@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "phaser": "^3.55.2",
+    "socket.io": "^4.6.0"
+  }
+}
