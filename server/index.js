@@ -107,6 +107,11 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('webRTC_speaking', (config) => {
+        // console.log("received" + config.bool);
+        socket.broadcast.to(socket.roomCode).emit('webRTC_speaking', config);
+    });
+
     socket.on('webRTC_join', (roomCodeObj) => {
         console.log("received webRTC_join request");
         let roomCode = roomCodeObj.roomCode;

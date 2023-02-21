@@ -7,6 +7,7 @@ const ICE_SERVERS = [
     {urls:"stun:stun.l.google.com:19302"}
 ];
 
+
 // Please note: the webRTC implementation borrowed a lot ideas code from:
 // https://github.com/anoek/webrtc-group-chat-example
 class webRTCClientManager {
@@ -334,7 +335,7 @@ class webRTCClientManager {
                         // var remote_media = document.createElement('audio');
 
                         remote_media.setAttribute("autoplay", "autoplay");
-                        remote_media.muted = true;
+                        // remote_media.muted = true;
                         if (MUTE_AUDIO_BY_DEFAULT) {
                             remote_media.setAttribute("muted", "true");
                         }
@@ -418,8 +419,8 @@ class webRTCClientManager {
         // let signaling_socket_local  = this.signaling_socket
         remote_media.addEventListener('timeupdate', function() {
             // update the proximity flag based on the most recent values of the sources
-            console.log('proximity_flag is:' + proximity_flag);
-            console.log(my_pos);
+            // console.log('proximity_flag is:' + proximity_flag);
+            // console.log(my_pos);
             // if (my_pos_x !== null && my_pos_y !== null && my_pos_x2 !== null && my_pos_y2 !== null) {
             if (Object.keys(my_pos).length >= 2 && global_signaling_socket.id in my_pos) {
                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
@@ -467,11 +468,39 @@ class webRTCClientManager {
                     try {
                         this.local_media_stream = stream;
 
+                        const audioContext = new AudioContext();
+                        const analyser = audioContext.createAnalyser();
+                        const microphone = audioContext.createMediaStreamSource(stream);
+                        const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+                    
+                        analyser.smoothingTimeConstant = 0.8;
+                        analyser.fftSize = 1024;
+                    
+                        microphone.connect(analyser);
+                        analyser.connect(scriptProcessor);
+                        scriptProcessor.connect(audioContext.destination);
+                        let tmp_signaling_socket = this.signaling_socket;
+                        scriptProcessor.onaudioprocess = function() {
+                            const array = new Uint8Array(analyser.frequencyBinCount);
+                            analyser.getByteFrequencyData(array);
+                            const arraySum = array.reduce((a, value) => a + value, 0);
+                            const average = arraySum / array.length;
+                            // console.log(Math.round(average));
+                            if (Math.round(average) > 10){
+                                console.log(Math.round(average));
+                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
+                            }
+                            else {
+                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
+                            }
+                        };
+
                         let local_media = document.createElement('audio');
 
                         local_media.setAttribute("autoplay", "autoplay");
 
                         local_media.setAttribute("muted", "true");
+                        // local_media.muted = true;
                         local_media.setAttribute("controls", "");
                         const audioContainer = document.getElementById('audio-container');
                         audioContainer.appendChild(local_media);
