@@ -8,6 +8,10 @@ class gameScene extends Phaser.Scene {
         this.players = {};
         this.speed = roomObj.speed;
         this.roomCode = roomObj.roomCode;
+        // Calling webRTC manager here
+        const webRTC = new webRTCClientManager();
+        webRTC.init(roomObj, this.socket);
+        webRTC.create();
     }
 
     preload() {

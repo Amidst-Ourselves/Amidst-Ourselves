@@ -23,6 +23,7 @@ const ROOM_CODE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
 const ROOM_CODE_CHARACTERS_LENGTH = ROOM_CODE_CHARACTERS.length;
 
 let rooms = {};
+let sockets = {}
 
 
 
@@ -87,7 +88,7 @@ io.on('connection', (socket) => {
     **************************
     **************************
     */
-
+    sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
     socket.on('webRTC_disconnect', () => {
         for (let channel in socket.channels) {
@@ -99,15 +100,17 @@ io.on('connection', (socket) => {
         console.log("received webRTC_join request");
         let roomCode = roomCodeObj.roomCode;
 
-        if (roomCode in rooms) {
-            // if already joined
-            return;
-        }
+        // if (roomCode in rooms) {
+        //     // if already joined
+        //     return;
+        // }
 
         for (let player in rooms[roomCode].players) {
-            // iterate through the players list and create p2p connection for each of them
-            player.emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
-            socket.emit('addPeer', {'peer_id': id, 'should_create_offer': true});
+            // iterate through the players list and create p2p connection for each pair
+            // pairs are stored in channel array
+            sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
+            console.log("I'm creating p2p2")
+            socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
         }
     });
 
@@ -128,9 +131,10 @@ io.on('connection', (socket) => {
     socket.on('relayICECandidate', (config) => {
         let peer_id = config.peer_id;
         let ice_candidate = config.ice_candidate;
+        let roomCode = config.roomCode;
 
         if (peer_id in rooms[roomCode].players) {
-            rooms[roomCode].players[peer_id].emit('iceCandidate', {'peer_id': socket.id, 'ice_candidate': ice_candidate});
+            sockets[peer_id].emit('iceCandidate', {'peer_id': socket.id, 'ice_candidate': ice_candidate});
         }
     });
     
@@ -138,9 +142,10 @@ io.on('connection', (socket) => {
     socket.on('relaySessionDescription', (config) => {
         let peer_id = config.peer_id;
         let session_description = config.session_description;
+        let roomCode = config.roomCode;
 
         if (peer_id in rooms[roomCode].players) {
-            rooms[roomCode].players[peer_id].emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
+            sockets[peer_id].emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
         }
     });
    /* End of webRTC events

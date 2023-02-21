@@ -19,9 +19,5 @@ class loadGameScene extends Phaser.Scene {
             }
             this.socket.disconnect();
         });
-        // Calling webRTC manager here
-        const webRTC = new webRTCClientManager();
-        webRTC.init(this);
-        webRTC.create();
     }
 }
