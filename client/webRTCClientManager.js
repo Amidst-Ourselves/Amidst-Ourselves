@@ -35,6 +35,7 @@ class webRTCClientManager {
             this.signaling_socket.on('connect', () => {
                 console.log("Connected to signaling server");
                 // Obtain user's audio from mic and wrap it as a continuous stream
+                // joinChatRoom(this.signaling_socket, this.roomCode);
                 this.setUpMedia(() => {
                     // join the char room that has same roomCode as the game room
                     joinChatRoom(this.signaling_socket, this.roomCode);
@@ -83,117 +84,117 @@ class webRTCClientManager {
             this.signaling_socket.emit('webRTC_delete', channel);
         }
 
-        try{
-            // Create peer-2-peer connection if a new user enter the room
-            this.signaling_socket.on('addPeer', (config) => {
-                console.log('Signaling server said to add peer:', config);
-                let peer_id = config.peer_id;
-                let peer_socket = config.peer_socket;
-                if (peer_id in this.peers) {
-                    console.log("Already connected to peer ", peer_id);
-                    return;
-                }
-                var peer_connection = new RTCPeerConnection(
-                    {"iceServers": ICE_SERVERS},
-                    {"optional": [{"DtlsSrtpKeyAgreement": true}]}
-                );
-                this.peers[peer_id] = peer_connection;
-                console.log("new peer")
+        // try{
+        //     // Create peer-2-peer connection if a new user enter the room
+        //     this.signaling_socket.on('addPeer', (config) => {
+        //         console.log('Signaling server said to add peer:', config);
+        //         let peer_id = config.peer_id;
+        //         let peer_socket = config.peer_socket;
+        //         if (peer_id in this.peers) {
+        //             console.log("Already connected to peer ", peer_id);
+        //             return;
+        //         }
+        //         var peer_connection = new RTCPeerConnection(
+        //             {"iceServers": ICE_SERVERS},
+        //             {"optional": [{"DtlsSrtpKeyAgreement": true}]}
+        //         );
+        //         this.peers[peer_id] = peer_connection;
+        //         console.log("new peer")
 
-                peer_connection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.signaling_socket.emit('relayICECandidate', {
-                            'peer_id': peer_id, 
-                            'ice_candidate': {
-                                'sdpMLineIndex': event.candidate.sdpMLineIndex,
-                                'candidate': event.candidate.candidate
-                            }, 
-                            'roomCode': this.roomCode
-                        });
-                    }
-                }
+        //         peer_connection.onicecandidate = (event) => {
+        //             if (event.candidate) {
+        //                 this.signaling_socket.emit('relayICECandidate', {
+        //                     'peer_id': peer_id, 
+        //                     'ice_candidate': {
+        //                         'sdpMLineIndex': event.candidate.sdpMLineIndex,
+        //                         'candidate': event.candidate.candidate
+        //                     }, 
+        //                     'roomCode': this.roomCode
+        //                 });
+        //             }
+        //         }
 
-                peer_connection.ontrack = (event) => {
+        //         peer_connection.ontrack = (event) => {
 
-                    console.log("ontrack", event);
+        //             console.log("ontrack", event);
 
-                    try {
-                        var remote_media = document.createElement('audio');
+        //             try {
+        //                 var remote_media = document.createElement('audio');
 
-                        remote_media.setAttribute("autoplay", "autoplay");
-                        if (MUTE_AUDIO_BY_DEFAULT) {
-                            remote_media.setAttribute("muted", "true");
-                        }
-                        remote_media.setAttribute("controls", "");
-                        this.peer_media_elements[peer_id] = remote_media;
-                        const audioContainer = document.getElementById('audio-container');
-                        audioContainer.appendChild(remote_media);
-                        this.attachMediaStream(remote_media, event.streams[0]);
+        //                 remote_media.setAttribute("autoplay", "autoplay");
+        //                 if (MUTE_AUDIO_BY_DEFAULT) {
+        //                     remote_media.setAttribute("muted", "true");
+        //                 }
+        //                 remote_media.setAttribute("controls", "");
+        //                 this.peer_media_elements[peer_id] = remote_media;
+        //                 const audioContainer = document.getElementById('audio-container');
+        //                 audioContainer.appendChild(remote_media);
+        //                 this.attachMediaStream(remote_media, event.streams[0]);
 
-                        let player_id = 0;
-                        let proximity_flag = true;
-                        this.signaling_socket.on('proximity', (playerObj) => {
-                            player_id = playerObj.id,
-                            proximity_flag = playerObj.bool
-                        });
-                        const volume = remote_media.volume;
-    
-                        if (proximity_flag) {
-                            remote_media.volume = 1.0;
-                        } else {
-                            remote_media.volume = 0.0;
-                        }
+        //                 let player_id = 0;
+        //                 let proximity_flag = true;
+        //                 this.signaling_socket.on('proximity', (playerObj) => {
+        //                     player_id = playerObj.id,
+        //                     proximity_flag = playerObj.bool
+        //                 });
+        //                 const volume = remote_media.volume;
+        //                 console.log('proximity_flag is: ' + proximity_flag)
+        //                 if (proximity_flag) {
+        //                     remote_media.volume = 1.0;
+        //                 } else {
+        //                     remote_media.volume = 0.0;
+        //                 }
                       
-                        // Use setTimeout to repeatedly check the distance
-                        setTimeout(1000);
-                    }
-                    catch (error) {
-                        // code that handles the error
-                        console.error('An error occurred:', error.message);
-                    }
-                }
-                
-                // add local stream
-                // TODO: replace deprecated function with newest ones
-                peer_connection.addStream(this.local_media_stream);
-                if (config.should_create_offer) {
-                    try {
-                        console.log("Creating RTC offer to ", peer_id);
-                        // SDP (Session Description Protocol) is the standard describing a 
-                        // peer-to-peer connection. SDP contains the codec, source address, 
-                        // and timing information of audio and video.
-                        peer_connection.createOffer(
-                            (session_description) => { 
-                                console.log("Session description is: ", session_description);
-                                // The RTCPeerConnection method setLocalDescription() changes the local description 
-                                // associated with the connection. This description specifies the properties of the local 
-                                // end of the connection, including the media format. The method takes a single parameter—the 
-                                // session description—and it returns a Promise which is fulfilled once the description has 
-                                // been changed, asynchronously.
-                                // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription
-                                peer_connection.setLocalDescription(session_description,
-                                    () => { 
-                                        this.signaling_socket.emit('relaySessionDescription', 
-                                            {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-                                        console.log("Offer setLocalDescription succeeded"); 
-                                    },
-                                    () => { Alert("Offer setLocalDescription failed!"); }
-                                );
-                            },
-                            (error) => {
-                                console.log("Error sending offer: ", error);
-                            });
-                    }
-                    catch (error) {
-                        // code that handles the error
-                        console.error('An error occurred:', error.message);
-                    }
-                }
-            });
-        }
-        catch(error) {
-            console.log("error " + error);
-        }
+        //                 // Use setTimeout to repeatedly check the distance
+        //                 // setTimeout(1000);
+        //             }
+        //             catch (error) {
+        //                 // code that handles the error
+        //                 console.error('An error occurred:', error.message);
+        //             }
+        //         }
+
+        //         // add local stream
+        //         // TODO: replace deprecated function with newest ones
+        //         peer_connection.addStream(this.local_media_stream);
+        //         if (config.should_create_offer) {
+        //             try {
+        //                 console.log("Creating RTC offer to ", peer_id);
+        //                 // SDP (Session Description Protocol) is the standard describing a 
+        //                 // peer-to-peer connection. SDP contains the codec, source address, 
+        //                 // and timing information of audio and video.
+        //                 peer_connection.createOffer(
+        //                     (session_description) => { 
+        //                         console.log("Session description is: ", session_description);
+        //                         // The RTCPeerConnection method setLocalDescription() changes the local description 
+        //                         // associated with the connection. This description specifies the properties of the local 
+        //                         // end of the connection, including the media format. The method takes a single parameter—the 
+        //                         // session description—and it returns a Promise which is fulfilled once the description has 
+        //                         // been changed, asynchronously.
+        //                         // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription
+        //                         peer_connection.setLocalDescription(session_description,
+        //                             () => { 
+        //                                 this.signaling_socket.emit('relaySessionDescription', 
+        //                                     {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
+        //                                 console.log("Offer setLocalDescription succeeded"); 
+        //                             },
+        //                             () => { Alert("Offer setLocalDescription failed!"); }
+        //                         );
+        //                     },
+        //                     (error) => {
+        //                         console.log("Error sending offer: ", error);
+        //                     });
+        //             }
+        //             catch (error) {
+        //                 // code that handles the error
+        //                 console.error('An error occurred:', error.message);
+        //             }
+        //         }
+        //     });
+        // }
+        // catch(error) {
+        //     console.log("error " + error);
+        // }
 
 
         try {
@@ -277,6 +278,162 @@ class webRTCClientManager {
         catch(error) {
             console.log("error " + error);
         }
+    }
+
+
+    // add remote audio and 
+    update(players) {
+
+        let proximity_flag = true;
+        let global_peer_id = 0
+        let remote_media = document.createElement('audio');
+        let global_signaling_socket = this.signaling_socket;
+        let global_peers = this.peers;
+
+        
+        try{
+            // Create peer-2-peer connection if a new user enter the room
+            this.signaling_socket.on('addPeer', (config) => {
+                console.log('Signaling server said to add peer:', config);
+                let peer_id = config.peer_id;
+                if (config.should_create_offer){
+                    global_peer_id = peer_id;
+                }
+                let peer_socket = config.peer_socket;
+                if (peer_id in this.peers) {
+                    console.log("Already connected to peer ", peer_id);
+                    return;
+                }
+                var peer_connection = new RTCPeerConnection(
+                    {"iceServers": ICE_SERVERS},
+                    {"optional": [{"DtlsSrtpKeyAgreement": true}]}
+                );
+                this.peers[peer_id] = peer_connection;
+                console.log("new peer")
+
+                peer_connection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        this.signaling_socket.emit('relayICECandidate', {
+                            'peer_id': peer_id, 
+                            'ice_candidate': {
+                                'sdpMLineIndex': event.candidate.sdpMLineIndex,
+                                'candidate': event.candidate.candidate
+                            }, 
+                            'roomCode': this.roomCode
+                        });
+                    }
+                }
+                
+
+
+                peer_connection.ontrack = (event) => {
+
+                    console.log("ontrack", event);
+
+                    try {
+                        // var remote_media = document.createElement('audio');
+
+                        remote_media.setAttribute("autoplay", "autoplay");
+                        remote_media.muted = true;
+                        if (MUTE_AUDIO_BY_DEFAULT) {
+                            remote_media.setAttribute("muted", "true");
+                        }
+                        remote_media.setAttribute("controls", "");
+                        this.peer_media_elements[peer_id] = remote_media;
+                        const audioContainer = document.getElementById('audio-container2');
+                        audioContainer.appendChild(remote_media);
+                        this.attachMediaStream(remote_media, event.streams[0]);
+
+                    }
+                    catch (error) {
+                        // code that handles the error
+                        console.error('An error occurred:', error.message);
+                    }
+                }
+
+                // add local stream
+                // TODO: replace deprecated function with newest ones
+                peer_connection.addStream(this.local_media_stream);
+                if (config.should_create_offer && peer_id != this.signaling_socket.id) {
+                    try {
+                        console.log("Creating RTC offer to ", peer_id);
+                        // SDP (Session Description Protocol) is the standard describing a 
+                        // peer-to-peer connection. SDP contains the codec, source address, 
+                        // and timing information of audio and video.
+                        peer_connection.createOffer(
+                            (session_description) => { 
+                                console.log("Session description is: ", session_description);
+                                // The RTCPeerConnection method setLocalDescription() changes the local description 
+                                // associated with the connection. This description specifies the properties of the local 
+                                // end of the connection, including the media format. The method takes a single parameter—the 
+                                // session description—and it returns a Promise which is fulfilled once the description has 
+                                // been changed, asynchronously.
+                                // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription
+                                peer_connection.setLocalDescription(session_description,
+                                    () => { 
+                                        this.signaling_socket.emit('relaySessionDescription', 
+                                            {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
+                                        console.log("Offer setLocalDescription succeeded"); 
+                                    },
+                                    () => { Alert("Offer setLocalDescription failed!"); }
+                                );
+                            },
+                            (error) => {
+                                console.log("Error sending offer: ", error);
+                            });
+                    }
+                    catch (error) {
+                        // code that handles the error
+                        console.error('An error occurred:', error.message);
+                    }
+                }
+            });
+        }
+        catch(error) {
+            console.log("error " + error);
+        }
+
+        let my_pos = {};
+        let my_x = null;
+        let my_y = null;
+
+        this.signaling_socket.on('my_pos2', (config) => {
+            my_pos[config.id] = [config.x, config.y]
+        });
+        function m_distance(x1,y1,x2,y2) {
+            return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+        }
+
+        function updateProximityFlag(ele) {
+            if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
+                global_peers[ele].volume = 0.0;
+                proximity_flag = false;
+            }
+            else {
+                global_peers[ele].volume = 1.0;
+                proximity_flag = true;
+            }
+        }
+        
+        // let signaling_socket_local  = this.signaling_socket
+        remote_media.addEventListener('timeupdate', function() {
+            // update the proximity flag based on the most recent values of the sources
+            console.log('proximity_flag is:' + proximity_flag);
+            console.log(my_pos);
+            // if (my_pos_x !== null && my_pos_y !== null && my_pos_x2 !== null && my_pos_y2 !== null) {
+            if (Object.keys(my_pos).length >= 2 && global_signaling_socket.id in my_pos) {
+                // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
+                my_x = my_pos[global_signaling_socket.id][0];
+                my_y = my_pos[global_signaling_socket.id][1];
+
+                for (let ele in my_pos) {
+                    if (ele != global_signaling_socket.id) {
+                        updateProximityFlag(ele);
+                    }
+                }
+            }
+            setTimeout(1000);
+        });
     }
 
     attachMediaStream(element, stream) {

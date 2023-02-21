@@ -78,6 +78,17 @@ io.on('connection', (socket) => {
             x: playerObj.x,
             y: playerObj.y
         });
+        // console.log("why I neever trigger");
+        socket.broadcast.to(socket.roomCode).emit('my_pos2', {
+            id: socket.id,
+            x: playerObj.x,
+            y: playerObj.y
+        });
+        socket.emit('my_pos2', {
+            id: socket.id,
+            x: playerObj.x,
+            y: playerObj.y
+        });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });
@@ -108,13 +119,15 @@ io.on('connection', (socket) => {
         for (let player in rooms[roomCode].players) {
             // iterate through the players list and create p2p connection for each pair
             // pairs are stored in channel array
-            sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
-            console.log("I'm creating p2p2")
-            socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
+            if (socket.id != player) {
+                sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
+                console.log("I'm creating p2p2")
+                socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
+            }
         }
     });
 
-    socket.on('webRTC_delete', (channel) => {
+    function webRTC_delete(channel) {
         // if channel not exist in the socket channels list then no need to delete it 
         if (!(channel in socket.channels)) {
             return;
@@ -124,9 +137,11 @@ io.on('connection', (socket) => {
         // notify all users the room has been deleted
         for (let player in rooms[roomCode].players) {
             player.emit('removePeer', {'peer_id': socket.id});
-            socket.emit('addPremovePeereer', {'peer_id': id});
+            socket.emit('removePeer', {'peer_id': id});
         }
-    });
+    }
+
+    socket.on('webRTC_delete', webRTC_delete);
 
     socket.on('relayICECandidate', (config) => {
         let peer_id = config.peer_id;
