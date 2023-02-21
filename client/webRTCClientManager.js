@@ -21,6 +21,7 @@ class webRTCClientManager {
             this.peers = {};
             this.peer_media_elements = {};
             this.roomCode = roomObj.roomCode;
+            this.roomObj = roomObj;
         }
         catch(error) {
             console.log("error " + error);
@@ -87,6 +88,7 @@ class webRTCClientManager {
             this.signaling_socket.on('addPeer', (config) => {
                 console.log('Signaling server said to add peer:', config);
                 let peer_id = config.peer_id;
+                let peer_socket = config.peer_socket;
                 if (peer_id in this.peers) {
                     console.log("Already connected to peer ", peer_id);
                     return;
@@ -112,6 +114,7 @@ class webRTCClientManager {
                 }
 
                 peer_connection.ontrack = (event) => {
+
                     console.log("ontrack", event);
 
                     try {
@@ -126,12 +129,60 @@ class webRTCClientManager {
                         const audioContainer = document.getElementById('audio-container');
                         audioContainer.appendChild(remote_media);
                         this.attachMediaStream(remote_media, event.streams[0]);
+
+                        // remote_media.addEventListener('play', () => {
+                        //     checkDistance(remote_media, peer_id, this.signaling_socket, this.roomCode);
+                        //   });
                     }
                     catch (error) {
                         // code that handles the error
                         console.error('An error occurred:', error.message);
                     }
                 }
+                // function m_distance(x1,y1,x2,y2) {
+                //     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+                // }
+
+                // function checkDistance(audio, peer_id, signaling_socket, roomCode) {
+                //     let x1 = 0;
+                //     let y1 = 0;
+                //     let x2 = 0;
+                //     let y2 = 0;
+                //     let rooms = {};
+                //     let player_id = 0;
+                //     signaling_socket.on('move', (playerObj) => {
+                //         x1 = playerObj.x;
+                //         y1= playerObj.y;
+                //         player_id = playerObj.id;
+                //         rooms = playerObj.rooms;
+                //     });
+
+                //     x2 = rooms[roomCode].players[player_id].x;
+                //     y2 = rooms[roomCode].players[player_id].y;
+                //     const volume = audio.volume;
+                //     let distance = 0;
+                //     try{
+                //         let a = peer_id.m_distance
+                //         distance = m_distance(x1, y1, x2, y2)
+                //         }
+                //     catch (error) {
+                //         // code that handles the error
+                //         console.error('An error occurred:', error.message);
+                //     }
+                //     let threshold = 20;
+                //     // Check distance between local and remote peers using location data
+                //     // Adjust the volume of the audio element based on the distance
+                //     if (distance < threshold) {
+                //       audio.volume = 1.0;
+                //     } else {
+                //       audio.volume = 0.0;
+                //     }
+                  
+                //     // Use setTimeout to repeatedly check the distance
+                //     setTimeout(function() {
+                //       checkDistance(audio);
+                //     }, 1000);
+                //   }
 
                 // add local stream
                 // TODO: replace deprecated function with newest ones
