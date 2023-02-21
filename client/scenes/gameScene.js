@@ -36,12 +36,30 @@ class gameScene extends Phaser.Scene {
                 this.createSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
             }
         });
+
+        function m_distance(x1,y1,x2,y2) {
+            return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+        }
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
             this.players[playerObj.id].y = playerObj.y;
+
+            if (m_distance(this.players[this.socket.id].x, this.players[this.socket.id].y, playerObj.x, playerObj.y) < 20){
+                this.socket.emit('proximity', {
+                    id: this.socket.id,
+                    bool: true
+                 });
+            }
+            else {
+                this.socket.emit('proximity', {
+                    id: this.socket.id,
+                    bool: false
+                 });
+            }
         });
     
+
         this.socket.on('join', (playerObj) => {
             this.createSprite(playerObj.id, playerObj.x, playerObj.y)
             console.log('player joined ' + playerObj.id);

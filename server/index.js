@@ -76,8 +76,7 @@ io.on('connection', (socket) => {
         socket.broadcast.to(socket.roomCode).emit('move', {
             id: socket.id,
             x: playerObj.x,
-            y: playerObj.y,
-            rooms: rooms
+            y: playerObj.y
         });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
