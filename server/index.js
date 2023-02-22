@@ -40,19 +40,22 @@ io.on('connection', (socket) => {
 
     socket.on('roomJoin', (roomCodeObj) => {
         if (roomCodeObj.roomCode === undefined || !roomCodeObj.roomCode in rooms) {
-            socket.emit('roomJoinResponse', {});
+            socket.emit('roomJoinResponse', {message: "error joining room"});
             return;
         }
 
         let room = rooms[roomCodeObj.roomCode];
 
-        if (room.players === undefined) {
-            players = {};
-            players[socket.id] = {x: 400, y: 400};
-            room["host"] = socket.id;
-            room["players"] = players;
-        } else {
-            room.players[socket.id] = {x: 400, y: 400};
+        if (playerCount(room) === 0) {
+            room.host = socket.id;
+        }
+
+        room.players[socket.id] = {x: 400, y: 400};
+
+        if (roomFull(room)) {
+            delete room.players[socket.id];
+            socket.emit('roomJoinResponse', {message: "room full"});
+            return;
         }
 
         io.to(roomCodeObj.roomCode).emit('join', {id: socket.id, x: 400, y: 400});
@@ -91,7 +94,9 @@ function createRoom(roomObj) {
         playerLimit: roomObj.playerLimit,
         imposterCount: roomObj.imposterCount,
         playerSpeed: roomObj.playerSpeed,
-        map: roomObj.map
+        map: roomObj.map,
+        host: undefined,
+        players: {}
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
@@ -115,4 +120,12 @@ function createRoomCode() {
         }
     } while (roomCode in rooms);
     return roomCode;
+}
+
+function playerCount(roomObj) {
+    return Object.keys(roomObj.players).length;
+}
+
+function roomFull(roomObj) {
+    return playerCount(roomObj) > roomObj.playerLimit;
 }

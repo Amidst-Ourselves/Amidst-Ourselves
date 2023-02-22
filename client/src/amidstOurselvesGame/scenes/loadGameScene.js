@@ -16,6 +16,9 @@ export default class loadGameScene extends Phaser.Scene {
         this.socket.emit('roomJoinCreate', this.roomCodeObj);
 
         this.socket.on('roomJoinCreateResponse', (roomObj) => {
+            if (roomObj.mesage !== undefined) {
+                this.scene.start("titleScene", {message: roomObj.message});
+            }
             if (roomObj.roomCode === undefined) {
                 this.scene.start("titleScene", {message: 'failed to join room'});
             } else {

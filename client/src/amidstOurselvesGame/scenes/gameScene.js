@@ -35,6 +35,9 @@ export default class gameScene extends Phaser.Scene {
         this.socket.emit('roomJoin', {roomCode: this.roomCode});
 
         this.socket.on('roomJoinResponse', (roomObj) => {
+            if (roomObj.message !== undefined) {
+                this.scene.start("titleScene", {message: roomObj.message});
+            }
             for (let playerId in roomObj.players) {
                 this.createSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
             }
