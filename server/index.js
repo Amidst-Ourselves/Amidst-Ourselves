@@ -81,6 +81,9 @@ io.on('connection', (socket) => {
             // do nothing
         } else {
             delete rooms[socket.roomCode].players[socket.id];
+            if (playerCount(rooms[socket.roomCode]) === 0) {
+                delete rooms[socket.roomCode];
+            }
             io.to(socket.roomCode).emit('leave', {id: socket.id});
         }
     });
