@@ -53,7 +53,7 @@ class gameScene extends Phaser.Scene {
         });
 
         this.socket.on('webRTC_speaking', (config) => {
-            console.log("received" + config.bool);
+            // console.log("received" + config.bool);
             if(config.bool == true) {
                 this.audioIcons[config.id].visible = true;
             }

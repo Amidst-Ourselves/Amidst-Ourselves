@@ -23,6 +23,10 @@ class webRTCClientManager {
             this.peer_media_elements = {};
             this.roomCode = roomObj.roomCode;
             this.roomObj = roomObj;
+            this.my_pos = {};
+            this.my_x = null;
+            this.my_y = null;
+            // this.stream_recycle = {};
         }
         catch(error) {
             console.log("error " + error);
@@ -271,7 +275,7 @@ class webRTCClientManager {
                 if (peer_id in this.peers) {
                     this.peers[peer_id].close();
                 }
-
+                console.log("deleting peer")
                 delete this.peers[peer_id];
                 delete this.peer_media_elements[config.peer_id];
             });
@@ -287,10 +291,14 @@ class webRTCClientManager {
 
         let proximity_flag = true;
         let global_peer_id = 0
-        let remote_media = document.createElement('audio');
+        // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
         let global_peers = this.peers;
 
+
+        this.signaling_socket.on('leave', (playerObj) => {
+            this.signaling_socket.emit('webRTC_disconnect');
+        });
         
         try{
             // Create peer-2-peer connection if a new user enter the room
@@ -332,12 +340,14 @@ class webRTCClientManager {
                     console.log("ontrack", event);
 
                     try {
-                        // var remote_media = document.createElement('audio');
+                        var remote_media = document.createElement('audio');
 
                         remote_media.setAttribute("autoplay", "autoplay");
+                        // remote_media.autoplay = true;
                         // remote_media.muted = true;
                         if (MUTE_AUDIO_BY_DEFAULT) {
-                            remote_media.setAttribute("muted", "true");
+                            // remote_media.setAttribute("muted", "true");
+                            remote_media.muted = true;
                         }
                         remote_media.setAttribute("controls", "");
                         this.peer_media_elements[peer_id] = remote_media;
@@ -354,8 +364,15 @@ class webRTCClientManager {
 
                 // add local stream
                 // TODO: replace deprecated function with newest ones
-                peer_connection.addStream(this.local_media_stream);
-                if (config.should_create_offer && peer_id != this.signaling_socket.id) {
+                // peer_connection.addStream(this.local_media_stream);
+                const track = this.local_media_stream.getTracks();
+                peer_connection.addTrack(track[0], this.local_media_stream);
+                // for (const track of this.local_media_stream.getTracks()) {
+                //     peer_connection.addTrack(track, this.local_media_stream);
+                // }
+
+
+                if (config.should_create_offer) {
                     try {
                         console.log("Creating RTC offer to ", peer_id);
                         // SDP (Session Description Protocol) is the standard describing a 
@@ -394,48 +411,49 @@ class webRTCClientManager {
             console.log("error " + error);
         }
 
-        let my_pos = {};
-        let my_x = null;
-        let my_y = null;
-
+        // let my_pos = {};
+        // let my_x = null;
+        // let my_y = null;
+        let tmp_pos = this.my_pos;
         this.signaling_socket.on('my_pos2', (config) => {
-            my_pos[config.id] = [config.x, config.y]
+            tmp_pos[config.id] = [config.x, config.y]
         });
-        function m_distance(x1,y1,x2,y2) {
-            return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-        }
 
-        function updateProximityFlag(ele) {
-            if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
-                global_peers[ele].volume = 0.0;
-                proximity_flag = false;
-            }
-            else {
-                global_peers[ele].volume = 1.0;
-                proximity_flag = true;
-            }
-        }
+
+        const toggleMicrophoneButton = document.getElementById('toggle-microphone');
+        let isMicrophoneOn = true;
         
-        // let signaling_socket_local  = this.signaling_socket
-        remote_media.addEventListener('timeupdate', function() {
-            // update the proximity flag based on the most recent values of the sources
-            // console.log('proximity_flag is:' + proximity_flag);
-            // console.log(my_pos);
-            // if (my_pos_x !== null && my_pos_y !== null && my_pos_x2 !== null && my_pos_y2 !== null) {
-            if (Object.keys(my_pos).length >= 2 && global_signaling_socket.id in my_pos) {
-                // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
-                my_x = my_pos[global_signaling_socket.id][0];
-                my_y = my_pos[global_signaling_socket.id][1];
-
-                for (let ele in my_pos) {
-                    if (ele != global_signaling_socket.id) {
-                        updateProximityFlag(ele);
-                    }
-                }
-            }
-            setTimeout(1000);
+        toggleMicrophoneButton.addEventListener('click', () => {
+            console.log("isMicrophoneOn: "+ isMicrophoneOn)
+          if (isMicrophoneOn) {
+            // Turn off the microphone
+            // navigator.mediaDevices.getUserMedia({audio: true})
+            //   .then(stream => {
+                this.local_media_stream.getAudioTracks()[0].enabled = false;
+                isMicrophoneOn = false;
+                toggleMicrophoneButton.innerText = 'Turn On Microphone';
+            //   })
+            //   .catch(error => console.error(error));
+          } 
+          else {
+            // console.log("clicked")
+            // Turn on the microphone
+            // navigator.mediaDevices.getUserMedia({audio: true})
+            //   .then(stream => {
+                this.local_media_stream.getAudioTracks()[0].enabled = true;
+                isMicrophoneOn = true;
+                toggleMicrophoneButton.innerText = 'Turn Off Microphone';
+            //   })
+            //   .catch(error => console.error(error));
+          }
+          setTimeout(function(){
+            //do what you need here
+        }, 1000);
         });
     }
+
+    
+
 
     attachMediaStream(element, stream) {
         console.log('DEPRECATED, attachMediaStream will soon be removed.');
@@ -480,29 +498,74 @@ class webRTCClientManager {
                         analyser.connect(scriptProcessor);
                         scriptProcessor.connect(audioContext.destination);
                         let tmp_signaling_socket = this.signaling_socket;
+                        let my_x = this.my_x;
+                        let my_y = this.my_y;
+                        let my_pos = this.my_pos;
+                        let my_peers = this.peers
+                        let my_stream = this.local_media_stream;
                         scriptProcessor.onaudioprocess = function() {
+
+                            function m_distance(x1,y1,x2,y2) {
+                                return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+                            }
+                        
+                            function updateProximityFlag(ele) {
+                                // console.log(ele);
+                                if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
+                                    // console.log("I'm in proximity")
+                                    let senderList = my_peers[ele].getSenders();
+                                    // console.log("length is: " + Object.keys(senderList).length);
+                                    // senderList.forEach((sender) => {
+                                    //     sender.track.enabled = false;
+                                    // });
+                                    senderList[0].track.enabled = false;
+                                }
+                                else {
+
+                                    let senderList = my_peers[ele].getSenders();
+                                    // console.log("length is: " + Object.keys(senderList).length);
+                                    // senderList.forEach((sender) => {
+                                    //     sender.track.enabled = true;
+                                    // });
+                                    senderList[0].track.enabled = true;
+                                }
+                            }
+
                             const array = new Uint8Array(analyser.frequencyBinCount);
                             analyser.getByteFrequencyData(array);
                             const arraySum = array.reduce((a, value) => a + value, 0);
                             const average = arraySum / array.length;
                             // console.log(Math.round(average));
                             if (Math.round(average) > 10){
-                                console.log(Math.round(average));
+                                // console.log(Math.round(average));
                                 tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
                             }
                             else {
                                 tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
                             }
+
+                            if (Object.keys(my_pos).length >= 2 && tmp_signaling_socket.id in my_pos) {
+                                // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
+                                my_x = my_pos[tmp_signaling_socket.id][0];
+                                my_y = my_pos[tmp_signaling_socket.id][1];
+                
+                                for (let ele in my_pos) {
+                                    if (ele != tmp_signaling_socket.id) {
+                                        updateProximityFlag(ele);
+                                    }
+                                }
+                            }
+                            // setTimeout(1000);
                         };
 
                         let local_media = document.createElement('audio');
 
                         local_media.setAttribute("autoplay", "autoplay");
 
-                        local_media.setAttribute("muted", "true");
-                        // local_media.muted = true;
+                        // local_media.setAttribute("muted", "true");
+                        local_media.muted = true;
                         local_media.setAttribute("controls", "");
-                        const audioContainer = document.getElementById('audio-container');
+                        const audioContainer = document.getElementById('audio-container2');
                         audioContainer.appendChild(local_media);
                         this.attachMediaStream(local_media, stream);
                         if (callback) callback();

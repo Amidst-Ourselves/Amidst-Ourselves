@@ -1,6 +1,7 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+// var hark = require('hark')
 
 const app = express();
 const httpServer = createServer(app);
@@ -124,11 +125,11 @@ io.on('connection', (socket) => {
         for (let player in rooms[roomCode].players) {
             // iterate through the players list and create p2p connection for each pair
             // pairs are stored in channel array
-            if (socket.id != player) {
-                sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
-                console.log("I'm creating p2p2")
-                socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
-            }
+
+            sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
+            console.log("I'm creating p2p2")
+            socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
+        
         }
     });
 
