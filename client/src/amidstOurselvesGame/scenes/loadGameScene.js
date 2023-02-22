@@ -1,10 +1,6 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
-const SPRITE_WIDTH = 84;
-const SPRITE_HEIGHT = 128;
-const PLAYER_WIDTH = 34;
-const PLAYER_HEIGHT = 46;
-const SERVER_ADDRESS = 'http://localhost:3000';
+import { SERVER_ADDRESS } from '../constants';
 
 export default class loadGameScene extends Phaser.Scene {
     constructor() {

@@ -1,12 +1,9 @@
+import playerpng from "../assets/player.png";
+import shippng from "../assets/ship.png";
+import skeldpng from "../assets/skeld.png";
 import Phaser from 'phaser';
 import io from 'socket.io-client';
-const SPRITE_WIDTH = 84;
-const SPRITE_HEIGHT = 128;
-const PLAYER_WIDTH = 34;
-const PLAYER_HEIGHT = 46;
-const SERVER_ADDRESS = 'http://localhost:3000';
-
-
+import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, SERVER_ADDRESS } from "../constants"
 
 export default class gameScene extends Phaser.Scene {
     constructor() {
@@ -21,9 +18,9 @@ export default class gameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('ship', 'assets/ship.png');
-        this.load.image('skeld', 'assets/skeld.png');
-        this.load.spritesheet('player', 'assets/player.png',
+        this.load.image('ship', shippng);
+        this.load.image('skeld', skeldpng);
+        this.load.spritesheet('player', playerpng,
             {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
         );
     }
