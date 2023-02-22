@@ -13,7 +13,7 @@ export default class gameScene extends Phaser.Scene {
     init(roomObj) {
         this.socket = io(SERVER_ADDRESS);
         this.players = {};
-        this.speed = roomObj.speed;
+        this.speed = roomObj.playerSpeed;
         this.roomCode = roomObj.roomCode;
     }
 

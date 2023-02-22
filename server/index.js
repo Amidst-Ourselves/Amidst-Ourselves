@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
     socket.on('roomJoinCreate', (roomCodeObj) => {
         let roomObj;
         if (roomCodeObj.roomCode === undefined) {
-            roomObj = createRoom();
+            roomObj = createRoom(roomCodeObj);
         } else {
             roomObj = getRoom(roomCodeObj.roomCode);
         }
@@ -84,11 +84,14 @@ io.on('connection', (socket) => {
 });
 
 
-function createRoom() {
+function createRoom(roomObj) {
     let roomCode = createRoomCode();
     let newRoom = {
         roomCode: roomCode,
-        speed: 2
+        playerLimit: roomObj.playerLimit,
+        imposterCount: roomObj.imposterCount,
+        playerSpeed: roomObj.playerSpeed,
+        map: roomObj.map
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
