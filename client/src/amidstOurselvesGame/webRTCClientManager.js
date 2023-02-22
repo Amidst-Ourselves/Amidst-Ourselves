@@ -10,7 +10,7 @@ const ICE_SERVERS = [
 
 // Please note: the webRTC implementation borrowed a lot ideas code from:
 // https://github.com/anoek/webrtc-group-chat-example
-class webRTCClientManager {
+export default class webRTCClientManager {
 
     constructor() {}
 
@@ -56,10 +56,10 @@ class webRTCClientManager {
             this.signaling_socket.on('webRTC_disconnect', () => {
                 console.log("Disconnected from signaling server");
 
-                for (peer_id in this.peer_media_elements) {
+                for (let peer_id in this.peer_media_elements) {
                     this.peer_media_elements[peer_id].remove();
                 }
-                for (peer_id in this.peers) {
+                for (let peer_id in this.peers) {
                     this.peers[peer_id].close();
                 }
 
@@ -228,7 +228,7 @@ class webRTCClientManager {
                                                     {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
                                                 console.log("Answer setLocalDescription succeeded");
                                             },
-                                            () => { Alert("Answer setLocalDescription failed!"); }
+                                            () => { console.log("Answer setLocalDescription failed!"); }
                                         );
                                     },
                                     (error) => {
@@ -393,7 +393,7 @@ class webRTCClientManager {
                                             {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
                                         console.log("Offer setLocalDescription succeeded"); 
                                     },
-                                    () => { Alert("Offer setLocalDescription failed!"); }
+                                    () => { console.log("Offer setLocalDescription failed!"); }
                                 );
                             },
                             (error) => {

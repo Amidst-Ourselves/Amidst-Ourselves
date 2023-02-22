@@ -1,4 +1,8 @@
-class loadGameScene extends Phaser.Scene {
+import Phaser from 'phaser';
+import io from 'socket.io-client';
+import { SERVER_ADDRESS } from '../constants';
+
+export default class loadGameScene extends Phaser.Scene {
     constructor() {
         super("loadGameScene")
     }
