@@ -1,6 +1,15 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const GAME_STATE = {
+    lobby: "lobby",
+    action: "action"
+};
+const PLAYER_STATE = {
+    crewmate: "crewmate",
+    imposter: "imposter",
+    ghost: "ghost"
+};
 
 const app = express();
 const httpServer = createServer(app);
@@ -45,12 +54,13 @@ io.on('connection', (socket) => {
         }
 
         let room = rooms[roomCodeObj.roomCode];
+        let player = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
 
         if (playerCount(room) === 0) {
             room.host = socket.id;
         }
 
-        room.players[socket.id] = {x: 400, y: 400};
+        room.players[socket.id] = player;
 
         if (roomFull(room)) {
             delete room.players[socket.id];
@@ -58,7 +68,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        io.to(roomCodeObj.roomCode).emit('join', {id: socket.id, x: 400, y: 400});
+        io.to(roomCodeObj.roomCode).emit('join', player);
         socket.join(roomCodeObj.roomCode);
         socket.emit('roomJoinResponse', rooms[roomCodeObj.roomCode]);
         socket.roomCode = roomCodeObj.roomCode;
@@ -96,6 +106,7 @@ function createRoom(roomObj) {
         playerSpeed: roomObj.playerSpeed,
         map: roomObj.map,
         host: undefined,
+        gameState: GAME_STATE.lobby,
         players: {}
     }
     rooms[roomCode] = newRoom;

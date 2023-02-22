@@ -11,6 +11,15 @@ export const PLAYER_HEIGHT = 46;
 export const HEIGHT = 600;
 export const WIDTH = 800;
 export const SERVER_ADDRESS = 'http://localhost:3000';
+export const GAME_STATE = {
+    lobby: "lobby",
+    action: "action"
+};
+export const PLAYER_STATE = {
+    crewmate: "crewmate",
+    imposter: "imposter",
+    ghost: "ghost"
+};
 
 export const config = {
     type: Phaser.AUTO,

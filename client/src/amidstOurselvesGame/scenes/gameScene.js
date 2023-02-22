@@ -39,7 +39,7 @@ export default class gameScene extends Phaser.Scene {
                 this.scene.start("titleScene", {message: roomObj.message});
             }
             for (let playerId in roomObj.players) {
-                this.createSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
+                this.createSprite(roomObj.players[playerId]);
             }
         });
     
@@ -49,7 +49,7 @@ export default class gameScene extends Phaser.Scene {
         });
     
         this.socket.on('join', (playerObj) => {
-            this.createSprite(playerObj.id, playerObj.x, playerObj.y)
+            this.createSprite(playerObj);
             console.log('player joined ' + playerObj.id);
         });
         
@@ -71,10 +71,11 @@ export default class gameScene extends Phaser.Scene {
         }
     }
     
-    createSprite(playerId, x, y) {
-        this.players[playerId] = this.add.sprite(x, y, 'player');
-        this.players[playerId].displayHeight = PLAYER_HEIGHT;
-        this.players[playerId].displayWidth = PLAYER_WIDTH;
+    createSprite(playerObj) {
+        console.log(playerObj.playerState);
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
+        this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
+        this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
     }
     
     destroySprite(playerId) {
