@@ -1,4 +1,11 @@
-class gameScene extends Phaser.Scene {
+import playerpng from "../assets/player.png";
+import shippng from "../assets/ship.png";
+import skeldpng from "../assets/skeld.png";
+import Phaser from 'phaser';
+import io from 'socket.io-client';
+import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, SERVER_ADDRESS } from "../constants"
+
+export default class gameScene extends Phaser.Scene {
     constructor() {
         super("gameScene")
     }
@@ -11,9 +18,9 @@ class gameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('ship', 'assets/ship.png');
-        this.load.image('skeld', 'assets/skeld.png');
-        this.load.spritesheet('player', 'assets/player.png',
+        this.load.image('ship', shippng);
+        this.load.image('skeld', skeldpng);
+        this.load.spritesheet('player', playerpng,
             {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
         );
     }
