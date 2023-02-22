@@ -2,6 +2,7 @@ import playerpng from "../assets/player.png";
 import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
+import mute_button from "../assets/button_sprite_sheet.png";
 import Phaser from 'phaser';
 import io from 'socket.io-client';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, SERVER_ADDRESS } from "../constants"
@@ -21,6 +22,8 @@ export default class gameScene extends Phaser.Scene {
         this.webRTC = new webRTCClientManager();
         this.webRTC.init(roomObj, this.socket);
         this.webRTC.create();
+        this.mute_button = null;
+        this.mute_flag = true;
     }
 
     preload() {
@@ -33,6 +36,7 @@ export default class gameScene extends Phaser.Scene {
         this.load.spritesheet('audioIcon', audioIconpng,
             {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
         );
+        this.load.spritesheet('mute_button', mute_button, {frameWidth: 193, frameHeight:71});
         console.log("I'm loading sprite")
     }
     
@@ -42,6 +46,15 @@ export default class gameScene extends Phaser.Scene {
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+        this.mute_button = this.add.sprite(100, 100, 'mute_button').setInteractive();
+        
+        this.mute_button.on('pointerover', function (event) { console.log('button over'); });
+        this.mute_button.on('pointerout', function (event) { console.log('button out'); });
+
+        this.mute_button.on('pointerdown', (event) => {
+            this.mute_flag = this.webRTC.mute(this.mute_flag);
+        });
     
         this.socket.emit('roomJoin', {roomCode: this.roomCode});
 
@@ -126,18 +139,22 @@ export default class gameScene extends Phaser.Scene {
         let moved = false;
         if (this.keyUp.isDown) {
             this.players[this.socket.id].y -= this.speed;
+            this.mute_button.y -= this.speed;
             moved = true;
         }
         if (this.keyDown.isDown) {
             this.players[this.socket.id].y += this.speed;
+            this.mute_button.y += this.speed;
             moved = true;
         }
         if (this.keyLeft.isDown) {
             this.players[this.socket.id].x -= this.speed;
+            this.mute_button.x -= this.speed;
             moved = true;
         }
         if (this.keyRight.isDown) {
             this.players[this.socket.id].x += this.speed;
+            this.mute_button.x += this.speed;
             moved = true;
         }
         this.audioIcons[this.socket.id].x = this.players[this.socket.id].x

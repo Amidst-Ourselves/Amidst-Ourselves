@@ -1,7 +1,7 @@
-const SIGNALING_SERVER = "http://localhost:3000";
+
 const USE_AUDIO = true;
 const USE_VIDEO = false;
-const DEFAULT_CHANNEL = 'tmp';
+
 const MUTE_AUDIO_BY_DEFAULT = false;
 const ICE_SERVERS = [
     {urls:"stun:stun.l.google.com:19302"}
@@ -11,8 +11,9 @@ const ICE_SERVERS = [
 // Please note: the webRTC implementation borrowed a lot ideas code from:
 // https://github.com/anoek/webrtc-group-chat-example
 export default class webRTCClientManager {
+    
 
-    constructor() {}
+
 
     // pass the game roomObj and use the same socket for audio chat
     init(roomObj, socket) {
@@ -26,6 +27,7 @@ export default class webRTCClientManager {
             this.my_pos = {};
             this.my_x = null;
             this.my_y = null;
+            this.isMicrophoneOn = true;
             // this.stream_recycle = {};
         }
         catch(error) {
@@ -289,11 +291,8 @@ export default class webRTCClientManager {
     // add remote audio and 
     update(players) {
 
-        let proximity_flag = true;
-        let global_peer_id = 0
         // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
-        let global_peers = this.peers;
 
 
         this.signaling_socket.on('leave', (playerObj) => {
@@ -305,10 +304,9 @@ export default class webRTCClientManager {
             this.signaling_socket.on('addPeer', (config) => {
                 console.log('Signaling server said to add peer:', config);
                 let peer_id = config.peer_id;
-                if (config.should_create_offer){
-                    global_peer_id = peer_id;
-                }
-                let peer_socket = config.peer_socket;
+                // if (config.should_create_offer){
+                //     global_peer_id = peer_id;
+                // }
                 if (peer_id in this.peers) {
                     console.log("Already connected to peer ", peer_id);
                     return;
@@ -418,40 +416,56 @@ export default class webRTCClientManager {
         this.signaling_socket.on('my_pos2', (config) => {
             tmp_pos[config.id] = [config.x, config.y]
         });
+        // let isMicrophoneOn = this.isMicrophoneOn;
+        // this.signaling_socket.on('mute2', (config) => {
+        //     // console.log("isMicrophoneOn: "+ this.isMicrophoneOn)
+        //     if (this.isMicrophoneOn) {
+        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
+        //         console.log('Microphone is off');
+        //         this.isMicrophoneOn = false;
+        //     } 
+        //     else {
+        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
+        //         console.log('Microphone is on');
+        //         this.isMicrophoneOn = true;
+        //     }
+        //     setTimeout(function(){
+        //     //do what you need here
+        //     }, 1000);
+        // });
 
-
-        const toggleMicrophoneButton = document.getElementById('toggle-microphone');
-        let isMicrophoneOn = true;
+        // const toggleMicrophoneButton = document.getElementById('toggle-microphone');
+        // let isMicrophoneOn = true;
         
-        toggleMicrophoneButton.addEventListener('click', () => {
-            // console.log("isMicrophoneOn: "+ isMicrophoneOn)
-          if (isMicrophoneOn) {
-            // Turn off the microphone
-            // navigator.mediaDevices.getUserMedia({audio: true})
-            //   .then(stream => {
-                this.local_media_stream.getAudioTracks()[0].enabled = false;
-                console.log('Microphone is off');
-                isMicrophoneOn = false;
-                toggleMicrophoneButton.innerText = 'Turn On Microphone';
-            //   })
-            //   .catch(error => console.error(error));
-          } 
-          else {
-            // console.log("clicked")
-            // Turn on the microphone
-            // navigator.mediaDevices.getUserMedia({audio: true})
-            //   .then(stream => {
-                this.local_media_stream.getAudioTracks()[0].enabled = true;
-                console.log('Microphone is on');
-                isMicrophoneOn = true;
-                toggleMicrophoneButton.innerText = 'Turn Off Microphone';
-            //   })
-            //   .catch(error => console.error(error));
-          }
-          setTimeout(function(){
-            //do what you need here
-        }, 1000);
-        });
+        // toggleMicrophoneButton.addEventListener('click', () => {
+        //     // console.log("isMicrophoneOn: "+ isMicrophoneOn)
+        //   if (isMicrophoneOn) {
+        //     // Turn off the microphone
+        //     // navigator.mediaDevices.getUserMedia({audio: true})
+        //     //   .then(stream => {
+        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
+        //         console.log('Microphone is off');
+        //         isMicrophoneOn = false;
+        //         toggleMicrophoneButton.innerText = 'Turn On Microphone';
+        //     //   })
+        //     //   .catch(error => console.error(error));
+        //   } 
+        //   else {
+        //     // console.log("clicked")
+        //     // Turn on the microphone
+        //     // navigator.mediaDevices.getUserMedia({audio: true})
+        //     //   .then(stream => {
+        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
+        //         console.log('Microphone is on');
+        //         isMicrophoneOn = true;
+        //         toggleMicrophoneButton.innerText = 'Turn Off Microphone';
+        //     //   })
+        //     //   .catch(error => console.error(error));
+        //   }
+        //   setTimeout(function(){
+        //     //do what you need here
+        //     }, 1000);
+        // });
     }
 
     
@@ -504,7 +518,6 @@ export default class webRTCClientManager {
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
                         let my_peers = this.peers
-                        let my_stream = this.local_media_stream;
                         scriptProcessor.onaudioprocess = function() {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -512,25 +525,12 @@ export default class webRTCClientManager {
                             }
                         
                             function updateProximityFlag(ele) {
-                                // console.log(ele);
                                 if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
-                                    // console.log("I'm in proximity")
-                                    // let senderList = my_peers[ele].getSenders();
                                     let senderList = my_peers[ele].getReceivers();
-                                    // console.log("length is: " + Object.keys(senderList).length);
-                                    // senderList.forEach((sender) => {
-                                    //     sender.track.enabled = false;
-                                    // });
                                     senderList[0].track.enabled = false;
                                 }
                                 else {
-
-                                    // let senderList = my_peers[ele].getSenders();
                                     let senderList = my_peers[ele].getReceivers();
-                                    // console.log("length is: " + Object.keys(senderList).length);
-                                    // senderList.forEach((sender) => {
-                                    //     sender.track.enabled = true;
-                                    // });
                                     senderList[0].track.enabled = true;
                                 }
                             }
@@ -589,5 +589,19 @@ export default class webRTCClientManager {
         catch(error) {
             console.log("error " + error);
         }
+    }
+
+    mute(mute_flag) {
+        if (mute_flag) {
+            this.local_media_stream.getAudioTracks()[0].enabled = false;
+            console.log('Microphone is off');
+            mute_flag= false;
+        } 
+        else {
+            this.local_media_stream.getAudioTracks()[0].enabled = true;
+            console.log('Microphone is on');
+            mute_flag = true;
+        }
+        return mute_flag
     }
 }
