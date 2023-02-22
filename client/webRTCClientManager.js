@@ -424,12 +424,13 @@ class webRTCClientManager {
         let isMicrophoneOn = true;
         
         toggleMicrophoneButton.addEventListener('click', () => {
-            console.log("isMicrophoneOn: "+ isMicrophoneOn)
+            // console.log("isMicrophoneOn: "+ isMicrophoneOn)
           if (isMicrophoneOn) {
             // Turn off the microphone
             // navigator.mediaDevices.getUserMedia({audio: true})
             //   .then(stream => {
                 this.local_media_stream.getAudioTracks()[0].enabled = false;
+                console.log('Microphone is off');
                 isMicrophoneOn = false;
                 toggleMicrophoneButton.innerText = 'Turn On Microphone';
             //   })
@@ -441,6 +442,7 @@ class webRTCClientManager {
             // navigator.mediaDevices.getUserMedia({audio: true})
             //   .then(stream => {
                 this.local_media_stream.getAudioTracks()[0].enabled = true;
+                console.log('Microphone is on');
                 isMicrophoneOn = true;
                 toggleMicrophoneButton.innerText = 'Turn Off Microphone';
             //   })
@@ -513,7 +515,8 @@ class webRTCClientManager {
                                 // console.log(ele);
                                 if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
                                     // console.log("I'm in proximity")
-                                    let senderList = my_peers[ele].getSenders();
+                                    // let senderList = my_peers[ele].getSenders();
+                                    let senderList = my_peers[ele].getReceivers();
                                     // console.log("length is: " + Object.keys(senderList).length);
                                     // senderList.forEach((sender) => {
                                     //     sender.track.enabled = false;
@@ -522,7 +525,8 @@ class webRTCClientManager {
                                 }
                                 else {
 
-                                    let senderList = my_peers[ele].getSenders();
+                                    // let senderList = my_peers[ele].getSenders();
+                                    let senderList = my_peers[ele].getReceivers();
                                     // console.log("length is: " + Object.keys(senderList).length);
                                     // senderList.forEach((sender) => {
                                     //     sender.track.enabled = true;
