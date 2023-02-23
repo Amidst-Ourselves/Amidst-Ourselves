@@ -90,16 +90,6 @@ io.on('connection', (socket) => {
             x: playerObj.x,
             y: playerObj.y
         });
-        socket.broadcast.to(socket.roomCode).emit('my_pos2', {
-            id: socket.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
-        socket.emit('my_pos2', {
-            id: socket.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });

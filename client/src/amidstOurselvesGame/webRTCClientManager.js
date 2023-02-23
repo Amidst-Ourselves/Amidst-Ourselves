@@ -13,8 +13,6 @@ const ICE_SERVERS = [
 export default class webRTCClientManager {
     
 
-
-
     // pass the game roomObj and use the same socket for audio chat
     init(roomObj, socket) {
         try {
@@ -285,6 +283,7 @@ export default class webRTCClientManager {
 
     // add remote audio and 
     update(players) {
+        this.my_pos = players;
 
         // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
@@ -407,10 +406,14 @@ export default class webRTCClientManager {
         // let my_pos = {};
         // let my_x = null;
         // let my_y = null;
-        let tmp_pos = this.my_pos;
-        this.signaling_socket.on('my_pos2', (config) => {
-            tmp_pos[config.id] = [config.x, config.y]
-        });
+
+
+        // let tmp_pos = this.my_pos;
+        // this.signaling_socket.on('my_pos2', (config) => {
+        //     tmp_pos[config.id] = [config.x, config.y]
+        // });
+
+
         // let isMicrophoneOn = this.isMicrophoneOn;
         // this.signaling_socket.on('mute2', (config) => {
         //     // console.log("isMicrophoneOn: "+ this.isMicrophoneOn)
@@ -521,7 +524,7 @@ export default class webRTCClientManager {
                         
                             function updateProximityFlag(ele) {
                                 console.log("proximity")
-                                if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
+                                if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
                                 }
@@ -546,11 +549,11 @@ export default class webRTCClientManager {
                                     //do what you need here
                                 }, 1000);
                             }
-                            console.log(my_pos)
+
                             if (Object.keys(my_pos).length >= 2 && tmp_signaling_socket.id in my_pos) {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
-                                my_x = my_pos[tmp_signaling_socket.id][0];
-                                my_y = my_pos[tmp_signaling_socket.id][1];
+                                my_x = my_pos[tmp_signaling_socket.id].x;
+                                my_y = my_pos[tmp_signaling_socket.id].y;
                 
                                 for (let ele in my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
