@@ -16,7 +16,7 @@ export default class gameScene extends Phaser.Scene {
         this.socket = io(SERVER_ADDRESS);
         this.players = {};
         this.audioIcons = {};
-        this.speed = roomObj.speed;
+        this.speed = roomObj.playerSpeed;
         this.roomCode = roomObj.roomCode;
         // Calling webRTC manager here
         this.webRTC = new webRTCClientManager();
@@ -47,7 +47,7 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-        this.mute_button = this.add.text(100, 100, 'Mute')
+        this.mute_button = this.add.text(100, 150, 'Mute')
         .setOrigin(0.5)
         .setPadding(10)
         .setStyle({ backgroundColor: '#111' })
@@ -67,8 +67,11 @@ export default class gameScene extends Phaser.Scene {
         this.socket.emit('roomJoin', {roomCode: this.roomCode});
 
         this.socket.on('roomJoinResponse', (roomObj) => {
+            if (roomObj.message !== undefined) {
+                this.scene.start("titleScene", {message: roomObj.message});
+            }
             for (let playerId in roomObj.players) {
-                this.createSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
+                this.createSprite(roomObj.players[playerId]);
                 this.createAudioSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
             }
         });
@@ -93,7 +96,7 @@ export default class gameScene extends Phaser.Scene {
     
 
         this.socket.on('join', (playerObj) => {
-            this.createSprite(playerObj.id, playerObj.x, playerObj.y)
+            this.createSprite(playerObj);
             this.createAudioSprite(playerObj.id, playerObj.x, playerObj.y)
             console.log('player joined ' + playerObj.id);
         });
@@ -119,10 +122,11 @@ export default class gameScene extends Phaser.Scene {
 
     }
     
-    createSprite(playerId, x, y) {
-        this.players[playerId] = this.add.sprite(x, y, 'player');
-        this.players[playerId].displayHeight = PLAYER_HEIGHT;
-        this.players[playerId].displayWidth = PLAYER_WIDTH;
+    createSprite(playerObj) {
+        console.log(playerObj.playerState);
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
+        this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
+        this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
     }
 
     createAudioSprite(playerId, x, y) {
