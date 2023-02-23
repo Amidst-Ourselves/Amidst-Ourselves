@@ -90,17 +90,6 @@ io.on('connection', (socket) => {
             x: playerObj.x,
             y: playerObj.y
         });
-        // console.log("why I neever trigger");
-        socket.broadcast.to(socket.roomCode).emit('my_pos2', {
-            id: socket.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
-        socket.emit('my_pos2', {
-            id: socket.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });
@@ -150,7 +139,7 @@ io.on('connection', (socket) => {
         //     // if already joined
         //     return;
         // }
-        if (rooms[roomCode].players === undefined) {
+        if (rooms[roomCode] === undefined || rooms[roomCode].players === undefined) {
             return;
         }
 
@@ -227,15 +216,6 @@ function createRoom(roomObj, hostPlayerObj) {
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
 }
-
-
-function getRoom(roomCode) {
-    if (roomCode in rooms) {
-        return rooms[roomCode];
-    }
-    return {};
-}
-
 
 function createRoomCode() {
     let roomCode;
