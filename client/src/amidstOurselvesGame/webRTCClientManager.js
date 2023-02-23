@@ -546,6 +546,9 @@ export default class webRTCClientManager {
                             }
                             else {
                                 tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
+                                setTimeout(function(){
+                                    //do what you need here
+                                }, 1000);
                             }
 
                             if (Object.keys(my_pos).length >= 2 && tmp_signaling_socket.id in my_pos) {

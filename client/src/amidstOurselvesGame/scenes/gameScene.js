@@ -34,9 +34,10 @@ export default class gameScene extends Phaser.Scene {
         );
         console.log("I'm loading sprite")
         this.load.spritesheet('audioIcon', audioIconpng,
-            {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
+            {frameWidth: 500, frameHeight: 500}
         );
-        this.load.spritesheet('mute_button', mute_button, {frameWidth: 193, frameHeight:71});
+        this.load.spritesheet('mute_button_on', mute_button, {frameWidth: 193, frameHeight:71});
+        this.load.spritesheet('mute_button_off', mute_button, {frameWidth: 386, frameHeight:71});
         console.log("I'm loading sprite")
     }
     
@@ -47,14 +48,22 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-        this.mute_button = this.add.sprite(100, 100, 'mute_button').setInteractive();
-        
-        this.mute_button.on('pointerover', function (event) { console.log('button over'); });
-        this.mute_button.on('pointerout', function (event) { console.log('button out'); });
-
-        this.mute_button.on('pointerdown', (event) => {
+        this.mute_button = this.add.text(100, 100, 'Mute')
+        .setOrigin(0.5)
+        .setPadding(10)
+        .setStyle({ backgroundColor: '#111' })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', (event) => {
             this.mute_flag = this.webRTC.mute(this.mute_flag);
-        });
+            if (!this.mute_flag) {
+                this.mute_button.setText("Unmute");
+            }
+            else {
+                this.mute_button.setText("Mute");
+            }
+        })
+        .on('pointerover', () => this.mute_button.setStyle({ fill: '#f39c12' }))
+        .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }))
     
         this.socket.emit('roomJoin', {roomCode: this.roomCode});
 
@@ -119,7 +128,7 @@ export default class gameScene extends Phaser.Scene {
 
     createAudioSprite(playerId, x, y) {
 
-        this.audioIcons[playerId] = this.add.sprite(x , y - PLAYER_WIDTH/2, 'audioIcon')
+        this.audioIcons[playerId] = this.add.sprite(x , y - PLAYER_WIDTH, 'audioIcon')
         this.audioIcons[playerId].displayHeight = PLAYER_HEIGHT/2;
         this.audioIcons[playerId].displayWidth = PLAYER_WIDTH/2;
         this.audioIcons[playerId].visible = false;
