@@ -28,6 +28,7 @@ export default class webRTCClientManager {
             this.my_x = null;
             this.my_y = null;
             this.isMicrophoneOn = true;
+            this.mute_flag = true;
             // this.stream_recycle = {};
         }
         catch(error) {
@@ -594,17 +595,17 @@ export default class webRTCClientManager {
         }
     }
 
-    mute(mute_flag) {
-        if (mute_flag) {
+    mute() {
+        if (this.mute_flag ) {
             this.local_media_stream.getAudioTracks()[0].enabled = false;
             console.log('Microphone is off');
-            mute_flag= false;
+            this.mute_flag = false;
         } 
         else {
             this.local_media_stream.getAudioTracks()[0].enabled = true;
             console.log('Microphone is on');
-            mute_flag = true;
+            this.mute_flag  = true;
         }
-        return mute_flag
+        return this.mute_flag 
     }
 }

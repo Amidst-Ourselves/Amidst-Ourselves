@@ -23,7 +23,6 @@ export default class gameScene extends Phaser.Scene {
         this.webRTC.init(roomObj, this.socket);
         this.webRTC.create();
         this.mute_button = null;
-        this.mute_flag = true;
     }
 
     preload() {
@@ -54,8 +53,8 @@ export default class gameScene extends Phaser.Scene {
         .setStyle({ backgroundColor: '#111' })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', (event) => {
-            this.mute_flag = this.webRTC.mute(this.mute_flag);
-            if (!this.mute_flag) {
+            let mute_flag = this.webRTC.mute();
+            if (!mute_flag) {
                 this.mute_button.setText("Unmute");
             }
             else {
