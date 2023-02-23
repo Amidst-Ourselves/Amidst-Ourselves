@@ -39,15 +39,9 @@ export default class webRTCClientManager {
     create() {
         console.log("Connecting to signaling server");
         try{
-            // Connect to the signaling server
-            this.signaling_socket.on('connect', () => {
-                console.log("Connected to signaling server");
-                // Obtain user's audio from mic and wrap it as a continuous stream
-                // joinChatRoom(this.signaling_socket, this.roomCode);
-                this.setUpMedia(() => {
-                    // join the char room that has same roomCode as the game room
-                    joinChatRoom(this.signaling_socket, this.roomCode);
-                });
+            this.setUpMedia(() => {
+                // join the char room that has same roomCode as the game room
+                joinChatRoom(this.signaling_socket, this.roomCode);
             });
         }
         catch(error) {
@@ -526,6 +520,7 @@ export default class webRTCClientManager {
                             }
                         
                             function updateProximityFlag(ele) {
+                                console.log("proximity")
                                 if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
@@ -551,7 +546,7 @@ export default class webRTCClientManager {
                                     //do what you need here
                                 }, 1000);
                             }
-
+                            console.log(my_pos)
                             if (Object.keys(my_pos).length >= 2 && tmp_signaling_socket.id in my_pos) {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
                                 my_x = my_pos[tmp_signaling_socket.id][0];

@@ -43,6 +43,7 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.createSpritesFromTempPlayers();
+        this.webRTC.update(this.players);
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -94,7 +95,6 @@ export default class gameScene extends Phaser.Scene {
                 });
             }
         }
-        this.webRTC.update(this.players);
 
     }
 
