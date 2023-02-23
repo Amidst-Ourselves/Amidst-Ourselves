@@ -36,6 +36,7 @@ let sockets = {}
 
 
 
+
 io.on('connection', (socket) => {
     socket.on('roomCreate', (roomCodeObj) => {
         let hostPlayerObj = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
@@ -149,6 +150,9 @@ io.on('connection', (socket) => {
         //     // if already joined
         //     return;
         // }
+        if (rooms[roomCode].players === undefined) {
+            return;
+        }
 
         for (let player in rooms[roomCode].players) {
             // iterate through the players list and create p2p connection for each pair
