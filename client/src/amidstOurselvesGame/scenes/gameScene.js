@@ -4,21 +4,22 @@ import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
 import mute_button from "../assets/button_sprite_sheet.png";
 import Phaser from 'phaser';
-import io from 'socket.io-client';
-import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, SERVER_ADDRESS } from "../constants"
+import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import webRTCClientManager from "../webRTCClientManager"
+
+
 export default class gameScene extends Phaser.Scene {
     constructor() {
         super("gameScene")
     }
 
     init(roomObj) {
-        this.socket = io(SERVER_ADDRESS);
-        this.players = {};
-        this.audioIcons = {};
-        this.speed = roomObj.playerSpeed;
+        this.socket = this.registry.get('socket');
         this.roomCode = roomObj.roomCode;
-        // Calling webRTC manager here
+        this.host = roomObj.host;
+        this.tempPlayers = roomObj.players;
+        this.speed = roomObj.playerSpeed;
+        this.players = {};
         this.webRTC = new webRTCClientManager();
         this.webRTC.init(roomObj, this.socket);
         this.webRTC.create();
@@ -75,6 +76,7 @@ export default class gameScene extends Phaser.Scene {
                 this.createAudioSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
             }
         });
+        this.createSpritesFromTempPlayers();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -106,6 +108,14 @@ export default class gameScene extends Phaser.Scene {
             this.destroyAudioSprite(playerObj.id)
             console.log('player left ' + playerObj.id);
         });
+
+        this.socket.on('teleportToLobby', (roomObj) => {
+            this.scene.start("lobbyScene", roomObj);
+        });
+
+        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' });
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' });
+        this.createEndButtonForHost();
     }
     
     update() {
@@ -120,6 +130,13 @@ export default class gameScene extends Phaser.Scene {
         }
         this.webRTC.update(this.players);
 
+    }
+
+    createSpritesFromTempPlayers() {
+        for (let playerId in this.tempPlayers) {
+            this.createSprite(this.tempPlayers[playerId]);
+        }
+        delete this.tempPlayers;
     }
     
     createSprite(playerObj) {
@@ -172,5 +189,23 @@ export default class gameScene extends Phaser.Scene {
         this.audioIcons[this.socket.id].x = this.players[this.socket.id].x
         this.audioIcons[this.socket.id].y = this.players[this.socket.id].y - PLAYER_HEIGHT/2;
         return moved;
+    }
+
+    createEndButtonForHost() {
+        if (this.socket.id !== this.host) {
+            return;
+        }
+        
+        this.startText = this.add.text(100, 450, 'end', { font: '32px Arial', fill: '#FFFFFF' });
+        this.startText.setInteractive();
+        this.startText.on('pointerover', () => {
+            this.startText.setTint(0x00FF00);
+        });
+        this.startText.on('pointerout', () => {
+            this.startText.setTint(0xFFFFFF);
+        });
+        this.startText.on('pointerdown', () => {
+            this.socket.emit('endGame');
+        });
     }
 }

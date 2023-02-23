@@ -37,40 +37,35 @@ let sockets = {}
 
 
 io.on('connection', (socket) => {
-    socket.on('roomJoinCreate', (roomCodeObj) => {
-        let roomObj;
-        if (roomCodeObj.roomCode === undefined) {
-            roomObj = createRoom(roomCodeObj);
-        } else {
-            roomObj = getRoom(roomCodeObj.roomCode);
-        }
-        socket.emit('roomJoinCreateResponse', roomObj);
+    socket.on('roomCreate', (roomCodeObj) => {
+        let hostPlayerObj = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
+        let roomObj = createRoom(roomCodeObj, hostPlayerObj);
+
+        socket.join(roomObj.roomCode);
+        socket.emit('roomResponse', roomObj);
+        socket.roomCode = roomObj.roomCode;
+
+        console.log(rooms);
     });
 
     socket.on('roomJoin', (roomCodeObj) => {
-        if (roomCodeObj.roomCode === undefined || !roomCodeObj.roomCode in rooms) {
-            socket.emit('roomJoinResponse', {message: "error joining room"});
+        if (roomCodeObj.roomCode === undefined || rooms[roomCodeObj.roomCode] === undefined) {
+            socket.emit('roomResponse', {message: "bad room code"});
             return;
         }
 
-        let room = rooms[roomCodeObj.roomCode];
         let player = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
+        rooms[roomCodeObj.roomCode].players[socket.id] = player;
 
-        if (playerCount(room) === 0) {
-            room.host = socket.id;
-        }
-
-        room.players[socket.id] = player;
-
-        if (roomFull(room)) {
-            delete room.players[socket.id];
-            socket.emit('roomJoinResponse', {message: "room full"});
+        if (roomFull(rooms[roomCodeObj.roomCode])) {
+            delete rooms[roomCodeObj.roomCode].players[socket.id];
+            socket.emit('roomResponse', {message: "room full"});
             return;
         }
 
         io.to(roomCodeObj.roomCode).emit('join', player);
         socket.join(roomCodeObj.roomCode);
-        socket.emit('roomJoinResponse', rooms[roomCodeObj.roomCode]);
+        socket.emit('roomResponse', rooms[roomCodeObj.roomCode]);
         socket.roomCode = roomCodeObj.roomCode;
 
         console.log(rooms);
@@ -107,6 +102,24 @@ io.on('connection', (socket) => {
         });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
+    });
+
+    socket.on('startGame', () => {
+        let room = rooms[socket.roomCode];
+        for (let playerId in room.players) {
+            room.players[playerId].x = 400;
+            room.players[playerId].y = 400;
+        }
+        io.to(socket.roomCode).emit('teleportToGame', room);
+    });
+
+    socket.on('endGame', () => {
+        let room = rooms[socket.roomCode];
+        for (let playerId in room.players) {
+            room.players[playerId].x = 400;
+            room.players[playerId].y = 400;
+        }
+        io.to(socket.roomCode).emit('teleportToLobby', room);
     });
 
     /* Below are webRTC events
@@ -190,21 +203,22 @@ io.on('connection', (socket) => {
     **************************
     **************************
     */
-
 });
 
 
-function createRoom(roomObj) {
+function createRoom(roomObj, hostPlayerObj) {
     let roomCode = createRoomCode();
+    let players = {};
+    players[hostPlayerObj.id] = hostPlayerObj;
     let newRoom = {
         roomCode: roomCode,
         playerLimit: roomObj.playerLimit,
         imposterCount: roomObj.imposterCount,
         playerSpeed: roomObj.playerSpeed,
         map: roomObj.map,
-        host: undefined,
+        host: hostPlayerObj.id,
         gameState: GAME_STATE.lobby,
-        players: {}
+        players: players
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
