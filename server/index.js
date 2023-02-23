@@ -1,6 +1,15 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const GAME_STATE = {
+    lobby: "lobby",
+    action: "action"
+};
+const PLAYER_STATE = {
+    crewmate: "crewmate",
+    imposter: "imposter",
+    ghost: "ghost"
+};
 
 const app = express();
 const httpServer = createServer(app);
@@ -31,7 +40,7 @@ io.on('connection', (socket) => {
     socket.on('roomJoinCreate', (roomCodeObj) => {
         let roomObj;
         if (roomCodeObj.roomCode === undefined) {
-            roomObj = createRoom();
+            roomObj = createRoom(roomCodeObj);
         } else {
             roomObj = getRoom(roomCodeObj.roomCode);
         }
@@ -40,22 +49,26 @@ io.on('connection', (socket) => {
 
     socket.on('roomJoin', (roomCodeObj) => {
         if (roomCodeObj.roomCode === undefined || !roomCodeObj.roomCode in rooms) {
-            socket.emit('roomJoinResponse', {});
+            socket.emit('roomJoinResponse', {message: "error joining room"});
             return;
         }
 
         let room = rooms[roomCodeObj.roomCode];
+        let player = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
 
-        if (room.players === undefined) {
-            players = {};
-            players[socket.id] = {x: 400, y: 400};
-            room["host"] = socket.id;
-            room["players"] = players;
-        } else {
-            room.players[socket.id] = {x: 400, y: 400};
+        if (playerCount(room) === 0) {
+            room.host = socket.id;
         }
 
-        io.to(roomCodeObj.roomCode).emit('join', {id: socket.id, x: 400, y: 400});
+        room.players[socket.id] = player;
+
+        if (roomFull(room)) {
+            delete room.players[socket.id];
+            socket.emit('roomJoinResponse', {message: "room full"});
+            return;
+        }
+
+        io.to(roomCodeObj.roomCode).emit('join', player);
         socket.join(roomCodeObj.roomCode);
         socket.emit('roomJoinResponse', rooms[roomCodeObj.roomCode]);
         socket.roomCode = roomCodeObj.roomCode;
@@ -68,6 +81,9 @@ io.on('connection', (socket) => {
             // do nothing
         } else {
             delete rooms[socket.roomCode].players[socket.id];
+            if (playerCount(rooms[socket.roomCode]) === 0) {
+                delete rooms[socket.roomCode];
+            }
             io.to(socket.roomCode).emit('leave', {id: socket.id});
         }
     });
@@ -84,11 +100,17 @@ io.on('connection', (socket) => {
 });
 
 
-function createRoom() {
+function createRoom(roomObj) {
     let roomCode = createRoomCode();
     let newRoom = {
         roomCode: roomCode,
-        speed: 2
+        playerLimit: roomObj.playerLimit,
+        imposterCount: roomObj.imposterCount,
+        playerSpeed: roomObj.playerSpeed,
+        map: roomObj.map,
+        host: undefined,
+        gameState: GAME_STATE.lobby,
+        players: {}
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
@@ -112,4 +134,12 @@ function createRoomCode() {
         }
     } while (roomCode in rooms);
     return roomCode;
+}
+
+function playerCount(roomObj) {
+    return Object.keys(roomObj.players).length;
+}
+
+function roomFull(roomObj) {
+    return playerCount(roomObj) > roomObj.playerLimit;
 }
