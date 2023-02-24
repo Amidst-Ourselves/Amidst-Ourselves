@@ -27,6 +27,7 @@ export default class gameScene extends Phaser.Scene {
             // this.webRTC.create();
         }
         this.webRTC.init(roomObj, this.socket);
+        console.log("This should only display once")
         this.webRTC.create();
     }
 
@@ -42,12 +43,14 @@ export default class gameScene extends Phaser.Scene {
     }
     
     create() {
-        this.add.image(50, 300, 'ship');
+        this.ship = this.add.image(50, 300, 'ship');
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         this.createSpritesFromTempPlayers();
+        this.createMiniMap();
         this.webRTC.update(this.players);
     
         this.socket.on('move', (playerObj) => {
@@ -81,6 +84,7 @@ export default class gameScene extends Phaser.Scene {
         });
 
         this.socket.on('teleportToLobby', (roomObj) => {
+            this.webRTC.reset();
             this.scene.start("lobbyScene", roomObj);
         });
 
@@ -90,7 +94,7 @@ export default class gameScene extends Phaser.Scene {
         this.createMuteButton();
     }
     
-    update() {
+    update(time, deltaTime) {
         if (this.players[this.socket.id]) {
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
             if (this.movePlayer()) {
@@ -98,6 +102,14 @@ export default class gameScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
+            }
+
+            this.counter += deltaTime;
+            // console.log(this.counter);
+            // Call a function every 200 milliseconds
+            if (this.counter > 200) {
+                this.displayMiniMap();
+                this.counter = 0;
             }
         }
 
@@ -196,5 +208,44 @@ export default class gameScene extends Phaser.Scene {
         })
         .on('pointerover', () => this.mute_button.setStyle({ fill: '#f39c12' }))
         .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }));
+    }
+
+    createMiniMap() {
+        this.miniMap = this.add.image(400, 250, 'ship');
+        this.miniMap.setScale(0.4);
+        this.miniMap.setAlpha(0.9);
+        this.miniMap.setScrollFactor(0);
+        this.miniMap.visible = false;
+        this.miniMap_bool = false;
+        this.counter = 0;
+    }
+    displayMiniMap() {
+        if (this.keyMiniMap.isDown && !this.miniMap_bool) {
+            this.miniMap.visible = true;
+            this.miniMap_bool = true;
+
+            // Create a Graphics object
+            this.graphics = this.add.graphics();
+            let backgroundTopLeft = this.ship.getTopLeft();
+            let smallerImageTopLeft = this.miniMap.getTopLeft();
+            // Draw a circle shape with a border and a fill color
+            console.log(backgroundTopLeft.x);
+            console.log(backgroundTopLeft.y);
+            console.log(this.players[this.socket.id].x);
+            console.log(this.players[this.socket.id].y);
+            let circle = new Phaser.Geom.Circle(
+                (this.players[this.socket.id].x - backgroundTopLeft.x)*0.4 + smallerImageTopLeft.x, 
+                (this.players[this.socket.id].y + backgroundTopLeft.y)*0.4 + smallerImageTopLeft.y,
+                10);
+            this.graphics.lineStyle(2, 0xFFFFFF, 1);
+            this.graphics.fillStyle(0xFFF000, 0.5);
+            this.graphics.fillCircleShape(circle);
+            this.graphics.strokeCircleShape(circle);
+        }
+        else if (this.keyMiniMap.isDown && this.miniMap_bool) {
+            this.miniMap.visible = false;
+            this.miniMap_bool = false;
+            this.graphics.setVisible(false);
+        }
     }
 }

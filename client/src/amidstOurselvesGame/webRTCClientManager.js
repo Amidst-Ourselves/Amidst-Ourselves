@@ -8,6 +8,8 @@ const ICE_SERVERS = [
 ];
 
 
+var local_counter = 0;
+var remote_counter = 0;
 // Please note: the webRTC implementation borrowed a lot ideas code from:
 // https://github.com/anoek/webrtc-group-chat-example
 export default class webRTCClientManager {
@@ -60,10 +62,12 @@ export default class webRTCClientManager {
         // this.my_pos = {};
         console.log("Connecting to signaling server");
         try{
-            this.setUpMedia(() => {
-                // join the char room that has same roomCode as the game room
-                joinChatRoom(this.signaling_socket, this.roomCode);
-            });
+            if (local_counter === 0) {
+                this.setUpMedia(() => {
+                    // join the char room that has same roomCode as the game room
+                    joinChatRoom(this.signaling_socket, this.roomCode);
+                });
+            }
         }
         catch(error) {
             console.log("error " + error);
@@ -106,118 +110,6 @@ export default class webRTCClientManager {
         function deleteChannel(channel) {
             this.signaling_socket.emit('webRTC_delete', channel);
         }
-
-        // try{
-        //     // Create peer-2-peer connection if a new user enter the room
-        //     this.signaling_socket.on('addPeer', (config) => {
-        //         console.log('Signaling server said to add peer:', config);
-        //         let peer_id = config.peer_id;
-        //         let peer_socket = config.peer_socket;
-        //         if (peer_id in this.peers) {
-        //             console.log("Already connected to peer ", peer_id);
-        //             return;
-        //         }
-        //         var peer_connection = new RTCPeerConnection(
-        //             {"iceServers": ICE_SERVERS},
-        //             {"optional": [{"DtlsSrtpKeyAgreement": true}]}
-        //         );
-        //         this.peers[peer_id] = peer_connection;
-        //         console.log("new peer")
-
-        //         peer_connection.onicecandidate = (event) => {
-        //             if (event.candidate) {
-        //                 this.signaling_socket.emit('relayICECandidate', {
-        //                     'peer_id': peer_id, 
-        //                     'ice_candidate': {
-        //                         'sdpMLineIndex': event.candidate.sdpMLineIndex,
-        //                         'candidate': event.candidate.candidate
-        //                     }, 
-        //                     'roomCode': this.roomCode
-        //                 });
-        //             }
-        //         }
-
-        //         peer_connection.ontrack = (event) => {
-
-        //             console.log("ontrack", event);
-
-        //             try {
-        //                 var remote_media = document.createElement('audio');
-
-        //                 remote_media.setAttribute("autoplay", "autoplay");
-        //                 if (MUTE_AUDIO_BY_DEFAULT) {
-        //                     remote_media.setAttribute("muted", "true");
-        //                 }
-        //                 remote_media.setAttribute("controls", "");
-        //                 this.peer_media_elements[peer_id] = remote_media;
-        //                 const audioContainer = document.getElementById('audio-container');
-        //                 audioContainer.appendChild(remote_media);
-        //                 this.attachMediaStream(remote_media, event.streams[0]);
-
-        //                 let player_id = 0;
-        //                 let proximity_flag = true;
-        //                 this.signaling_socket.on('proximity', (playerObj) => {
-        //                     player_id = playerObj.id,
-        //                     proximity_flag = playerObj.bool
-        //                 });
-        //                 const volume = remote_media.volume;
-        //                 console.log('proximity_flag is: ' + proximity_flag)
-        //                 if (proximity_flag) {
-        //                     remote_media.volume = 1.0;
-        //                 } else {
-        //                     remote_media.volume = 0.0;
-        //                 }
-                      
-        //                 // Use setTimeout to repeatedly check the distance
-        //                 // setTimeout(1000);
-        //             }
-        //             catch (error) {
-        //                 // code that handles the error
-        //                 console.error('An error occurred:', error.message);
-        //             }
-        //         }
-
-        //         // add local stream
-        //         // TODO: replace deprecated function with newest ones
-        //         peer_connection.addStream(this.local_media_stream);
-        //         if (config.should_create_offer) {
-        //             try {
-        //                 console.log("Creating RTC offer to ", peer_id);
-        //                 // SDP (Session Description Protocol) is the standard describing a 
-        //                 // peer-to-peer connection. SDP contains the codec, source address, 
-        //                 // and timing information of audio and video.
-        //                 peer_connection.createOffer(
-        //                     (session_description) => { 
-        //                         console.log("Session description is: ", session_description);
-        //                         // The RTCPeerConnection method setLocalDescription() changes the local description 
-        //                         // associated with the connection. This description specifies the properties of the local 
-        //                         // end of the connection, including the media format. The method takes a single parameter—the 
-        //                         // session description—and it returns a Promise which is fulfilled once the description has 
-        //                         // been changed, asynchronously.
-        //                         // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription
-        //                         peer_connection.setLocalDescription(session_description,
-        //                             () => { 
-        //                                 this.signaling_socket.emit('relaySessionDescription', 
-        //                                     {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-        //                                 console.log("Offer setLocalDescription succeeded"); 
-        //                             },
-        //                             () => { Alert("Offer setLocalDescription failed!"); }
-        //                         );
-        //                     },
-        //                     (error) => {
-        //                         console.log("Error sending offer: ", error);
-        //                     });
-        //             }
-        //             catch (error) {
-        //                 // code that handles the error
-        //                 console.error('An error occurred:', error.message);
-        //             }
-        //         }
-        //     });
-        // }
-        // catch(error) {
-        //     console.log("error " + error);
-        // }
 
 
         try {
@@ -307,8 +199,6 @@ export default class webRTCClientManager {
     // add remote audio and 
     update(players) {
         this.my_pos = players;
-
-        // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
 
 
@@ -325,7 +215,7 @@ export default class webRTCClientManager {
                 // if (config.should_create_offer){
                 //     global_peer_id = peer_id;
                 // }
-                if (peer_id in this.peers) {
+                if (peer_id in this.peers || peer_id === this.signaling_socket.id) {
                     console.log("Already connected to peer ", peer_id);
                     return;
                 }
@@ -337,45 +227,24 @@ export default class webRTCClientManager {
                 console.log("new peer")
 
                 peer_connection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.signaling_socket.emit('relayICECandidate', {
-                            'peer_id': peer_id, 
-                            'ice_candidate': {
-                                'sdpMLineIndex': event.candidate.sdpMLineIndex,
-                                'candidate': event.candidate.candidate
-                            }, 
-                            'roomCode': this.roomCode
-                        });
-                    }
+                    this.handleIceCandidate(event, peer_id);
                 }
-                
-
+                    // {
+                    // if (event.candidate) {
+                    //     this.signaling_socket.emit('relayICECandidate', {
+                    //         'peer_id': peer_id, 
+                    //         'ice_candidate': {
+                    //             'sdpMLineIndex': event.candidate.sdpMLineIndex,
+                    //             'candidate': event.candidate.candidate
+                    //         }, 
+                    //         'roomCode': this.roomCode
+                    //     });
+                    // }
+                // }
+            
 
                 peer_connection.ontrack = (event) => {
-
-                    console.log("ontrack", event);
-
-                    try {
-                        var remote_media = document.createElement('audio');
-
-                        remote_media.setAttribute("autoplay", "autoplay");
-                        // remote_media.autoplay = true;
-                        // remote_media.muted = true;
-                        if (MUTE_AUDIO_BY_DEFAULT) {
-                            // remote_media.setAttribute("muted", "true");
-                            remote_media.muted = true;
-                        }
-                        remote_media.setAttribute("controls", "");
-                        this.peer_media_elements[peer_id] = remote_media;
-                        const audioContainer = document.getElementById('audio-container2');
-                        audioContainer.appendChild(remote_media);
-                        this.attachMediaStream(remote_media, event.streams[0]);
-
-                    }
-                    catch (error) {
-                        // code that handles the error
-                        console.error('An error occurred:', error.message);
-                    }
+                    this.handleRemoteTrack(event, peer_id);
                 }
 
                 // add local stream
@@ -415,6 +284,9 @@ export default class webRTCClientManager {
                             (error) => {
                                 console.log("Error sending offer: ", error);
                             });
+
+                        // IMPORTANT
+                        // peer_connection.setLocalDescription(null);
                     }
                     catch (error) {
                         // code that handles the error
@@ -426,71 +298,13 @@ export default class webRTCClientManager {
         catch(error) {
             console.log("error " + error);
         }
-
-        // let my_pos = {};
-        // let my_x = null;
-        // let my_y = null;
-
-
-        // let tmp_pos = this.my_pos;
-        // this.signaling_socket.on('my_pos2', (config) => {
-        //     tmp_pos[config.id] = [config.x, config.y]
-        // });
-
-
-        // let isMicrophoneOn = this.isMicrophoneOn;
-        // this.signaling_socket.on('mute2', (config) => {
-        //     // console.log("isMicrophoneOn: "+ this.isMicrophoneOn)
-        //     if (this.isMicrophoneOn) {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
-        //         console.log('Microphone is off');
-        //         this.isMicrophoneOn = false;
-        //     } 
-        //     else {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
-        //         console.log('Microphone is on');
-        //         this.isMicrophoneOn = true;
-        //     }
-        //     setTimeout(function(){
-        //     //do what you need here
-        //     }, 1000);
-        // });
-
-        // const toggleMicrophoneButton = document.getElementById('toggle-microphone');
-        // let isMicrophoneOn = true;
-        
-        // toggleMicrophoneButton.addEventListener('click', () => {
-        //     // console.log("isMicrophoneOn: "+ isMicrophoneOn)
-        //   if (isMicrophoneOn) {
-        //     // Turn off the microphone
-        //     // navigator.mediaDevices.getUserMedia({audio: true})
-        //     //   .then(stream => {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
-        //         console.log('Microphone is off');
-        //         isMicrophoneOn = false;
-        //         toggleMicrophoneButton.innerText = 'Turn On Microphone';
-        //     //   })
-        //     //   .catch(error => console.error(error));
-        //   } 
-        //   else {
-        //     // console.log("clicked")
-        //     // Turn on the microphone
-        //     // navigator.mediaDevices.getUserMedia({audio: true})
-        //     //   .then(stream => {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
-        //         console.log('Microphone is on');
-        //         isMicrophoneOn = true;
-        //         toggleMicrophoneButton.innerText = 'Turn Off Microphone';
-        //     //   })
-        //     //   .catch(error => console.error(error));
-        //   }
-        //   setTimeout(function(){
-        //     //do what you need here
-        //     }, 1000);
-        // });
     }
 
     reset() {
+        console.log("local counter : " + local_counter);
+        console.log("remote counter: " + remote_counter)
+        local_counter = 0;
+        remote_counter = 0;
         console.log("Disconnected from signaling server");
 
         if (this.local_media_stream) {
@@ -498,15 +312,25 @@ export default class webRTCClientManager {
             this.local_media_stream.getTracks().forEach((track) => {
               track.stop();
             });
-          
-            // Stop the local media stream itself
-            this.local_media_stream = null;
           }
 
+        const container = document.getElementById('audio-container2');
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+
         for (let peer_id in this.peer_media_elements) {
+            // const audioContainer = document.getElementById('audio-container2');
+            // audioContainer.removeChild(this.peer_media_elements[peer_id]);
             this.peer_media_elements[peer_id].remove();
+
         }
         for (let peer_id in this.peers) {
+            this.peers[peer_id].removeEventListener('track', this.handleRemoteTrack);
+            this.peers[peer_id].removeEventListener('icecandidate', this.handleIceCandidate);
+            // this.peers[peer_id].setRemoteDescription(null);
+            this.peers[peer_id].setLocalDescription(null);
+            this.peers[peer_id].onicecandidate = null;
             const senders = this.peers[peer_id].getSenders();
             senders.forEach(sender => {
                 this.peers[peer_id].removeTrack(sender);
@@ -517,6 +341,47 @@ export default class webRTCClientManager {
         this.peers = {};
         this.peer_media_elements = {};
         this.local_media_stream = null;
+    }
+
+    handleRemoteTrack(event, peer_id) {
+        console.log("ontrack", event);
+
+        try {
+            var remote_media = document.createElement('audio');
+
+            remote_media.setAttribute("autoplay", "autoplay");
+            // remote_media.autoplay = true;
+            // remote_media.muted = true;
+            if (MUTE_AUDIO_BY_DEFAULT) {
+                // remote_media.setAttribute("muted", "true");
+                remote_media.muted = true;
+            }
+            remote_media.setAttribute("controls", "");
+            this.peer_media_elements[peer_id] = remote_media;
+            const audioContainer = document.getElementById('audio-container2');
+            remote_counter+=1;
+            audioContainer.appendChild(remote_media);
+            this.attachMediaStream(remote_media, event.streams[0]);
+
+        }
+        catch (error) {
+            // code that handles the error
+            console.error('An error occurred:', error.message);
+        }
+    }
+
+    handleIceCandidate(event, peer_id) {
+
+        if (event.candidate) {
+            this.signaling_socket.emit('relayICECandidate', {
+                'peer_id': peer_id, 
+                'ice_candidate': {
+                    'sdpMLineIndex': event.candidate.sdpMLineIndex,
+                    'candidate': event.candidate.candidate
+                }, 
+                'roomCode': this.roomCode
+            });
+        }
     }
 
 
@@ -545,14 +410,19 @@ export default class webRTCClientManager {
                 element.srcObject = stream;
             };
 
+            const audioContext = new AudioContext();
+            const analyser = audioContext.createAnalyser();
+            // const microphone = audioContext.createMediaStreamSource(stream);
+            // const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
             navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
                 .then((stream) => {
 
                     try {
                         this.local_media_stream = stream;
 
-                        const audioContext = new AudioContext();
-                        const analyser = audioContext.createAnalyser();
+                        // const audioContext = new AudioContext();
+                        // const analyser = audioContext.createAnalyser();
                         const microphone = audioContext.createMediaStreamSource(stream);
                         const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
                     
@@ -616,6 +486,8 @@ export default class webRTCClientManager {
                             }
                             // setTimeout(1000);
                         };
+                        microphone.disconnect();
+                        scriptProcessor.disconnect();
 
                         let local_media = document.createElement('audio');
 
@@ -625,6 +497,8 @@ export default class webRTCClientManager {
                         local_media.muted = true;
                         local_media.setAttribute("controls", "");
                         const audioContainer = document.getElementById('audio-container2');
+                        console.log("how many times this will be triggered???")
+                        local_counter += 1;
                         audioContainer.appendChild(local_media);
                         this.attachMediaStream(local_media, stream);
                         if (callback) callback();
@@ -640,6 +514,11 @@ export default class webRTCClientManager {
                     console.log(errorback);
                     if (errorback) errorback();
                 })
+
+                audioContext.close();
+                analyser.disconnect();
+                // microphone.disconnect();
+                // scriptProcessor.disconnect();
         }
         catch(error) {
             console.log("error " + error);
