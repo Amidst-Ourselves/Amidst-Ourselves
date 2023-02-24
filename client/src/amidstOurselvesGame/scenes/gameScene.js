@@ -14,6 +14,7 @@ export default class gameScene extends Phaser.Scene {
 
     init(roomObj) {
         this.socket = this.registry.get('socket');
+        console.log('socket id is:' + this.socket.id);
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
@@ -173,6 +174,7 @@ export default class gameScene extends Phaser.Scene {
         });
         this.startText.on('pointerdown', () => {
             this.socket.emit('endGame');
+            this.webRTC.reset();
         });
     }
 

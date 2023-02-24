@@ -29,27 +29,27 @@ export default class webRTCClientManager {
             this.mute_flag = true;
             // this.stream_recycle = {};
 
-            try{
-                this.setUpMedia(() => {
-                    // join the char room that has same roomCode as the game room
-                    joinChatRoom(this.signaling_socket, this.roomCode);
-                });
-            }
-            catch(error) {
-                console.log("error " + error);
-            }
+            // try{
+            //     this.setUpMedia(() => {
+            //         // join the char room that has same roomCode as the game room
+            //         joinChatRoom(this.signaling_socket, this.roomCode);
+            //     });
+            // }
+            // catch(error) {
+            //     console.log("error " + error);
+            // }
 
 
-            function joinChatRoom(signaling_socket, roomCode) {
-                console.log("send join chat channel request");
-                try {
-                    signaling_socket.emit('webRTC_join', {roomCode});
-                }
-                catch (error) {
-                    // code that handles the error
-                    console.error('An error occurred:', error.message);
-                }
-            }
+            // function joinChatRoom(signaling_socket, roomCode) {
+            //     console.log("send join chat channel request");
+            //     try {
+            //         signaling_socket.emit('webRTC_join', {roomCode});
+            //     }
+            //     catch (error) {
+            //         // code that handles the error
+            //         console.error('An error occurred:', error.message);
+            //     }
+            // }
         }
         catch(error) {
             console.log("error " + error);
@@ -57,6 +57,7 @@ export default class webRTCClientManager {
     }
 
     create() {
+        // this.my_pos = {};
         console.log("Connecting to signaling server");
         try{
             this.setUpMedia(() => {
@@ -68,25 +69,25 @@ export default class webRTCClientManager {
             console.log("error " + error);
         }
 
-        try{
-            // Disconnect signal, I don't think I have ever used this part
-            this.signaling_socket.on('webRTC_disconnect', () => {
-                console.log("Disconnected from signaling server");
+        // try{
+        //     // Disconnect signal, I don't think I have ever used this part
+        //     this.signaling_socket.on('webRTC_disconnect', () => {
+        //         console.log("Disconnected from signaling server");
 
-                for (let peer_id in this.peer_media_elements) {
-                    this.peer_media_elements[peer_id].remove();
-                }
-                for (let peer_id in this.peers) {
-                    this.peers[peer_id].close();
-                }
+        //         for (let peer_id in this.peer_media_elements) {
+        //             this.peer_media_elements[peer_id].remove();
+        //         }
+        //         for (let peer_id in this.peers) {
+        //             this.peers[peer_id].close();
+        //         }
 
-                this.peers = {};
-                this.peer_media_elements = {};
-            });
-        }
-        catch(error) {
-            console.log("error " + error);
-        }
+        //         this.peers = {};
+        //         this.peer_media_elements = {};
+        //     });
+        // }
+        // catch(error) {
+        //     console.log("error " + error);
+        // }
 
         function joinChatRoom(signaling_socket, roomCode) {
             console.log("send join chat channel request");
@@ -313,6 +314,7 @@ export default class webRTCClientManager {
 
         this.signaling_socket.on('leave', (playerObj) => {
             this.signaling_socket.emit('webRTC_disconnect');
+            this.reset();
         });
         
         try{
@@ -488,7 +490,23 @@ export default class webRTCClientManager {
         // });
     }
 
-    
+    reset() {
+        console.log("Disconnected from signaling server");
+
+        for (let peer_id in this.peer_media_elements) {
+            this.peer_media_elements[peer_id].remove();
+        }
+        for (let peer_id in this.peers) {
+            const senders = this.peers[peer_id].getSenders();
+            senders.forEach(sender => {
+                this.peers[peer_id].removeTrack(sender);
+            });
+            this.peers[peer_id].close();
+        }
+
+        this.peers = {};
+        this.peer_media_elements = {};
+    }
 
 
     attachMediaStream(element, stream) {
@@ -545,7 +563,9 @@ export default class webRTCClientManager {
                             }
                         
                             function updateProximityFlag(ele) {
-                                console.log("proximity")
+                                // console.log("proximity")
+                                // console.log('my x: ' + my_x);
+                                // console.log('target x: ' + my_pos[ele].x);
                                 if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
