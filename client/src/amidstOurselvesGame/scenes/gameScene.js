@@ -5,6 +5,7 @@ import audioIconpng from "../assets/audioIcon.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import webRTCClientManager from "../webRTCClientManager"
+import lobbyScene from "./lobbyScene";
 
 
 export default class gameScene extends Phaser.Scene {
@@ -81,7 +82,9 @@ export default class gameScene extends Phaser.Scene {
         });
 
         this.socket.on('teleportToLobby', (roomObj) => {
-            this.scene.start("lobbyScene", roomObj);
+            this.cleanupSocketio();
+            this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+            this.scene.remove("gameScene");
         });
 
         this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' });
@@ -100,7 +103,6 @@ export default class gameScene extends Phaser.Scene {
                 });
             }
         }
-
     }
 
     createSpritesFromTempPlayers() {
@@ -198,7 +200,7 @@ export default class gameScene extends Phaser.Scene {
         .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }));
     }
 
-    cleanUpSocketio() {
+    cleanupSocketio() {
         this.socket.off('move');
         this.socket.off('webRTC_speaking')
         this.socket.off('join');

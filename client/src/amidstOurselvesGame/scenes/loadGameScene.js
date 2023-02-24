@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
 import { SERVER_ADDRESS, GAME_STATE } from '../constants';
+import lobbyScene from './lobbyScene';
+import gameScene from './gameScene';
 
 
 export default class loadGameScene extends Phaser.Scene {
@@ -33,9 +35,13 @@ export default class loadGameScene extends Phaser.Scene {
                     this.scene.start("titleScene", {message: 'failed to join room'});
                     this.socket.disconnect();
                 } else if (roomObj.gameState === GAME_STATE.lobby) {
-                    this.scene.start("lobbyScene", roomObj);
+
+                    this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+
                 } else if (roomObj.gameState === GAME_STATE.action) {
-                    this.scene.start("gameScene", roomObj);
+
+                    this.scene.add("gameScene", gameScene, true, roomObj);
+                    
                 } else {
                     this.scene.start("titleScene", {message: 'unknown error'});
                     this.socket.disconnect();

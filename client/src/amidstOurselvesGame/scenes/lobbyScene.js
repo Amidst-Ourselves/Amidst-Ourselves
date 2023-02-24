@@ -3,6 +3,7 @@ import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
+import gameScene from "./gameScene";
 
 
 export default class lobbyScene extends Phaser.Scene {
@@ -51,7 +52,9 @@ export default class lobbyScene extends Phaser.Scene {
         });
 
         this.socket.on('teleportToGame', (roomObj) => {
-            this.scene.start("gameScene", roomObj);
+            this.cleanupSocketio();
+            this.scene.add("gameScene", gameScene, true, roomObj);
+            this.scene.remove("lobbyScene");
         });
 
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' });
@@ -129,7 +132,7 @@ export default class lobbyScene extends Phaser.Scene {
         });
     }
 
-    cleanUpSocketio() {
+    cleanupSocketio() {
         this.socket.off('move');
         this.socket.off('join');
         this.socket.off('leave');
