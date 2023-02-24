@@ -121,10 +121,10 @@ io.on('connection', (socket) => {
     */
     sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
-    socket.on('webRTC_disconnect', () => {
-        for (let channel in socket.channels) {
-            webRTC_delete(channel);
-        }
+    socket.on('webRTC_disconnect', (roomCodeObj) => {
+        let roomCode = roomCodeObj.roomCode;
+        webRTC_delete(roomCode);
+        delete sockets[socket.id];
     });
 
     socket.on('webRTC_speaking', (config) => {
@@ -155,16 +155,16 @@ io.on('connection', (socket) => {
         }
     });
 
-    function webRTC_delete(channel) {
+    function webRTC_delete(roomCode) {
         // if channel not exist in the socket channels list then no need to delete it 
-        if (!(channel in socket.channels)) {
+        if (rooms[roomCode].players === undefined) {
             return;
         }
 
-        delete socket.channels[channel];
+        // delete socket.channels[channel];
         // notify all users the room has been deleted
         for (let player in rooms[roomCode].players) {
-            player.emit('removePeer', {'peer_id': socket.id});
+            sockets[player].emit('removePeer', {'peer_id': socket.id});
             socket.emit('removePeer', {'peer_id': id});
         }
     }

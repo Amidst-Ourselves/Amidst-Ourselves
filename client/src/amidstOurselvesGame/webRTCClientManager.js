@@ -27,6 +27,29 @@ export default class webRTCClientManager {
             this.my_y = null;
             this.isMicrophoneOn = true;
             this.mute_flag = true;
+
+
+            console.log("Connecting to signaling server");
+            try{
+                this.setUpMedia(() => {
+                    // join the char room that has same roomCode as the game room
+                    joinChatRoom(this.signaling_socket, this.roomCode);
+                });
+            }
+            catch(error) {
+                console.log("error " + error);
+            }
+
+            function joinChatRoom(signaling_socket, roomCode) {
+                console.log("send join chat channel request");
+                try {
+                    signaling_socket.emit('webRTC_join', {roomCode});
+                }
+                catch (error) {
+                    // code that handles the error
+                    console.error('An error occurred:', error.message);
+                }
+            }
             // this.stream_recycle = {};
         }
         catch(error) {
@@ -36,15 +59,15 @@ export default class webRTCClientManager {
 
     create() {
         console.log("Connecting to signaling server");
-        try{
-            this.setUpMedia(() => {
-                // join the char room that has same roomCode as the game room
-                joinChatRoom(this.signaling_socket, this.roomCode);
-            });
-        }
-        catch(error) {
-            console.log("error " + error);
-        }
+        // try{
+        //     this.setUpMedia(() => {
+        //         // join the char room that has same roomCode as the game room
+        //         joinChatRoom(this.signaling_socket, this.roomCode);
+        //     });
+        // }
+        // catch(error) {
+        //     console.log("error " + error);
+        // }
 
         try{
             // Disconnect signal, I don't think I have ever used this part
@@ -66,16 +89,16 @@ export default class webRTCClientManager {
             console.log("error " + error);
         }
 
-        function joinChatRoom(signaling_socket, roomCode) {
-            console.log("send join chat channel request");
-            try {
-                signaling_socket.emit('webRTC_join', {roomCode});
-            }
-            catch (error) {
-                // code that handles the error
-                console.error('An error occurred:', error.message);
-            }
-        }
+        // function joinChatRoom(signaling_socket, roomCode) {
+        //     console.log("send join chat channel request");
+        //     try {
+        //         signaling_socket.emit('webRTC_join', {roomCode});
+        //     }
+        //     catch (error) {
+        //         // code that handles the error
+        //         console.error('An error occurred:', error.message);
+        //     }
+        // }
         
 
         // Haven't use this function so far, but could use it in the future. At this stage I don't know what is the
@@ -305,6 +328,7 @@ export default class webRTCClientManager {
                     console.log("Already connected to peer ", peer_id);
                     return;
                 }
+                
                 var peer_connection = new RTCPeerConnection(
                     {"iceServers": ICE_SERVERS},
                     {"optional": [{"DtlsSrtpKeyAgreement": true}]}
@@ -523,7 +547,9 @@ export default class webRTCClientManager {
                             }
                         
                             function updateProximityFlag(ele) {
-                                console.log("proximity")
+                                // console.log(my_x)
+                                // console.log(my_pos[ele].x)
+                                console.log(my_pos)
                                 if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;

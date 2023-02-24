@@ -2,6 +2,7 @@ import playerpng from "../assets/player.png";
 import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import Phaser from 'phaser';
+// import webRTCClientManager from "../webRTCClientManager"
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 
 
@@ -17,6 +18,11 @@ export default class lobbyScene extends Phaser.Scene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.players = {};
+        // if (!this.webRTC){
+        //     this.webRTC = new webRTCClientManager();
+        //     this.webRTC.init(roomObj, this.socket);
+        //     this.webRTC.create();
+        // }
     }
 
     preload() {
