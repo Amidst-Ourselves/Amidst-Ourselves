@@ -28,6 +28,28 @@ export default class webRTCClientManager {
             this.isMicrophoneOn = true;
             this.mute_flag = true;
             // this.stream_recycle = {};
+
+            try{
+                this.setUpMedia(() => {
+                    // join the char room that has same roomCode as the game room
+                    joinChatRoom(this.signaling_socket, this.roomCode);
+                });
+            }
+            catch(error) {
+                console.log("error " + error);
+            }
+
+
+            function joinChatRoom(signaling_socket, roomCode) {
+                console.log("send join chat channel request");
+                try {
+                    signaling_socket.emit('webRTC_join', {roomCode});
+                }
+                catch (error) {
+                    // code that handles the error
+                    console.error('An error occurred:', error.message);
+                }
+            }
         }
         catch(error) {
             console.log("error " + error);

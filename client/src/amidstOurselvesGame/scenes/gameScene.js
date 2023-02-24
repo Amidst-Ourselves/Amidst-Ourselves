@@ -22,9 +22,11 @@ export default class gameScene extends Phaser.Scene {
         this.audioIcons = {};
         if (!this.webRTC){
             this.webRTC = new webRTCClientManager();
-            this.webRTC.init(roomObj, this.socket);
-            this.webRTC.create();
+            // this.webRTC.init(roomObj, this.socket);
+            // this.webRTC.create();
         }
+        this.webRTC.init(roomObj, this.socket);
+        this.webRTC.create();
     }
 
     preload() {
