@@ -506,7 +506,6 @@ export default class webRTCClientManager {
 
         this.peers = {};
         this.peer_media_elements = {};
-        this.local_media_stream.stop();
     }
 
 
