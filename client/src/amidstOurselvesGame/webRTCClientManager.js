@@ -493,6 +493,16 @@ export default class webRTCClientManager {
     reset() {
         console.log("Disconnected from signaling server");
 
+        if (this.local_media_stream) {
+            // Stop all tracks in the local media stream
+            this.local_media_stream.getTracks().forEach((track) => {
+              track.stop();
+            });
+          
+            // Stop the local media stream itself
+            this.local_media_stream = null;
+          }
+
         for (let peer_id in this.peer_media_elements) {
             this.peer_media_elements[peer_id].remove();
         }
@@ -506,6 +516,7 @@ export default class webRTCClientManager {
 
         this.peers = {};
         this.peer_media_elements = {};
+        this.local_media_stream = null;
     }
 
 
