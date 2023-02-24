@@ -197,4 +197,12 @@ export default class gameScene extends Phaser.Scene {
         .on('pointerover', () => this.mute_button.setStyle({ fill: '#f39c12' }))
         .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }));
     }
+
+    cleanUpSocketio() {
+        this.socket.off('move');
+        this.socket.off('webRTC_speaking')
+        this.socket.off('join');
+        this.socket.off('leave');
+        this.socket.off('teleportToLobby');
+    }
 }

@@ -128,4 +128,11 @@ export default class lobbyScene extends Phaser.Scene {
             this.socket.emit('startGame');
         });
     }
+
+    cleanUpSocketio() {
+        this.socket.off('move');
+        this.socket.off('join');
+        this.socket.off('leave');
+        this.socket.off('teleportToGame');
+    }
 }
