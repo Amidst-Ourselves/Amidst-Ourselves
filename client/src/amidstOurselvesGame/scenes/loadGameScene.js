@@ -31,10 +31,6 @@ export default class loadGameScene extends Phaser.Scene {
             this.socket.on('roomResponse', (roomObj) => {
                 console.log("roomObj", roomObj)
 
-                this.webRTC.init(roomObj, this.registry.get('socket'));
-                // this.webRTC.create();
-                this.registry.set('webRTC', this.webRTC);
-
                 if (roomObj.message !== undefined) {
                     this.scene.start("titleScene", {message: roomObj.message});
                     this.socket.disconnect();
@@ -43,10 +39,12 @@ export default class loadGameScene extends Phaser.Scene {
                     this.socket.disconnect();
                 } else if (roomObj.gameState === GAME_STATE.lobby) {
 
+                    this.initWebRTC(roomObj);
                     this.scene.add("lobbyScene", lobbyScene, true, roomObj);
 
                 } else if (roomObj.gameState === GAME_STATE.action) {
 
+                    this.initWebRTC(roomObj);
                     this.scene.add("gameScene", gameScene, true, roomObj);
                     
                 } else {
@@ -55,5 +53,12 @@ export default class loadGameScene extends Phaser.Scene {
                 }
             });
         });
+    }
+
+    initWebRTC(roomObj) {
+        this.webRTC.init(roomObj, this.socket);
+        this.webRTC.create();
+        this.webRTC.update();
+        this.registry.set('webRTC', this.webRTC);
     }
 }

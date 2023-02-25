@@ -6,7 +6,6 @@ import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../con
 import gameScene from "./gameScene";
 
 
-let webRTC_flag = false;
 export default class lobbyScene extends Phaser.Scene {
     constructor() {
         super("lobbyScene")
@@ -20,12 +19,6 @@ export default class lobbyScene extends Phaser.Scene {
         this.speed = roomObj.playerSpeed;
         this.players = {};
         this.webRTC = this.registry.get('webRTC');
-        if (!webRTC_flag) {
-            this.webRTC.init(roomObj, this.socket);
-            this.webRTC.create();
-            this.webRTC.update();
-            webRTC_flag = true;
-        }
     }
 
     preload() {
@@ -43,8 +36,6 @@ export default class lobbyScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.createSpritesFromTempPlayers();
-        // this.webRTC.update();
-        // this.webRTC.update(this.players);
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;

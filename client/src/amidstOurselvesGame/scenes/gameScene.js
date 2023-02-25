@@ -14,7 +14,6 @@ export default class gameScene extends Phaser.Scene {
 
     init(roomObj) {
         this.socket = this.registry.get('socket');
-        // console.log('socket id is:' + this.socket.id);
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
@@ -42,8 +41,6 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.createSpritesFromTempPlayers();
-
-        // this.webRTC.update();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -165,7 +162,6 @@ export default class gameScene extends Phaser.Scene {
         if (this.socket.id !== this.host) {
             return;
         }
-        
         this.startText = this.add.text(100, 450, 'end', { font: '32px Arial', fill: '#FFFFFF' });
         this.startText.setInteractive();
         this.startText.on('pointerover', () => {
@@ -176,7 +172,6 @@ export default class gameScene extends Phaser.Scene {
         });
         this.startText.on('pointerdown', () => {
             this.socket.emit('endGame');
-            // this.webRTC.reset();
         });
     }
 
