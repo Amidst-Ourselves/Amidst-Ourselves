@@ -90,6 +90,16 @@ io.on('connection', (socket) => {
             x: playerObj.x,
             y: playerObj.y
         });
+        socket.broadcast.to(socket.roomCode).emit('my_pos2', {
+            id: socket.id,
+            x: playerObj.x,
+            y: playerObj.y
+        });
+        socket.emit('my_pos2', {
+            id: socket.id,
+            x: playerObj.x,
+            y: playerObj.y
+        });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });
@@ -213,7 +223,8 @@ function createRoom(roomObj, hostPlayerObj) {
         map: roomObj.map,
         host: hostPlayerObj.id,
         gameState: GAME_STATE.lobby,
-        players: players
+        players: players,
+        webRTC: roomObj.webRTC
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];

@@ -4,7 +4,7 @@ import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
-import webRTCClientManager from "../webRTCClientManager"
+// import webRTCClientManager from "../webRTCClientManager"
 import lobbyScene from "./lobbyScene";
 
 
@@ -22,13 +22,9 @@ export default class gameScene extends Phaser.Scene {
         this.speed = roomObj.playerSpeed;
         this.players = {};
         this.audioIcons = {};
-        if (!this.webRTC){
-            this.webRTC = new webRTCClientManager();
-            // this.webRTC.init(roomObj, this.socket);
-            // this.webRTC.create();
-        }
-        this.webRTC.init(roomObj, this.socket);
-        this.webRTC.create();
+        this.webRTC = this.registry.get('webRTC');
+        // this.webRTC.init(roomObj, this.socket);
+        // this.webRTC.update(this.players);
     }
 
     preload() {
@@ -49,7 +45,8 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.createSpritesFromTempPlayers();
-        this.webRTC.update(this.players);
+
+        // this.webRTC.update();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -176,7 +173,7 @@ export default class gameScene extends Phaser.Scene {
         });
         this.startText.on('pointerdown', () => {
             this.socket.emit('endGame');
-            this.webRTC.reset();
+            // this.webRTC.reset();
         });
     }
 
