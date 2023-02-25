@@ -7,13 +7,10 @@ const ICE_SERVERS = [
     {urls:"stun:stun.l.google.com:19302"}
 ];
 
-
 // Please note: the webRTC implementation borrowed a lot ideas code from:
 // https://github.com/anoek/webrtc-group-chat-example
 export default class webRTCClientManager {
     
-
-
 
     // pass the game roomObj and use the same socket for audio chat
     init(roomObj, socket) {
@@ -29,7 +26,6 @@ export default class webRTCClientManager {
             this.my_y = null;
             this.isMicrophoneOn = true;
             this.mute_flag = true;
-            // this.stream_recycle = {};
         }
         catch(error) {
             console.log("error " + error);
@@ -37,37 +33,22 @@ export default class webRTCClientManager {
     }
 
     create() {
+
+        this.signaling_socket.on('my_pos2', (playerObj) => {
+
+            if (!this.my_pos[playerObj.id]) {
+                this.my_pos[playerObj.id] = {};
+            }
+
+            this.my_pos[playerObj.id].x = playerObj.x;
+            this.my_pos[playerObj.id].y = playerObj.y;
+        });
+        
         console.log("Connecting to signaling server");
         try{
-            // Connect to the signaling server
-            this.signaling_socket.on('connect', () => {
-                console.log("Connected to signaling server");
-                // Obtain user's audio from mic and wrap it as a continuous stream
-                // joinChatRoom(this.signaling_socket, this.roomCode);
-                this.setUpMedia(() => {
-                    // join the char room that has same roomCode as the game room
-                    joinChatRoom(this.signaling_socket, this.roomCode);
-                });
-            });
-        }
-        catch(error) {
-            console.log("error " + error);
-        }
-
-        try{
-            // Disconnect signal, I don't think I have ever used this part
-            this.signaling_socket.on('webRTC_disconnect', () => {
-                console.log("Disconnected from signaling server");
-
-                for (let peer_id in this.peer_media_elements) {
-                    this.peer_media_elements[peer_id].remove();
-                }
-                for (let peer_id in this.peers) {
-                    this.peers[peer_id].close();
-                }
-
-                this.peers = {};
-                this.peer_media_elements = {};
+            this.setUpMedia(() => {
+                // join the char room that has same roomCode as the game room
+                joinChatRoom(this.signaling_socket, this.roomCode);
             });
         }
         catch(error) {
@@ -91,119 +72,6 @@ export default class webRTCClientManager {
         function deleteChannel(channel) {
             this.signaling_socket.emit('webRTC_delete', channel);
         }
-
-        // try{
-        //     // Create peer-2-peer connection if a new user enter the room
-        //     this.signaling_socket.on('addPeer', (config) => {
-        //         console.log('Signaling server said to add peer:', config);
-        //         let peer_id = config.peer_id;
-        //         let peer_socket = config.peer_socket;
-        //         if (peer_id in this.peers) {
-        //             console.log("Already connected to peer ", peer_id);
-        //             return;
-        //         }
-        //         var peer_connection = new RTCPeerConnection(
-        //             {"iceServers": ICE_SERVERS},
-        //             {"optional": [{"DtlsSrtpKeyAgreement": true}]}
-        //         );
-        //         this.peers[peer_id] = peer_connection;
-        //         console.log("new peer")
-
-        //         peer_connection.onicecandidate = (event) => {
-        //             if (event.candidate) {
-        //                 this.signaling_socket.emit('relayICECandidate', {
-        //                     'peer_id': peer_id, 
-        //                     'ice_candidate': {
-        //                         'sdpMLineIndex': event.candidate.sdpMLineIndex,
-        //                         'candidate': event.candidate.candidate
-        //                     }, 
-        //                     'roomCode': this.roomCode
-        //                 });
-        //             }
-        //         }
-
-        //         peer_connection.ontrack = (event) => {
-
-        //             console.log("ontrack", event);
-
-        //             try {
-        //                 var remote_media = document.createElement('audio');
-
-        //                 remote_media.setAttribute("autoplay", "autoplay");
-        //                 if (MUTE_AUDIO_BY_DEFAULT) {
-        //                     remote_media.setAttribute("muted", "true");
-        //                 }
-        //                 remote_media.setAttribute("controls", "");
-        //                 this.peer_media_elements[peer_id] = remote_media;
-        //                 const audioContainer = document.getElementById('audio-container');
-        //                 audioContainer.appendChild(remote_media);
-        //                 this.attachMediaStream(remote_media, event.streams[0]);
-
-        //                 let player_id = 0;
-        //                 let proximity_flag = true;
-        //                 this.signaling_socket.on('proximity', (playerObj) => {
-        //                     player_id = playerObj.id,
-        //                     proximity_flag = playerObj.bool
-        //                 });
-        //                 const volume = remote_media.volume;
-        //                 console.log('proximity_flag is: ' + proximity_flag)
-        //                 if (proximity_flag) {
-        //                     remote_media.volume = 1.0;
-        //                 } else {
-        //                     remote_media.volume = 0.0;
-        //                 }
-                      
-        //                 // Use setTimeout to repeatedly check the distance
-        //                 // setTimeout(1000);
-        //             }
-        //             catch (error) {
-        //                 // code that handles the error
-        //                 console.error('An error occurred:', error.message);
-        //             }
-        //         }
-
-        //         // add local stream
-        //         // TODO: replace deprecated function with newest ones
-        //         peer_connection.addStream(this.local_media_stream);
-        //         if (config.should_create_offer) {
-        //             try {
-        //                 console.log("Creating RTC offer to ", peer_id);
-        //                 // SDP (Session Description Protocol) is the standard describing a 
-        //                 // peer-to-peer connection. SDP contains the codec, source address, 
-        //                 // and timing information of audio and video.
-        //                 peer_connection.createOffer(
-        //                     (session_description) => { 
-        //                         console.log("Session description is: ", session_description);
-        //                         // The RTCPeerConnection method setLocalDescription() changes the local description 
-        //                         // associated with the connection. This description specifies the properties of the local 
-        //                         // end of the connection, including the media format. The method takes a single parameter—the 
-        //                         // session description—and it returns a Promise which is fulfilled once the description has 
-        //                         // been changed, asynchronously.
-        //                         // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription
-        //                         peer_connection.setLocalDescription(session_description,
-        //                             () => { 
-        //                                 this.signaling_socket.emit('relaySessionDescription', 
-        //                                     {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-        //                                 console.log("Offer setLocalDescription succeeded"); 
-        //                             },
-        //                             () => { Alert("Offer setLocalDescription failed!"); }
-        //                         );
-        //                     },
-        //                     (error) => {
-        //                         console.log("Error sending offer: ", error);
-        //                     });
-        //             }
-        //             catch (error) {
-        //                 // code that handles the error
-        //                 console.error('An error occurred:', error.message);
-        //             }
-        //         }
-        //     });
-        // }
-        // catch(error) {
-        //     console.log("error " + error);
-        // }
-
 
         try {
             // this listener is for remote/peer session_description
@@ -290,7 +158,8 @@ export default class webRTCClientManager {
 
 
     // add remote audio and 
-    update(players) {
+    update() {
+        // this.my_pos = players;
 
         // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
@@ -298,7 +167,18 @@ export default class webRTCClientManager {
 
         this.signaling_socket.on('leave', (playerObj) => {
             this.signaling_socket.emit('webRTC_disconnect');
+            this.reset();
         });
+
+        // this.signaling_socket.on('my_pos2', (playerObj) => {
+
+        //     if (!this.my_pos[playerObj.id]) {
+        //         this.my_pos[playerObj.id] = {};
+        //     }
+
+        //     this.my_pos[playerObj.id].x = playerObj.x;
+        //     this.my_pos[playerObj.id].y = playerObj.y;
+        // });
         
         try{
             // Create peer-2-peer connection if a new user enter the room
@@ -409,67 +289,36 @@ export default class webRTCClientManager {
         catch(error) {
             console.log("error " + error);
         }
-
-        // let my_pos = {};
-        // let my_x = null;
-        // let my_y = null;
-        let tmp_pos = this.my_pos;
-        this.signaling_socket.on('my_pos2', (config) => {
-            tmp_pos[config.id] = [config.x, config.y]
-        });
-        // let isMicrophoneOn = this.isMicrophoneOn;
-        // this.signaling_socket.on('mute2', (config) => {
-        //     // console.log("isMicrophoneOn: "+ this.isMicrophoneOn)
-        //     if (this.isMicrophoneOn) {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
-        //         console.log('Microphone is off');
-        //         this.isMicrophoneOn = false;
-        //     } 
-        //     else {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
-        //         console.log('Microphone is on');
-        //         this.isMicrophoneOn = true;
-        //     }
-        //     setTimeout(function(){
-        //     //do what you need here
-        //     }, 1000);
-        // });
-
-        // const toggleMicrophoneButton = document.getElementById('toggle-microphone');
-        // let isMicrophoneOn = true;
-        
-        // toggleMicrophoneButton.addEventListener('click', () => {
-        //     // console.log("isMicrophoneOn: "+ isMicrophoneOn)
-        //   if (isMicrophoneOn) {
-        //     // Turn off the microphone
-        //     // navigator.mediaDevices.getUserMedia({audio: true})
-        //     //   .then(stream => {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = false;
-        //         console.log('Microphone is off');
-        //         isMicrophoneOn = false;
-        //         toggleMicrophoneButton.innerText = 'Turn On Microphone';
-        //     //   })
-        //     //   .catch(error => console.error(error));
-        //   } 
-        //   else {
-        //     // console.log("clicked")
-        //     // Turn on the microphone
-        //     // navigator.mediaDevices.getUserMedia({audio: true})
-        //     //   .then(stream => {
-        //         this.local_media_stream.getAudioTracks()[0].enabled = true;
-        //         console.log('Microphone is on');
-        //         isMicrophoneOn = true;
-        //         toggleMicrophoneButton.innerText = 'Turn Off Microphone';
-        //     //   })
-        //     //   .catch(error => console.error(error));
-        //   }
-        //   setTimeout(function(){
-        //     //do what you need here
-        //     }, 1000);
-        // });
     }
 
-    
+    reset() {
+        console.log("Disconnected from signaling server");
+
+        if (this.local_media_stream) {
+            // Stop all tracks in the local media stream
+            this.local_media_stream.getTracks().forEach((track) => {
+              track.stop();
+            });
+          
+            // Stop the local media stream itself
+            this.local_media_stream = null;
+          }
+
+        for (let peer_id in this.peer_media_elements) {
+            this.peer_media_elements[peer_id].remove();
+        }
+        for (let peer_id in this.peers) {
+            const senders = this.peers[peer_id].getSenders();
+            senders.forEach(sender => {
+                this.peers[peer_id].removeTrack(sender);
+            });
+            this.peers[peer_id].close();
+        }
+
+        this.peers = {};
+        this.peer_media_elements = {};
+        this.local_media_stream = null;
+    }
 
 
     attachMediaStream(element, stream) {
@@ -478,6 +327,7 @@ export default class webRTCClientManager {
     };
 
     setUpMedia(callback, errorback) {
+        
         try {
             if (this.local_media_stream != null) {
                 if (callback) callback();
@@ -519,14 +369,17 @@ export default class webRTCClientManager {
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
                         let my_peers = this.peers
-                        scriptProcessor.onaudioprocess = function() {
+                        scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
                                 return Math.abs(x1 - x2) + Math.abs(y1 - y2);
                             }
                         
                             function updateProximityFlag(ele) {
-                                if (m_distance(my_x, my_y, my_pos[ele][0], my_pos[ele][1]) > 150) {
+                                //console.log("proximity")
+                                //console.log('my x: ' + my_x);
+                                //console.log('target x: ' + my_pos[ele].x);
+                                if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
                                 }
@@ -551,13 +404,14 @@ export default class webRTCClientManager {
                                     //do what you need here
                                 }, 1000);
                             }
+                            console.log("my_pos is: " + Object.keys(this.my_pos).length);
 
-                            if (Object.keys(my_pos).length >= 2 && tmp_signaling_socket.id in my_pos) {
+                            if (Object.keys(this.my_pos).length >= 2 && tmp_signaling_socket.id in this.my_pos) {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
-                                my_x = my_pos[tmp_signaling_socket.id][0];
-                                my_y = my_pos[tmp_signaling_socket.id][1];
+                                my_x = this.my_pos[tmp_signaling_socket.id].x;
+                                my_y = this.my_pos[tmp_signaling_socket.id].y;
                 
-                                for (let ele in my_pos) {
+                                for (let ele in this.my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
                                         updateProximityFlag(ele);
                                     }
@@ -607,5 +461,14 @@ export default class webRTCClientManager {
             this.mute_flag  = true;
         }
         return this.mute_flag 
+    }
+
+    move(playerObj) {
+        if (!this.my_pos[playerObj.id]) {
+            this.my_pos[playerObj.id] = {};
+        }
+
+        this.my_pos[playerObj.id].x = playerObj.x;
+        this.my_pos[playerObj.id].y = playerObj.y;
     }
 }

@@ -2,27 +2,25 @@ import playerpng from "../assets/player.png";
 import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
-import mute_button from "../assets/button_sprite_sheet.png";
 import Phaser from 'phaser';
-import io from 'socket.io-client';
-import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, SERVER_ADDRESS } from "../constants"
-import webRTCClientManager from "../webRTCClientManager"
+import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
+import lobbyScene from "./lobbyScene";
+
+
 export default class gameScene extends Phaser.Scene {
     constructor() {
         super("gameScene")
     }
 
     init(roomObj) {
-        this.socket = io(SERVER_ADDRESS);
+        this.socket = this.registry.get('socket');
+        this.roomCode = roomObj.roomCode;
+        this.host = roomObj.host;
+        this.tempPlayers = roomObj.players;
+        this.speed = roomObj.playerSpeed;
         this.players = {};
         this.audioIcons = {};
-        this.speed = roomObj.playerSpeed;
-        this.roomCode = roomObj.roomCode;
-        // Calling webRTC manager here
-        this.webRTC = new webRTCClientManager();
-        this.webRTC.init(roomObj, this.socket);
-        this.webRTC.create();
-        this.mute_button = null;
+        this.webRTC = this.registry.get('webRTC');
     }
 
     preload() {
@@ -31,13 +29,9 @@ export default class gameScene extends Phaser.Scene {
         this.load.spritesheet('player', playerpng,
             {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
         );
-        console.log("I'm loading sprite")
         this.load.spritesheet('audioIcon', audioIconpng,
             {frameWidth: 500, frameHeight: 500}
         );
-        this.load.spritesheet('mute_button_on', mute_button, {frameWidth: 193, frameHeight:71});
-        this.load.spritesheet('mute_button_off', mute_button, {frameWidth: 386, frameHeight:71});
-        console.log("I'm loading sprite")
     }
     
     create() {
@@ -46,42 +40,14 @@ export default class gameScene extends Phaser.Scene {
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
-        this.mute_button = this.add.text(100, 150, 'Mute')
-        .setOrigin(0.5)
-        .setPadding(10)
-        .setStyle({ backgroundColor: '#111' })
-        .setInteractive({ useHandCursor: true })
-        .on('pointerdown', (event) => {
-            let mute_flag = this.webRTC.mute();
-            if (!mute_flag) {
-                this.mute_button.setText("Unmute");
-            }
-            else {
-                this.mute_button.setText("Mute");
-            }
-        })
-        .on('pointerover', () => this.mute_button.setStyle({ fill: '#f39c12' }))
-        .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }))
-    
-        this.socket.emit('roomJoin', {roomCode: this.roomCode});
-
-        this.socket.on('roomJoinResponse', (roomObj) => {
-            if (roomObj.message !== undefined) {
-                this.scene.start("titleScene", {message: roomObj.message});
-            }
-            for (let playerId in roomObj.players) {
-                this.createSprite(roomObj.players[playerId]);
-                this.createAudioSprite(playerId, roomObj.players[playerId].x, roomObj.players[playerId].y);
-            }
-        });
+        this.createSpritesFromTempPlayers();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
             this.players[playerObj.id].y = playerObj.y;
-
             this.audioIcons[playerObj.id].x = playerObj.x;
             this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
+            this.webRTC.move(playerObj);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -93,7 +59,6 @@ export default class gameScene extends Phaser.Scene {
                 this.audioIcons[config.id].visible = false;
             }
         });
-    
 
         this.socket.on('join', (playerObj) => {
             this.createSprite(playerObj);
@@ -106,6 +71,17 @@ export default class gameScene extends Phaser.Scene {
             this.destroyAudioSprite(playerObj.id)
             console.log('player left ' + playerObj.id);
         });
+
+        this.socket.on('teleportToLobby', (roomObj) => {
+            this.cleanupSocketio();
+            this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+            this.scene.remove("gameScene");
+        });
+
+        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' });
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' });
+        this.createEndButtonForHost();
+        this.createMuteButton();
     }
     
     update() {
@@ -116,10 +92,21 @@ export default class gameScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
+                this.webRTC.move({
+                    id: this.socket.id,
+                    x: this.players[this.socket.id].x,
+                    y: this.players[this.socket.id].y
+                });
             }
         }
-        this.webRTC.update(this.players);
+    }
 
+    createSpritesFromTempPlayers() {
+        for (let playerId in this.tempPlayers) {
+            this.createSprite(this.tempPlayers[playerId]);
+            this.createAudioSprite(this.tempPlayers[playerId].id, this.tempPlayers[playerId].x, this.tempPlayers[playerId].y)
+        }
+        delete this.tempPlayers;
     }
     
     createSprite(playerObj) {
@@ -127,6 +114,7 @@ export default class gameScene extends Phaser.Scene {
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.webRTC.move(playerObj);
     }
 
     createAudioSprite(playerId, x, y) {
@@ -151,26 +139,67 @@ export default class gameScene extends Phaser.Scene {
         let moved = false;
         if (this.keyUp.isDown) {
             this.players[this.socket.id].y -= this.speed;
-            this.mute_button.y -= this.speed;
             moved = true;
         }
         if (this.keyDown.isDown) {
             this.players[this.socket.id].y += this.speed;
-            this.mute_button.y += this.speed;
             moved = true;
         }
         if (this.keyLeft.isDown) {
             this.players[this.socket.id].x -= this.speed;
-            this.mute_button.x -= this.speed;
             moved = true;
         }
         if (this.keyRight.isDown) {
             this.players[this.socket.id].x += this.speed;
-            this.mute_button.x += this.speed;
             moved = true;
         }
         this.audioIcons[this.socket.id].x = this.players[this.socket.id].x
         this.audioIcons[this.socket.id].y = this.players[this.socket.id].y - PLAYER_HEIGHT/2;
         return moved;
+    }
+
+    createEndButtonForHost() {
+        if (this.socket.id !== this.host) {
+            return;
+        }
+        this.startText = this.add.text(100, 450, 'end', { font: '32px Arial', fill: '#FFFFFF' });
+        this.startText.setInteractive();
+        this.startText.on('pointerover', () => {
+            this.startText.setTint(0x00FF00);
+        });
+        this.startText.on('pointerout', () => {
+            this.startText.setTint(0xFFFFFF);
+        });
+        this.startText.on('pointerdown', () => {
+            this.socket.emit('endGame');
+        });
+    }
+
+    createMuteButton() {
+        this.mute_button = this.add.text(100, 100, 'Mute')
+        .setScrollFactor(0)
+        .setOrigin(0.5)
+        .setPadding(10)
+        .setStyle({ backgroundColor: '#111' })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', (event) => {
+            let mute_flag = this.webRTC.mute();
+            if (!mute_flag) {
+                this.mute_button.setText("Unmute");
+            }
+            else {
+                this.mute_button.setText("Mute");
+            }
+        })
+        .on('pointerover', () => this.mute_button.setStyle({ fill: '#f39c12' }))
+        .on('pointerout', () => this.mute_button.setStyle({ fill: '#FFF' }));
+    }
+
+    cleanupSocketio() {
+        this.socket.off('move');
+        this.socket.off('webRTC_speaking')
+        this.socket.off('join');
+        this.socket.off('leave');
+        this.socket.off('teleportToLobby');
     }
 }

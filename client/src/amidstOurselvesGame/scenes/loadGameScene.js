@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
-import { SERVER_ADDRESS } from '../constants';
+import { SERVER_ADDRESS, GAME_STATE } from '../constants';
+import lobbyScene from './lobbyScene';
+import gameScene from './gameScene';
+import webRTCClientManager from "../webRTCClientManager"
+
 
 export default class loadGameScene extends Phaser.Scene {
     constructor() {
@@ -9,22 +13,52 @@ export default class loadGameScene extends Phaser.Scene {
 
     init(roomCodeObj) {
         this.roomCodeObj = roomCodeObj;
-        this.socket = io(SERVER_ADDRESS);
+        this.webRTC = new webRTCClientManager();
     }
     
     create() {
-        this.socket.emit('roomJoinCreate', this.roomCodeObj);
+        this.socket = io(SERVER_ADDRESS);
 
-        this.socket.on('roomJoinCreateResponse', (roomObj) => {
-            if (roomObj.mesage !== undefined) {
-                this.scene.start("titleScene", {message: roomObj.message});
-            }
-            if (roomObj.roomCode === undefined) {
-                this.scene.start("titleScene", {message: 'failed to join room'});
+        this.socket.on('connect', () => {
+            this.registry.set('socket', this.socket);
+
+            if (this.roomCodeObj.roomCode === undefined) {
+                this.socket.emit('roomCreate', this.roomCodeObj);
             } else {
-                this.scene.start("gameScene", roomObj);
+                this.socket.emit('roomJoin', this.roomCodeObj);
             }
-            this.socket.disconnect();
+    
+            this.socket.on('roomResponse', (roomObj) => {
+                console.log("roomObj", roomObj)
+
+                if (roomObj.message !== undefined) {
+                    this.scene.start("titleScene", {message: roomObj.message});
+                    this.socket.disconnect();
+                } else if (roomObj.roomCode === undefined) {
+                    this.scene.start("titleScene", {message: 'failed to join room'});
+                    this.socket.disconnect();
+                } else if (roomObj.gameState === GAME_STATE.lobby) {
+
+                    this.initWebRTC(roomObj);
+                    this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+
+                } else if (roomObj.gameState === GAME_STATE.action) {
+
+                    this.initWebRTC(roomObj);
+                    this.scene.add("gameScene", gameScene, true, roomObj);
+                    
+                } else {
+                    this.scene.start("titleScene", {message: 'unknown error'});
+                    this.socket.disconnect();
+                }
+            });
         });
+    }
+
+    initWebRTC(roomObj) {
+        this.webRTC.init(roomObj, this.socket);
+        this.webRTC.create();
+        this.webRTC.update();
+        this.registry.set('webRTC', this.webRTC);
     }
 }
