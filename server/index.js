@@ -142,7 +142,7 @@ io.on('connection', (socket) => {
         //     // if already joined
         //     return;
         // }
-        if (rooms[roomCode].players === undefined) {
+        if (rooms[roomCode] === undefined || rooms[roomCode].players === undefined) {
             return;
         }
 
