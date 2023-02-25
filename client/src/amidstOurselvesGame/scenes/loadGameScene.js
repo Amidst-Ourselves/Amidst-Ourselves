@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
 import { SERVER_ADDRESS, GAME_STATE } from '../constants';
+import lobbyScene from './lobbyScene';
+import gameScene from './gameScene';
+import webRTCClientManager from "../webRTCClientManager"
 
 
 export default class loadGameScene extends Phaser.Scene {
@@ -10,6 +13,7 @@ export default class loadGameScene extends Phaser.Scene {
 
     init(roomCodeObj) {
         this.roomCodeObj = roomCodeObj;
+        this.webRTC = new webRTCClientManager();
     }
     
     create() {
@@ -26,6 +30,7 @@ export default class loadGameScene extends Phaser.Scene {
     
             this.socket.on('roomResponse', (roomObj) => {
                 console.log("roomObj", roomObj)
+
                 if (roomObj.message !== undefined) {
                     this.scene.start("titleScene", {message: roomObj.message});
                     this.socket.disconnect();
@@ -33,14 +38,27 @@ export default class loadGameScene extends Phaser.Scene {
                     this.scene.start("titleScene", {message: 'failed to join room'});
                     this.socket.disconnect();
                 } else if (roomObj.gameState === GAME_STATE.lobby) {
-                    this.scene.start("lobbyScene", roomObj);
+
+                    this.initWebRTC(roomObj);
+                    this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+
                 } else if (roomObj.gameState === GAME_STATE.action) {
-                    this.scene.start("gameScene", roomObj);
+
+                    this.initWebRTC(roomObj);
+                    this.scene.add("gameScene", gameScene, true, roomObj);
+                    
                 } else {
                     this.scene.start("titleScene", {message: 'unknown error'});
                     this.socket.disconnect();
                 }
             });
         });
+    }
+
+    initWebRTC(roomObj) {
+        this.webRTC.init(roomObj, this.socket);
+        this.webRTC.create();
+        this.webRTC.update();
+        this.registry.set('webRTC', this.webRTC);
     }
 }

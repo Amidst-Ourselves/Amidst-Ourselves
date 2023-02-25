@@ -3,6 +3,7 @@ import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
+import gameScene from "./gameScene";
 
 
 export default class lobbyScene extends Phaser.Scene {
@@ -17,6 +18,7 @@ export default class lobbyScene extends Phaser.Scene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.players = {};
+        this.webRTC = this.registry.get('webRTC');
     }
 
     preload() {
@@ -38,6 +40,7 @@ export default class lobbyScene extends Phaser.Scene {
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
             this.players[playerObj.id].y = playerObj.y;
+            this.webRTC.move(playerObj);
         });
     
         this.socket.on('join', (playerObj) => {
@@ -51,7 +54,9 @@ export default class lobbyScene extends Phaser.Scene {
         });
 
         this.socket.on('teleportToGame', (roomObj) => {
-            this.scene.start("gameScene", roomObj);
+            this.cleanupSocketio();
+            this.scene.add("gameScene", gameScene, true, roomObj);
+            this.scene.remove("lobbyScene");
         });
 
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' });
@@ -64,6 +69,11 @@ export default class lobbyScene extends Phaser.Scene {
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
             if (this.movePlayer()) {
                 this.socket.emit('move', {
+                    x: this.players[this.socket.id].x,
+                    y: this.players[this.socket.id].y
+                });
+                this.webRTC.move({
+                    id: this.socket.id,
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
@@ -83,6 +93,7 @@ export default class lobbyScene extends Phaser.Scene {
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.webRTC.move(playerObj);
     }
     
     destroySprite(playerId) {
@@ -127,5 +138,12 @@ export default class lobbyScene extends Phaser.Scene {
         this.startText.on('pointerdown', () => {
             this.socket.emit('startGame');
         });
+    }
+
+    cleanupSocketio() {
+        this.socket.off('move');
+        this.socket.off('join');
+        this.socket.off('leave');
+        this.socket.off('teleportToGame');
     }
 }

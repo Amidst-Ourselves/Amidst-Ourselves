@@ -94,7 +94,9 @@ io.on('connection', (socket) => {
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });
 
+    
     socket.on('startGame', () => {
+        rooms[socket.roomCode].gameState = GAME_STATE.action;
         let room = rooms[socket.roomCode];
         for (let playerId in room.players) {
             room.players[playerId].x = 400;
@@ -104,6 +106,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('endGame', () => {
+        rooms[socket.roomCode].gameState = GAME_STATE.lobby;
         let room = rooms[socket.roomCode];
         for (let playerId in room.players) {
             room.players[playerId].x = 400;
@@ -120,10 +123,10 @@ io.on('connection', (socket) => {
     */
     sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
-    socket.on('webRTC_disconnect', () => {
-        for (let channel in socket.channels) {
-            webRTC_delete(channel);
-        }
+    socket.on('webRTC_disconnect', (roomCodeObj) => {
+        let roomCode = roomCodeObj.roomCode;
+        webRTC_delete(roomCode);
+        delete sockets[socket.id];
     });
 
     socket.on('webRTC_speaking', (config) => {
@@ -154,19 +157,20 @@ io.on('connection', (socket) => {
         }
     });
 
-    function webRTC_delete(channel) {
+    function webRTC_delete(roomCode) {
         // if channel not exist in the socket channels list then no need to delete it 
-        if (!(channel in socket.channels)) {
+        if (rooms[roomCode].players === undefined) {
             return;
         }
 
-        delete socket.channels[channel];
+        // delete socket.channels[channel];
         // notify all users the room has been deleted
         for (let player in rooms[roomCode].players) {
-            player.emit('removePeer', {'peer_id': socket.id});
+            sockets[player].emit('removePeer', {'peer_id': socket.id});
             socket.emit('removePeer', {'peer_id': id});
         }
     }
+
 
     socket.on('webRTC_delete', webRTC_delete);
 
@@ -211,7 +215,8 @@ function createRoom(roomObj, hostPlayerObj) {
         map: roomObj.map,
         host: hostPlayerObj.id,
         gameState: GAME_STATE.lobby,
-        players: players
+        players: players,
+        webRTC: roomObj.webRTC
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];

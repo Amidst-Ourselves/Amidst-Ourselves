@@ -1,9 +1,7 @@
 import Phaser from 'phaser';
 import titleScene from './scenes/titleScene';
 import loadGameScene from './scenes/loadGameScene';
-import gameScene from './scenes/gameScene';
 import gameSettingsScene from './scenes/gameSettingsScene';
-import lobbyScene from './scenes/lobbyScene';
 
 export const SPRITE_WIDTH = 84;
 export const SPRITE_HEIGHT = 128;
@@ -27,5 +25,5 @@ export const config = {
     type: Phaser.AUTO,
     width: WIDTH,
     height: HEIGHT,
-    scene: [titleScene, loadGameScene, gameSettingsScene, lobbyScene, gameScene]
+    scene: [titleScene, loadGameScene, gameSettingsScene]
 };
