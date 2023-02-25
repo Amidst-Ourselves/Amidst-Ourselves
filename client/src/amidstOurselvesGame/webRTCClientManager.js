@@ -376,9 +376,9 @@ export default class webRTCClientManager {
                             }
                         
                             function updateProximityFlag(ele) {
-                                console.log("proximity")
-                                console.log('my x: ' + my_x);
-                                console.log('target x: ' + my_pos[ele].x);
+                                //console.log("proximity")
+                                //console.log('my x: ' + my_x);
+                                //console.log('target x: ' + my_pos[ele].x);
                                 if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
@@ -461,5 +461,14 @@ export default class webRTCClientManager {
             this.mute_flag  = true;
         }
         return this.mute_flag 
+    }
+
+    move(playerObj) {
+        if (!this.my_pos[playerObj.id]) {
+            this.my_pos[playerObj.id] = {};
+        }
+
+        this.my_pos[playerObj.id].x = playerObj.x;
+        this.my_pos[playerObj.id].y = playerObj.y;
     }
 }

@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import gameScene from "./gameScene";
 
+
 let webRTC_flag = false;
 export default class lobbyScene extends Phaser.Scene {
     constructor() {
@@ -48,6 +49,7 @@ export default class lobbyScene extends Phaser.Scene {
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
             this.players[playerObj.id].y = playerObj.y;
+            this.webRTC.move(playerObj);
         });
     
         this.socket.on('join', (playerObj) => {
@@ -79,6 +81,11 @@ export default class lobbyScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
+                this.webRTC.move({
+                    id: this.socket.id,
+                    x: this.players[this.socket.id].x,
+                    y: this.players[this.socket.id].y
+                });
             }
         }
     }
@@ -95,6 +102,7 @@ export default class lobbyScene extends Phaser.Scene {
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.webRTC.move(playerObj);
     }
     
     destroySprite(playerId) {

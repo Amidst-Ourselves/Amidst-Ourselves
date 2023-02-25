@@ -4,7 +4,6 @@ import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
-// import webRTCClientManager from "../webRTCClientManager"
 import lobbyScene from "./lobbyScene";
 
 
@@ -15,7 +14,7 @@ export default class gameScene extends Phaser.Scene {
 
     init(roomObj) {
         this.socket = this.registry.get('socket');
-        console.log('socket id is:' + this.socket.id);
+        // console.log('socket id is:' + this.socket.id);
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
@@ -23,8 +22,6 @@ export default class gameScene extends Phaser.Scene {
         this.players = {};
         this.audioIcons = {};
         this.webRTC = this.registry.get('webRTC');
-        // this.webRTC.init(roomObj, this.socket);
-        // this.webRTC.update(this.players);
     }
 
     preload() {
@@ -51,9 +48,9 @@ export default class gameScene extends Phaser.Scene {
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
             this.players[playerObj.id].y = playerObj.y;
-
             this.audioIcons[playerObj.id].x = playerObj.x;
             this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
+            this.webRTC.move(playerObj);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -98,6 +95,11 @@ export default class gameScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
+                this.webRTC.move({
+                    id: this.socket.id,
+                    x: this.players[this.socket.id].x,
+                    y: this.players[this.socket.id].y
+                });
             }
         }
     }
@@ -115,6 +117,7 @@ export default class gameScene extends Phaser.Scene {
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.webRTC.move(playerObj);
     }
 
     createAudioSprite(playerId, x, y) {
