@@ -42,15 +42,11 @@ export default class loadGameScene extends Phaser.Scene {
                     this.scene.start("titleScene", {message: 'failed to join room'});
                     this.socket.disconnect();
                 } else if (roomObj.gameState === GAME_STATE.lobby) {
-                    // roomObj.webRTC = new webRTCClientManager();
-                    // roomObj.webRTC.init(roomObj, this.socket);
-                    // roomObj.webRTC.create();
+
                     this.scene.add("lobbyScene", lobbyScene, true, roomObj);
 
                 } else if (roomObj.gameState === GAME_STATE.action) {
-                    // roomObj.webRTC = new webRTCClientManager();
-                    // roomObj.webRTC.init(roomObj, this.socket);
-                    // roomObj.webRTC.create();
+
                     this.scene.add("gameScene", gameScene, true, roomObj);
                     
                 } else {
