@@ -20,7 +20,7 @@ export const Register = (props) => {
         props.onLogin(); // add this line to set loggedIn to true
         console.log(email);
 
-        await fetch("http://localhost:4000/user/add", {
+        await fetch("http://localhost:3000/user/add", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
