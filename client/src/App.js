@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Phaser from 'phaser';
+import React, { useState } from 'react';
 import './App.css';
 import { Login } from './login';
 import { Register } from './register';
-import { config } from './amidstOurselvesGame/constants';
-
-function MyGame() {
-  useEffect(() => {
-    const game = new Phaser.Game(config);
-
-    return () => {
-      game.destroy(true);
-    };
-    
-  }, []);
-
-  return null;
-}
+import Game from './components/Game/index';
 
 export default function App() {
   const [currentForm, setCurrentForm] = useState('login');
@@ -38,7 +24,7 @@ export default function App() {
           style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
           id="game-container"
         >
-          <MyGame />
+          <Game />
         </div>
       ) : (
         <div className="App">

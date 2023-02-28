@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+
 export default class titleScene extends Phaser.Scene {
     constructor() {
         super("titleScene")
@@ -23,7 +24,7 @@ export default class titleScene extends Phaser.Scene {
             startGameText.setTint(0xFFFFFF);
         });
         startGameText.on('pointerdown', () => {
-            this.scene.start("loadGameScene", {});
+            this.scene.start("gameSettingsScene");
         });
 
         let joinGameText = this.add.text(100, 200, 'Click here to join an existing game room!', { font: '32px Arial', fill: '#FFFFFF' });
