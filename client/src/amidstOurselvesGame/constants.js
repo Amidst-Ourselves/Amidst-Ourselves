@@ -1,8 +1,3 @@
-import Phaser from 'phaser';
-import titleScene from './scenes/titleScene';
-import loadGameScene from './scenes/loadGameScene';
-import gameSettingsScene from './scenes/gameSettingsScene';
-
 export const SPRITE_WIDTH = 84;
 export const SPRITE_HEIGHT = 128;
 export const PLAYER_WIDTH = 34;
@@ -19,11 +14,4 @@ export const PLAYER_STATE = {
     crewmate: "crewmate",
     imposter: "imposter",
     ghost: "ghost"
-};
-
-export const config = {
-    type: Phaser.AUTO,
-    width: WIDTH,
-    height: HEIGHT,
-    scene: [titleScene, loadGameScene, gameSettingsScene]
 };

@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('webRTC_join', (roomCodeObj) => {
-        console.log("received webRTC_join request");
+        //console.log("received webRTC_join request");
         let roomCode = roomCodeObj.roomCode;
 
         // if (roomCode in rooms) {
@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
             // pairs are stored in channel array
 
             sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
-            console.log("I'm creating p2p2")
+            //console.log("I'm creating p2p2")
             socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
         
         }
