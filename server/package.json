@@ -1,7 +1,6 @@
 {
   "name": "ece493",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
@@ -11,8 +10,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bootstrap": "^5.2.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "mongodb": "^5.1.0",
+    "mongoose": "^6.10.0",
+    "axios": "^1.3.4",
     "nodemon": "^2.0.20",
+    "react-router-dom": "^6.8.1",
+    "react-scripts": "^5.0.1",
     "socket.io": "^4.6.0"
-  }
+  },
+  "description": ""
 }

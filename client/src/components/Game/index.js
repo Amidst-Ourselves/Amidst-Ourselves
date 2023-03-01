@@ -1,24 +1,31 @@
 import Phaser from 'phaser';
-import React from 'react';
-import { config } from '../../amidstOurselvesGame/constants';
+import titleScene from '../../amidstOurselvesGame/scenes/titleScene'
+import loadGameScene from '../../amidstOurselvesGame/scenes/loadGameScene';
+import gameSettingsScene from '../../amidstOurselvesGame/scenes/gameSettingsScene';
+import { WIDTH, HEIGHT } from '../../amidstOurselvesGame/constants';
+import React, { useRef, useEffect } from 'react';
 
-class Game extends React.Component {
-    constructor(props) {
-        super(props);
-        this.game = null;
-    }
-    
-    componentDidMount() {
-        this.game = new Phaser.Game(config);
-    }
 
-    componentWillUnmount() {
-        this.game.destroy(true);
-    }
-
-    render() {
-        return <div id="game-container" />;
-    }
-}
-
-export default Game;
+export default function Game() {
+    const gameContainerRef = useRef(null);
+  
+    useEffect(() => {
+        const config = {
+            type: Phaser.AUTO,
+            width: WIDTH,
+            height: HEIGHT,
+            parent: gameContainerRef.current,
+            scene: [titleScene, loadGameScene, gameSettingsScene]
+        };
+  
+        const game = new Phaser.Game(config);
+  
+        return () => {
+            game.destroy(true);
+        };
+    }, []);
+  
+    return (
+      <div ref={gameContainerRef}></div>
+    );
+  }

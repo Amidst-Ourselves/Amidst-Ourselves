@@ -20,8 +20,23 @@ const io = new Server(httpServer, {
     }
 });
 
+
+//const express = require("express");
+//const app = express();
+const cors = require("cors");
+require("dotenv").config({ path: "./config.env" });
+const port = 3000;
+app.use(cors());
+app.use(express.json());
+app.use(require("./API/user"));
+
+const dbo = require("./connect");
 httpServer.listen(3000, () => {
     console.log('listening on localhost:3000');
+    dbo.connectToServer(function (err) {
+        if (err) console.error(err);
+     
+      });
 });
 
 
@@ -135,7 +150,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('webRTC_join', (roomCodeObj) => {
-        console.log("received webRTC_join request");
+        //console.log("received webRTC_join request");
         let roomCode = roomCodeObj.roomCode;
 
         // if (roomCode in rooms) {
@@ -151,7 +166,7 @@ io.on('connection', (socket) => {
             // pairs are stored in channel array
 
             sockets[player].emit('addPeer', {'peer_id': socket.id, 'should_create_offer': false});
-            console.log("I'm creating p2p2")
+            //console.log("I'm creating p2p2")
             socket.emit('addPeer', {'peer_id': player, 'should_create_offer': true});
         
         }

@@ -44,7 +44,7 @@ export default class webRTCClientManager {
             this.my_pos[playerObj.id].y = playerObj.y;
         });
         
-        console.log("Connecting to signaling server");
+        //console.log("Connecting to signaling server");
         try{
             this.setUpMedia(() => {
                 // join the char room that has same roomCode as the game room
@@ -56,7 +56,7 @@ export default class webRTCClientManager {
         }
 
         function joinChatRoom(signaling_socket, roomCode) {
-            console.log("send join chat channel request");
+            //console.log("send join chat channel request");
             try {
                 signaling_socket.emit('webRTC_join', {roomCode});
             }
@@ -77,27 +77,27 @@ export default class webRTCClientManager {
             // this listener is for remote/peer session_description
             this.signaling_socket.on('sessionDescription', (config) => {
                 
-                console.log('Remote description received: ', config);
+                //console.log('Remote description received: ', config);
                 try {
                     let peer_id = config.peer_id;
                     let peer = this.peers[peer_id];
                     let remote_description = config.session_description;
-                    console.log(config.session_description);
+                    //console.log(config.session_description);
 
                     let desc = new RTCSessionDescription(remote_description);
                     peer.setRemoteDescription(desc, 
                         () => {
-                            console.log("setRemoteDescription succeeded");
+                            //console.log("setRemoteDescription succeeded");
                             if (remote_description.type == "offer") {
-                                console.log("Creating answer");
+                                //console.log("Creating answer");
                                 peer.createAnswer(
                                     (session_description) => {
-                                        console.log("Answer description is: ", session_description);
+                                        // console.log("Answer description is: ", session_description);
                                         peer.setLocalDescription(session_description,
                                             () => { 
                                                 this.signaling_socket.emit('relaySessionDescription', 
                                                     {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-                                                console.log("Answer setLocalDescription succeeded");
+                                                // console.log("Answer setLocalDescription succeeded");
                                             },
                                             () => { console.log("Answer setLocalDescription failed!"); }
                                         );
@@ -138,7 +138,7 @@ export default class webRTCClientManager {
 
         try {
             this.signaling_socket.on('removePeer', (config) => {
-                console.log('Signaling server said to remove peer:', config);
+                // console.log('Signaling server said to remove peer:', config);
                 let peer_id = config.peer_id;
                 if (peer_id in this.peer_media_elements) {
                     this.peer_media_elements[peer_id].remove();
@@ -146,7 +146,7 @@ export default class webRTCClientManager {
                 if (peer_id in this.peers) {
                     this.peers[peer_id].close();
                 }
-                console.log("deleting peer")
+                //console.log("deleting peer")
                 delete this.peers[peer_id];
                 delete this.peer_media_elements[config.peer_id];
             });
@@ -183,13 +183,13 @@ export default class webRTCClientManager {
         try{
             // Create peer-2-peer connection if a new user enter the room
             this.signaling_socket.on('addPeer', (config) => {
-                console.log('Signaling server said to add peer:', config);
+                // console.log('Signaling server said to add peer:', config);
                 let peer_id = config.peer_id;
                 // if (config.should_create_offer){
                 //     global_peer_id = peer_id;
                 // }
                 if (peer_id in this.peers) {
-                    console.log("Already connected to peer ", peer_id);
+                    //console.log("Already connected to peer ", peer_id);
                     return;
                 }
                 var peer_connection = new RTCPeerConnection(
@@ -197,7 +197,7 @@ export default class webRTCClientManager {
                     {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
                 this.peers[peer_id] = peer_connection;
-                console.log("new peer")
+                //console.log("new peer")
 
                 peer_connection.onicecandidate = (event) => {
                     if (event.candidate) {
@@ -216,7 +216,7 @@ export default class webRTCClientManager {
 
                 peer_connection.ontrack = (event) => {
 
-                    console.log("ontrack", event);
+                    //console.log("ontrack", event);
 
                     try {
                         var remote_media = document.createElement('audio');
@@ -253,13 +253,13 @@ export default class webRTCClientManager {
 
                 if (config.should_create_offer) {
                     try {
-                        console.log("Creating RTC offer to ", peer_id);
+                        //console.log("Creating RTC offer to ", peer_id);
                         // SDP (Session Description Protocol) is the standard describing a 
                         // peer-to-peer connection. SDP contains the codec, source address, 
                         // and timing information of audio and video.
                         peer_connection.createOffer(
                             (session_description) => { 
-                                console.log("Session description is: ", session_description);
+                                //console.log("Session description is: ", session_description);
                                 // The RTCPeerConnection method setLocalDescription() changes the local description 
                                 // associated with the connection. This description specifies the properties of the local 
                                 // end of the connection, including the media format. The method takes a single parameter—the 
@@ -270,7 +270,7 @@ export default class webRTCClientManager {
                                     () => { 
                                         this.signaling_socket.emit('relaySessionDescription', 
                                             {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-                                        console.log("Offer setLocalDescription succeeded"); 
+                                        //console.log("Offer setLocalDescription succeeded"); 
                                     },
                                     () => { console.log("Offer setLocalDescription failed!"); }
                                 );
@@ -292,7 +292,7 @@ export default class webRTCClientManager {
     }
 
     reset() {
-        console.log("Disconnected from signaling server");
+        //console.log("Disconnected from signaling server");
 
         if (this.local_media_stream) {
             // Stop all tracks in the local media stream
@@ -322,7 +322,7 @@ export default class webRTCClientManager {
 
 
     attachMediaStream(element, stream) {
-        console.log('DEPRECATED, attachMediaStream will soon be removed.');
+        //console.log('DEPRECATED, attachMediaStream will soon be removed.');
         element.srcObject = stream;
     };
 
@@ -334,7 +334,7 @@ export default class webRTCClientManager {
                 return; 
             }
 
-            console.log("Requesting access to local audio / video inputs");
+            //console.log("Requesting access to local audio / video inputs");
 
 
             navigator.getUserMedia = ( navigator.getUserMedia ||
@@ -343,7 +343,7 @@ export default class webRTCClientManager {
                 navigator.msGetUserMedia);
 
             this.attachMediaStream = (element, stream) => {
-                console.log('DEPRECATED, attachMediaStream will soon be removed.');
+                //console.log('DEPRECATED, attachMediaStream will soon be removed.');
                 element.srcObject = stream;
             };
 
@@ -404,7 +404,7 @@ export default class webRTCClientManager {
                                     //do what you need here
                                 }, 1000);
                             }
-                            console.log("my_pos is: " + Object.keys(this.my_pos).length);
+                            // console.log("my_pos is: " + Object.keys(this.my_pos).length);
 
                             if (Object.keys(this.my_pos).length >= 2 && tmp_signaling_socket.id in this.my_pos) {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
@@ -452,12 +452,12 @@ export default class webRTCClientManager {
     mute() {
         if (this.mute_flag ) {
             this.local_media_stream.getAudioTracks()[0].enabled = false;
-            console.log('Microphone is off');
+            //console.log('Microphone is off');
             this.mute_flag = false;
         } 
         else {
             this.local_media_stream.getAudioTracks()[0].enabled = true;
-            console.log('Microphone is on');
+            //console.log('Microphone is on');
             this.mute_flag  = true;
         }
         return this.mute_flag 
