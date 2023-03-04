@@ -2,6 +2,7 @@ import playerpng from "../assets/player.png";
 import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
+import minimapPlayer from "../assets/minimapPlayer.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import lobbyScene from "./lobbyScene";
@@ -32,6 +33,9 @@ export default class gameScene extends Phaser.Scene {
         this.load.spritesheet('audioIcon', audioIconpng,
             {frameWidth: 500, frameHeight: 500}
         );
+        this.load.spritesheet('minimapPlayer', minimapPlayer,
+            {frameWidth: 500, frameHeight: 500}
+        );
     }
     
     create() {
@@ -40,7 +44,9 @@ export default class gameScene extends Phaser.Scene {
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         this.createSpritesFromTempPlayers();
+        this.createMiniMap();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -84,7 +90,7 @@ export default class gameScene extends Phaser.Scene {
         this.createMuteButton();
     }
     
-    update() {
+    update(time, deltaTime) {
         if (this.players[this.socket.id]) {
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
             if (this.movePlayer()) {
@@ -97,6 +103,13 @@ export default class gameScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
+            }
+
+            this.counter += deltaTime;
+            // Call a function every 200 milliseconds
+            if (this.counter > 200) {
+                this.displayMiniMap();
+                this.counter = 0;
             }
         }
     }
@@ -155,6 +168,8 @@ export default class gameScene extends Phaser.Scene {
         }
         this.audioIcons[this.socket.id].x = this.players[this.socket.id].x
         this.audioIcons[this.socket.id].y = this.players[this.socket.id].y - PLAYER_HEIGHT/2;
+        this.miniMapPlayer.x = (this.players[this.socket.id].x - 50) * 0.4 + 433;
+        this.miniMapPlayer.y = (this.players[this.socket.id].y - 300) * 0.4 + 230;
         return moved;
     }
 
@@ -201,5 +216,46 @@ export default class gameScene extends Phaser.Scene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+    }
+
+    createMiniMap() {
+
+        this.graphics = this.add.graphics();
+        this.graphics.fillStyle(0x000000, 1);
+        this.graphics.fillCircle(this.cameras.main.width/2, this.cameras.main.height/2,
+             1000);
+        this.graphics.setAlpha(0.7);
+        this.graphics.setScrollFactor(0);
+
+        this.miniMap = this.add.image(0, 0, 'ship');
+        this.miniMap.setOrigin(0,0);
+        this.miniMap.setScale(0.4);
+        this.miniMap.setAlpha(0.9);
+        this.miniMap.setScrollFactor(0);
+        this.miniMap.visible = false;
+        this.miniMap_bool = false;
+        this.counter = 0;
+        this.miniMapPlayer = this.add.sprite((this.players[this.socket.id].x - 50) * 0.4 + 433,
+         (this.players[this.socket.id].y - 300) * 0.4 + 230, 'minimapPlayer');
+        this.miniMapPlayer.displayHeight = PLAYER_HEIGHT/2;
+        this.miniMapPlayer.displayWidth = PLAYER_WIDTH;
+        this.miniMapPlayer.setScrollFactor(0);
+        this.miniMapPlayer.visible = false;
+        this.graphics.visible = false;
+    }
+
+    displayMiniMap() {
+        if (this.keyMiniMap.isDown && !this.miniMap_bool) {
+            this.miniMap.visible = true;
+            this.miniMap_bool = true;
+            this.graphics.visible = true;
+            this.miniMapPlayer.visible = true;
+        }
+        else if (this.keyMiniMap.isDown && this.miniMap_bool) {
+            this.miniMap.visible = false;
+            this.miniMap_bool = false;
+            this.miniMapPlayer.visible = false;
+            this.graphics.visible = false;
+        }
     }
 }
