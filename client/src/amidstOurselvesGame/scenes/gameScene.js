@@ -3,9 +3,11 @@ import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
 import minimapPlayer from "../assets/minimapPlayer.png";
+import deadpng from "../assets/dead.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import lobbyScene from "./lobbyScene";
+import imposter from "../imposter"
 
 
 export default class gameScene extends Phaser.Scene {
@@ -20,8 +22,13 @@ export default class gameScene extends Phaser.Scene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.players = {};
+        this.deadBodies = {};
         this.audioIcons = {};
         this.webRTC = this.registry.get('webRTC');
+        this.imposter = new imposter();
+        // this.imposter.init();
+        this.imposter.init(this.socket);
+        this.lastActionTime = 0;
     }
 
     preload() {
@@ -36,6 +43,9 @@ export default class gameScene extends Phaser.Scene {
         this.load.spritesheet('minimapPlayer', minimapPlayer,
             {frameWidth: 500, frameHeight: 500}
         );
+        this.load.spritesheet('dead', deadpng,
+            {frameWidth: 500, frameHeight: 500}
+        );
     }
     
     create() {
@@ -45,8 +55,10 @@ export default class gameScene extends Phaser.Scene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.createSpritesFromTempPlayers();
         this.createMiniMap();
+        // this.createDeadBody();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -54,6 +66,15 @@ export default class gameScene extends Phaser.Scene {
             this.audioIcons[playerObj.id].x = playerObj.x;
             this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
             this.webRTC.move(playerObj);
+        });
+
+        this.socket.on('kill', (playerObj) => {
+            this.deadBodies[playerObj.id].x = playerObj.x;
+            this.deadBodies[playerObj.id].y = playerObj.y;
+            this.deadBodies[playerObj.id].visible = true;
+            // this.audioIcons[playerObj.id].x = playerObj.x;
+            // this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
+            // this.webRTC.move(playerObj);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -109,6 +130,7 @@ export default class gameScene extends Phaser.Scene {
             // Call a function every 200 milliseconds
             if (this.counter > 200) {
                 this.displayMiniMap();
+                this.killWrapper(time);
                 this.counter = 0;
             }
         }
@@ -118,6 +140,7 @@ export default class gameScene extends Phaser.Scene {
         for (let playerId in this.tempPlayers) {
             this.createSprite(this.tempPlayers[playerId]);
             this.createAudioSprite(this.tempPlayers[playerId].id, this.tempPlayers[playerId].x, this.tempPlayers[playerId].y)
+            this.createDeadBody(this.tempPlayers[playerId].id, this.tempPlayers[playerId].x, this.tempPlayers[playerId].y);
         }
         delete this.tempPlayers;
     }
@@ -256,6 +279,25 @@ export default class gameScene extends Phaser.Scene {
             this.miniMap_bool = false;
             this.miniMapPlayer.visible = false;
             this.graphics.visible = false;
+        }
+    }
+
+    createDeadBody(playerId, x, y) {
+        this.deadBodies[playerId] = this.add.sprite(x , y, 'dead')
+        this.deadBodies[playerId].displayHeight = PLAYER_HEIGHT/2;
+        this.deadBodies[playerId].displayWidth = PLAYER_WIDTH/2;
+        this.deadBodies[playerId].visible = false;
+    }
+
+    killWrapper(time) {
+
+        if (time - this.lastActionTime >= this.imposter.killCooldown && this.killButton.isDown) {
+            console.log("kill");
+            this.imposter.update(this.players[this.socket.id]);
+            let kill_flag = this.imposter.kill(this.players, this.deadBodies);
+            if (kill_flag) {
+                this.lastActionTime = time;
+            }
         }
     }
 }
