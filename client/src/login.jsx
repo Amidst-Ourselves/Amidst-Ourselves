@@ -4,22 +4,35 @@ import axios from 'axios';
 export const Login = (props) => {
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        props.onLogin(); // add this line to set loggedIn to true
-        console.log(email);
 
-        try {
-            const response = await axios.post('/api/login', {
-                email,
-                pass
+        try{
+            const response = await fetch("http://localhost:3000/user/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: email,
+                    password: pass,
+                }),
             });
-      
-            alert(response.data.message);
-          } catch (error) {
-            alert(error.response.data.error);
+            const data = await response.json();
+
+            if (data.message === "match") {
+                console.log(data.message);
+                props.onLogin();
+            } else {
+                console.log(data.message);
+                setErrorMessage("Invalid username or password.");
+            }
+        }catch{
+            console.log("Error Occured in fetch");
         }
+        
+        return;
+
     }
 
     return (
@@ -33,8 +46,15 @@ export const Login = (props) => {
                 <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="********" id="password" name="password" />
                 <br></br> <p></p>
                 <button type="submit">Log In</button>
+                {errorMessage && (
+                    <div className="alert alert-danger" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
             </form>
             <p></p>
+            <p className="link-btn" onClick={() => props.onLogin()}>Play Anonymously.</p>
+            <p className="link-btn" onClick={() => props.onFormSwitch('forgotPassword')}>Forgot Password?</p>
             <p className="link-btn" onClick={() => props.onFormSwitch('register')}>Don't have an account? Register here.</p>
 
         </div>
