@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH } from "../constants"
+import { PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, MAP_SCALE, MAP1_WALLS } from "../constants"
 
 
 export default class AbstractGameplayScene extends Phaser.Scene {
@@ -8,6 +8,45 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players = {};
         this.playerNames = {};
         this.audioIcons = {};
+    }
+
+    movePlayer(speed, oldX, oldY, up, down, left, right) {
+        let newX = oldX;
+        let newY = oldY;
+    
+        let moved = false;
+        if (up) {
+            newY -= speed;
+            moved = true;
+        }
+        if (down) {
+            newY += speed;
+            moved = true;
+        }
+        if (left) {
+            newX -= speed;
+            moved = true;
+        }
+        if (right) {
+            newX += speed;
+            moved = true;
+        }
+        if (!moved) return;
+    
+        let wallnewX = Math.floor(newX/MAP_SCALE);
+        let wallnewY = Math.floor(newY/MAP_SCALE);
+        let walloldX = Math.floor(oldX/MAP_SCALE);
+        let walloldY = Math.floor(oldY/MAP_SCALE);
+    
+        if (!MAP1_WALLS.has(`${wallnewX}-${wallnewY}`)) {
+            this.updateLocalPlayerPosition(newX, newY);
+        }
+        else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
+            this.updateLocalPlayerPosition(oldX, newY);
+        }
+        else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
+            this.updateLocalPlayerPosition(newX, oldY);
+        }
     }
 
     updateLocalPlayerPosition(newX, newY) {
@@ -26,6 +65,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.webRTC.move({id: playerId, x: newX, y: newY});
     }
 
+    updatePlayerColour(newColour, playerId) {
+        console.log("COLOUR", newColour, playerId);
+    }
+
     createSpritesFromTempPlayers() {
         for (let playerId in this.tempPlayers) {
             this.createSprite(this.tempPlayers[playerId]);
@@ -39,7 +82,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     createSprite(playerObj) {
         console.log(playerObj.playerState);
 
-        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player').setOrigin(0.5, 1);
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', 0).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.players[playerObj.id].playerState = playerObj.playerState;
@@ -72,6 +115,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
 
         this.audioIcons[playerId].destroy();
         delete this.audioIcons[playerId];
+    }
+
+    isWithinManhattanDist(x1, y1, x2, y2, minDist) {
+        return Math.abs(x1-x2) + Math.abs(y1-y2) < minDist;
     }
 
     createMuteButton() {

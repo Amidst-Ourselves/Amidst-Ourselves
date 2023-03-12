@@ -1,8 +1,7 @@
 import audioIconpng from "../assets/audioIcon.png";
 import Phaser from 'phaser';
-import { SPRITE_WIDTH, SPRITE_HEIGHT, MAP_SCALE, MAP1_SPAWN_X, MAP1_SPAWN_Y } from "../constants"
+import { MAP_SCALE, MAP1_SPAWN_X, MAP1_SPAWN_Y, SPRITE_CONFIG } from "../constants"
 import LobbyScene from "./lobbyScene";
-import { movePlayer } from '../utils/gameplay';
 import AbstractGameplayScene from "./abstractGameplayScene";
 
 
@@ -22,7 +21,7 @@ export default class GameScene extends AbstractGameplayScene {
 
     preload() {
         this.load.image('map1', 'amidstOurselvesAssets/map1.png');
-        this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT});
+        this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
         this.load.spritesheet('audioIcon', audioIconpng, {frameWidth: 500, frameHeight: 500});
     }
     
@@ -35,7 +34,6 @@ export default class GameScene extends AbstractGameplayScene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.createSpritesFromTempPlayers();
-        console.log('players', this.players);
     
         this.socket.on('move', (playerObj) => {
             this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id);
@@ -74,7 +72,7 @@ export default class GameScene extends AbstractGameplayScene {
     }
 
     update() {
-        let positionObj = movePlayer(
+        this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
             this.players[this.socket.id].y,
@@ -83,7 +81,6 @@ export default class GameScene extends AbstractGameplayScene {
             this.keyLeft.isDown,
             this.keyRight.isDown
         );
-        if (positionObj) this.updateLocalPlayerPosition(positionObj.x, positionObj.y);
     }
 
     createEndButtonForHost() {

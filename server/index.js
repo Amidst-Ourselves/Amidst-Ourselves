@@ -65,6 +65,8 @@ const MAP1_TASKS = [
     'cafeteria'
 ];
 
+const COLOUR_COUNT = 10;
+
 let rooms = {};
 let sockets = {}
 
@@ -73,7 +75,7 @@ let sockets = {}
 
 io.on('connection', (socket) => {
     socket.on('roomCreate', (roomCodeObj) => {
-        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: []};
+        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: [], colour: 0};
         let roomObj = createRoom(roomCodeObj, hostPlayerObj);
 
         socket.join(roomObj.roomCode);
@@ -89,7 +91,8 @@ io.on('connection', (socket) => {
             return;
         }
 
-        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: []};
+        //TODO: put a mutex here
+        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: [], colour: 0};
         rooms[roomCodeObj.roomCode].players[socket.id] = player;
 
         if (roomFull(rooms[roomCodeObj.roomCode])) {
@@ -98,6 +101,8 @@ io.on('connection', (socket) => {
             return;
         }
 
+        let nextColour = findNextAvailableColour(rooms[roomCodeObj.roomCode], player.colour);
+        if (nextColour >= 0) player.colour = nextColour;
         io.to(roomCodeObj.roomCode).emit('join', player);
         socket.join(roomCodeObj.roomCode);
         socket.emit('roomResponse', rooms[roomCodeObj.roomCode]);
@@ -128,6 +133,14 @@ io.on('connection', (socket) => {
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
     });
 
+    socket.on('colour', () => {
+        //TODO: put a mutex here
+        let nextColour = findNextAvailableColour(rooms[socket.roomCode], rooms[socket.roomCode].players[socket.id].colour);
+        if (nextColour >= 0) {
+            rooms[socket.roomCode].players[socket.id].colour = nextColour;
+            io.to(socket.roomCode).emit('colour', {id: socket.id, colour: nextColour});
+        }
+    });
     
     socket.on('startGame', () => {
         let room = rooms[socket.roomCode];
@@ -250,6 +263,17 @@ io.on('connection', (socket) => {
     */
 });
 
+function chooseRandomItemsFromList(list, numberOfItemsToChoose) {
+    if (list.length <= numberOfItemsToChoose) {
+        return list;
+    }
+
+    list.sort(function(a, b) {
+        return Math.random() - 0.5;
+    });
+
+    return list.slice(0, numberOfItemsToChoose);
+}
 
 function createRoom(roomObj, hostPlayerObj) {
     let roomCode = createRoomCode();
@@ -271,18 +295,6 @@ function createRoom(roomObj, hostPlayerObj) {
     return rooms[roomCode];
 }
 
-function chooseRandomItemsFromList(list, numberOfItemsToChoose) {
-    if (list.length <= numberOfItemsToChoose) {
-        return list;
-    }
-
-    list.sort(function(a, b) {
-        return Math.random() - 0.5;
-    });
-
-    return list.slice(0, numberOfItemsToChoose);
-}
-
 function createRoomCode() {
     let roomCode;
     do {
@@ -292,6 +304,25 @@ function createRoomCode() {
         }
     } while (roomCode in rooms);
     return roomCode;
+}
+
+function findNextAvailableColour(roomObj, currentColour) {
+    for (let i=0; i<COLOUR_COUNT-1; i++) {
+        currentColour = (currentColour+1)%COLOUR_COUNT;
+        if (isColourAvailable(roomObj.players, currentColour)) {
+            return currentColour;
+        }
+    }
+    return -1;
+}
+
+function isColourAvailable(players, colour) {
+    for (let playerId in players) {
+        if (players[playerId].colour === colour) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function playerCount(roomObj) {

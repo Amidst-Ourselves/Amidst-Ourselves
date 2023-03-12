@@ -1,6 +1,13 @@
 export const MAP_SCALE = 6;
-export const SPRITE_WIDTH = 12;
+
+export const SPRITE_WIDTH = 13;
 export const SPRITE_HEIGHT = 13;
+export const SPRITE_CONFIG = {
+    frameWidth: SPRITE_WIDTH,
+    frameHeight: SPRITE_HEIGHT,
+    endFrame: 90,
+};
+
 export const PLAYER_WIDTH = SPRITE_WIDTH * MAP_SCALE;
 export const PLAYER_HEIGHT = SPRITE_HEIGHT * MAP_SCALE;
 export const HEIGHT = 600;
@@ -17,6 +24,10 @@ export const PLAYER_STATE = {
     imposter: "imposter",
     ghost: "ghost"
 };
+
+export const LOBBY_COLOUR_X = 230 * MAP_SCALE;
+export const LOBBY_COLOUR_Y = 130 * MAP_SCALE;
+export const LOBBY_COLOUR_MIN_DISTANCE = 10 * MAP_SCALE;
 
 export const MAP1_SPAWN_X = 230 * MAP_SCALE;
 export const MAP1_SPAWN_Y = 130 * MAP_SCALE;
