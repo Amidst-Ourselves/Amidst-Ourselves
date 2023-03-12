@@ -1,9 +1,7 @@
-import playerpng from "../assets/player.png";
-import shippng from "../assets/ship.png";
-import skeldpng from "../assets/skeld.png";
 import Phaser from 'phaser';
-import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
+import { SPRITE_WIDTH, SPRITE_HEIGHT, MAP_SCALE, MAP1_SPAWN_X, MAP1_SPAWN_Y, PLAYER_HEIGHT, PLAYER_WIDTH } from "../constants"
 import gameScene from "./gameScene";
+import { movePlayer } from '../utils/gameplay';
 
 
 export default class lobbyScene extends Phaser.Scene {
@@ -22,15 +20,14 @@ export default class lobbyScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('ship', shippng);
-        this.load.image('skeld', skeldpng);
-        this.load.spritesheet('player', playerpng,
-            {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT}
-        );
+        this.load.image('map1', 'amidstOurselvesAssets/map1.png');
+        this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', {frameWidth: SPRITE_WIDTH, frameHeight: SPRITE_HEIGHT});
     }
     
     create() {
-        this.add.image(50, 300, 'ship');
+        this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
+        this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
+
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -59,26 +56,30 @@ export default class lobbyScene extends Phaser.Scene {
             this.scene.remove("lobbyScene");
         });
 
-        this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' });
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' });
+        this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createStartButtonForHost();
     }
     
     update() {
-        if (this.players[this.socket.id]) {
-            this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
-            if (this.movePlayer()) {
-                this.socket.emit('move', {
-                    x: this.players[this.socket.id].x,
-                    y: this.players[this.socket.id].y
-                });
-                this.webRTC.move({
-                    id: this.socket.id,
-                    x: this.players[this.socket.id].x,
-                    y: this.players[this.socket.id].y
-                });
-            }
-        }
+        let positionObj = movePlayer(
+            this.speed,
+            this.players[this.socket.id].x,
+            this.players[this.socket.id].y,
+            this.keyUp.isDown,
+            this.keyDown.isDown,
+            this.keyLeft.isDown,
+            this.keyRight.isDown
+        );
+        if (positionObj) this.updatePlayerPosition(positionObj.x, positionObj.y);
+    }
+
+    updatePlayerPosition(newX, newY) {
+        this.cameras.main.centerOn(newX, newY);
+        this.players[this.socket.id].x = newX;
+        this.players[this.socket.id].y = newY;
+        this.socket.emit('move', {x: newX, y: newY});
+        this.webRTC.move({id: this.socket.id, x: newX, y: newY});
     }
 
     createSpritesFromTempPlayers() {
@@ -90,7 +91,7 @@ export default class lobbyScene extends Phaser.Scene {
     
     createSprite(playerObj) {
         console.log(playerObj.playerState);
-        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player');
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player').setOrigin(0.5,1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.webRTC.move(playerObj);
@@ -100,27 +101,6 @@ export default class lobbyScene extends Phaser.Scene {
         this.players[playerId].destroy();
         delete this.players[playerId];
     }
-    
-    movePlayer() {
-        let moved = false;
-        if (this.keyUp.isDown) {
-            this.players[this.socket.id].y -= this.speed;
-            moved = true;
-        }
-        if (this.keyDown.isDown) {
-            this.players[this.socket.id].y += this.speed;
-            moved = true;
-        }
-        if (this.keyLeft.isDown) {
-            this.players[this.socket.id].x -= this.speed;
-            moved = true;
-        }
-        if (this.keyRight.isDown) {
-            this.players[this.socket.id].x += this.speed;
-            moved = true;
-        }
-        return moved;
-    }
 
     createStartButtonForHost() {
         if (this.socket.id !== this.host) {
@@ -128,7 +108,7 @@ export default class lobbyScene extends Phaser.Scene {
         }
 
         this.startText = this.add.text(100, 450, 'start', { font: '32px Arial', fill: '#FFFFFF' });
-        this.startText.setInteractive();
+        this.startText.setInteractive().setScrollFactor(0);
         this.startText.on('pointerover', () => {
             this.startText.setTint(0x00FF00);
         });

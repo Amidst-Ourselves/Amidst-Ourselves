@@ -15,6 +15,7 @@ export default function Game() {
             width: WIDTH,
             height: HEIGHT,
             parent: gameContainerRef.current,
+            pixelArt: true,
             scene: [titleScene, loadGameScene, gameSettingsScene]
         };
   

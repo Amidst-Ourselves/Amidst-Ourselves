@@ -46,6 +46,9 @@ const ROOM_CODE_LENGTH = 4;
 const ROOM_CODE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
 const ROOM_CODE_CHARACTERS_LENGTH = ROOM_CODE_CHARACTERS.length;
 
+const MAP1_SPAWN_X = 230 * 6;
+const MAP1_SPAWN_Y = 130 * 6;
+
 let rooms = {};
 let sockets = {}
 
@@ -54,7 +57,7 @@ let sockets = {}
 
 io.on('connection', (socket) => {
     socket.on('roomCreate', (roomCodeObj) => {
-        let hostPlayerObj = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
+        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost};
         let roomObj = createRoom(roomCodeObj, hostPlayerObj);
 
         socket.join(roomObj.roomCode);
@@ -70,7 +73,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        let player = {id: socket.id, x: 400, y: 400, playerState: PLAYER_STATE.ghost};
+        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost};
         rooms[roomCodeObj.roomCode].players[socket.id] = player;
 
         if (roomFull(rooms[roomCodeObj.roomCode])) {
@@ -114,8 +117,8 @@ io.on('connection', (socket) => {
         rooms[socket.roomCode].gameState = GAME_STATE.action;
         let room = rooms[socket.roomCode];
         for (let playerId in room.players) {
-            room.players[playerId].x = 400;
-            room.players[playerId].y = 400;
+            room.players[playerId].x = MAP1_SPAWN_X;
+            room.players[playerId].y = MAP1_SPAWN_Y;
         }
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
@@ -124,8 +127,8 @@ io.on('connection', (socket) => {
         rooms[socket.roomCode].gameState = GAME_STATE.lobby;
         let room = rooms[socket.roomCode];
         for (let playerId in room.players) {
-            room.players[playerId].x = 400;
-            room.players[playerId].y = 400;
+            room.players[playerId].x = MAP1_SPAWN_X;
+            room.players[playerId].y = MAP1_SPAWN_Y;
         }
         io.to(socket.roomCode).emit('teleportToLobby', room);
     });
