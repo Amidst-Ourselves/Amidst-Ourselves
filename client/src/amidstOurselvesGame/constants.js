@@ -28,6 +28,7 @@ export const PLAYER_STATE = {
 export const LOBBY_COLOUR_X = 230 * MAP_SCALE;
 export const LOBBY_COLOUR_Y = 130 * MAP_SCALE;
 export const LOBBY_COLOUR_MIN_DISTANCE = 10 * MAP_SCALE;
+export const FRAMES_PER_COLOUR = 9;
 
 export const MAP1_SPAWN_X = 230 * MAP_SCALE;
 export const MAP1_SPAWN_Y = 130 * MAP_SCALE;

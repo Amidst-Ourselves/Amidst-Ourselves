@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, MAP_SCALE, MAP1_WALLS } from "../constants"
+import { PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, MAP_SCALE, MAP1_WALLS, FRAMES_PER_COLOUR } from "../constants"
 
 
 export default class AbstractGameplayScene extends Phaser.Scene {
@@ -66,7 +66,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
 
     updatePlayerColour(newColour, playerId) {
-        console.log("COLOUR", newColour, playerId);
+        this.players[playerId].setFrame(newColour * FRAMES_PER_COLOUR);
     }
 
     createSpritesFromTempPlayers() {
@@ -82,7 +82,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     createSprite(playerObj) {
         console.log(playerObj.playerState);
 
-        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', 0).setOrigin(0.5, 1);
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', playerObj.colour * FRAMES_PER_COLOUR).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.players[playerObj.id].playerState = playerObj.playerState;
