@@ -25,9 +25,7 @@ export default class gameScene extends Phaser.Scene {
         this.deadBodies = {};
         this.audioIcons = {};
         this.webRTC = this.registry.get('webRTC');
-        this.imposter = new imposter();
-        // this.imposter.init();
-        this.imposter.init(this.socket);
+        this.imposter = new imposter(this.socket);
         this.lastActionTime = 0;
     }
 
@@ -72,9 +70,6 @@ export default class gameScene extends Phaser.Scene {
             this.deadBodies[playerObj.id].x = playerObj.x;
             this.deadBodies[playerObj.id].y = playerObj.y;
             this.deadBodies[playerObj.id].visible = true;
-            // this.audioIcons[playerObj.id].x = playerObj.x;
-            // this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
-            // this.webRTC.move(playerObj);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -90,12 +85,14 @@ export default class gameScene extends Phaser.Scene {
         this.socket.on('join', (playerObj) => {
             this.createSprite(playerObj);
             this.createAudioSprite(playerObj.id, playerObj.x, playerObj.y)
+            this.createDeadBody(playerObj.id, playerObj.x, playerObj.y);
             console.log('player joined ' + playerObj.id);
         });
         
         this.socket.on('leave', (playerObj) => {
             this.destroySprite(playerObj.id);
-            this.destroyAudioSprite(playerObj.id)
+            this.destroyAudioSprite(playerObj.id);
+            this.destroyDeadBodySprite(playerObj.id);
             console.log('player left ' + playerObj.id);
         });
 
@@ -130,7 +127,8 @@ export default class gameScene extends Phaser.Scene {
             // Call a function every 200 milliseconds
             if (this.counter > 200) {
                 this.displayMiniMap();
-                this.killWrapper(time);
+                this.lastActionTime = this.imposter.killWrapper(time, this.lastActionTime, 
+                    this.killButton, this.players, this.socket.id, this.deadBodies);
                 this.counter = 0;
             }
         }
@@ -169,6 +167,11 @@ export default class gameScene extends Phaser.Scene {
     destroyAudioSprite(playerId) {
         this.audioIcons[playerId].destroy();
         delete this.audioIcons[playerId];
+    }
+
+    destroyDeadBodySprite(playerId) {
+        this.deadBodies[playerId].destroy();
+        delete this.deadBodies[playerId];
     }
     
     movePlayer() {
@@ -287,17 +290,5 @@ export default class gameScene extends Phaser.Scene {
         this.deadBodies[playerId].displayHeight = PLAYER_HEIGHT/2;
         this.deadBodies[playerId].displayWidth = PLAYER_WIDTH/2;
         this.deadBodies[playerId].visible = false;
-    }
-
-    killWrapper(time) {
-
-        if (time - this.lastActionTime >= this.imposter.killCooldown && this.killButton.isDown) {
-            console.log("kill");
-            this.imposter.update(this.players[this.socket.id]);
-            let kill_flag = this.imposter.kill(this.players, this.deadBodies);
-            if (kill_flag) {
-                this.lastActionTime = time;
-            }
-        }
     }
 }

@@ -1,5 +1,6 @@
 export default class imposter {
-    init(socket) {
+
+    constructor(socket) {
         this.killCooldown = 20000; // in sec
         this.socket = socket;
     }
@@ -9,12 +10,7 @@ export default class imposter {
     }
 
     kill(players, deadBodies) {
-        console.log(players);
         for (let player in players) {
-            console.log(players[player].x);
-            console.log(players[player].y);
-            console.log(this.player.x);
-            console.log(this.player.y);
             if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 10 && player != this.socket.id) {
                 console.log("I'm killing: "+players[player].id);
                 this.socket.emit('kill', {
@@ -30,5 +26,17 @@ export default class imposter {
             } 
         }
         return false;
+    }
+
+    killWrapper(time, lastActionTime, killButton, players, id, deadBodies) {
+
+        if (time - lastActionTime >= this.killCooldown && killButton.isDown) {
+            this.update(players[id]);
+            let kill_flag = this.kill(players, deadBodies);
+            if (kill_flag) {
+                lastActionTime = time;
+            }
+        }
+        return lastActionTime;
     }
 }
