@@ -12,7 +12,10 @@ export const Register = (props) => {
         name: name,
         username : email,
         password : pass,
-        question: ques
+        question: ques,
+        wins: 0,
+        totalgames: 0,
+        activestatus: "false"
     };
 
     const handleSubmit = async (e) => {

@@ -12,17 +12,23 @@ const dbo = require("../connect");
 // This help convert the id from string to ObjectId for the _id.
 const ObjectId = require("mongodb").ObjectId;
 
+const getAllRecord = async (req) => {
+  let db_connect = dbo.getDb();
+
+  const record = await db_connect.collection("Users").find().toArray();
+
+  return record;
+};
 
 // This section will help you get a list of all the records.
-userRoutes.route("/users").get(function (req, res) {
-  let db_connect = dbo.getDb("game");
-  db_connect
-    .collection("Users")
-    .find({})
-    .toArray(function (err, result) {
-      if (err) throw err;
-      res.json(result);
-    });
+userRoutes.route("/user/leaderboard").get(async function (req, res) {
+  try {
+    const record = await getAllRecord(req);
+    res.json(record);
+  } catch (error) {
+    res.json({ message: error });
+  }
+
 });
 
 
@@ -121,6 +127,9 @@ userRoutes.route("/user/add").post(async function (req, response) {
           username: req.body.username,
           password: hash,
           question: req.body.question,
+          wins: req.body.wins,
+          totalgames: req.body.totalgames,
+          activestatus: req.body.activestatus
         };
         const record2 = await addUserRecord(myobj);
 
