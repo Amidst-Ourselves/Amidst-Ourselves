@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { HEIGHT } from "../constants";
 
 
-export default class gameSettingsScene extends Phaser.Scene {
+export default class GameSettingsScene extends Phaser.Scene {
     constructor() {
         super("gameSettingsScene")
     }
@@ -28,7 +28,8 @@ export default class gameSettingsScene extends Phaser.Scene {
                 playerLimit: playerLimit.getValue(),
                 imposterCount: imposterCount.getValue(),
                 playerSpeed: playerSpeed.getValue(),
-                map: map.getValue()
+                map: map.getValue(),
+                taskCount: 6
             });
         });
     }

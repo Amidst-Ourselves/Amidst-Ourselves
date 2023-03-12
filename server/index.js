@@ -48,6 +48,22 @@ const ROOM_CODE_CHARACTERS_LENGTH = ROOM_CODE_CHARACTERS.length;
 
 const MAP1_SPAWN_X = 230 * 6;
 const MAP1_SPAWN_Y = 130 * 6;
+const MAP1_TASKS = [
+    'upperEngine',
+    'lowerEngine',
+    'security',
+    'reactor',
+    'medbay',
+    'electrical',
+    'storage',
+    'admin',
+    'weapons',
+    'sheilds',
+    'o2',
+    'navigation',
+    'communications',
+    'cafeteria'
+];
 
 let rooms = {};
 let sockets = {}
@@ -57,7 +73,7 @@ let sockets = {}
 
 io.on('connection', (socket) => {
     socket.on('roomCreate', (roomCodeObj) => {
-        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost};
+        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: []};
         let roomObj = createRoom(roomCodeObj, hostPlayerObj);
 
         socket.join(roomObj.roomCode);
@@ -73,7 +89,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost};
+        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: []};
         rooms[roomCodeObj.roomCode].players[socket.id] = player;
 
         if (roomFull(rooms[roomCodeObj.roomCode])) {
@@ -114,22 +130,32 @@ io.on('connection', (socket) => {
 
     
     socket.on('startGame', () => {
-        rooms[socket.roomCode].gameState = GAME_STATE.action;
         let room = rooms[socket.roomCode];
+        let imposters = chooseRandomItemsFromList(Object.keys(room.players), room.imposterCount);
         for (let playerId in room.players) {
+            if (imposters.includes(playerId)) {
+                room.players[playerId].playerState = PLAYER_STATE.imposter;
+                room.players[playerId].tasks = [];
+            } else {
+                room.players[playerId].playerState = PLAYER_STATE.crewmate;
+                room.players[playerId].tasks = chooseRandomItemsFromList(MAP1_TASKS, room.taskCount);
+            }
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
         }
+        room.gameState = GAME_STATE.action;
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
 
     socket.on('endGame', () => {
-        rooms[socket.roomCode].gameState = GAME_STATE.lobby;
         let room = rooms[socket.roomCode];
         for (let playerId in room.players) {
+            room.players[playerId].playerState = PLAYER_STATE.ghost;
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
+            room.players[playerId].tasks = [];
         }
+        room.gameState = GAME_STATE.lobby;
         io.to(socket.roomCode).emit('teleportToLobby', room);
     });
 
@@ -142,6 +168,10 @@ io.on('connection', (socket) => {
     sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
     socket.on('webRTC_disconnect', (roomCodeObj) => {
+        if (roomCodeObj === undefined) {
+            console.log("something that should never happen happened");
+            return;
+        }
         let roomCode = roomCodeObj.roomCode;
         webRTC_delete(roomCode);
         delete sockets[socket.id];
@@ -229,6 +259,7 @@ function createRoom(roomObj, hostPlayerObj) {
         roomCode: roomCode,
         playerLimit: roomObj.playerLimit,
         imposterCount: roomObj.imposterCount,
+        taskCount: roomObj.taskCount,
         playerSpeed: roomObj.playerSpeed,
         map: roomObj.map,
         host: hostPlayerObj.id,
@@ -238,6 +269,18 @@ function createRoom(roomObj, hostPlayerObj) {
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
+}
+
+function chooseRandomItemsFromList(list, numberOfItemsToChoose) {
+    if (list.length <= numberOfItemsToChoose) {
+        return list;
+    }
+
+    list.sort(function(a, b) {
+        return Math.random() - 0.5;
+    });
+
+    return list.slice(0, numberOfItemsToChoose);
 }
 
 function createRoomCode() {

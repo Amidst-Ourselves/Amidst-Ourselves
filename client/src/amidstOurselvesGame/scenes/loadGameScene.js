@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
 import { SERVER_ADDRESS, GAME_STATE } from '../constants';
-import lobbyScene from './lobbyScene';
-import gameScene from './gameScene';
+import LobbyScene from './lobbyScene';
+import GameScene from './gameScene';
 import webRTCClientManager from "../webRTCClientManager"
 
 
-export default class loadGameScene extends Phaser.Scene {
+export default class LoadGameScene extends Phaser.Scene {
     constructor() {
         super("loadGameScene")
     }
@@ -40,12 +40,12 @@ export default class loadGameScene extends Phaser.Scene {
                 } else if (roomObj.gameState === GAME_STATE.lobby) {
 
                     this.initWebRTC(roomObj);
-                    this.scene.add("lobbyScene", lobbyScene, true, roomObj);
+                    this.scene.add("lobbyScene", LobbyScene, true, roomObj);
 
                 } else if (roomObj.gameState === GAME_STATE.action) {
 
                     this.initWebRTC(roomObj);
-                    this.scene.add("gameScene", gameScene, true, roomObj);
+                    this.scene.add("gameScene", GameScene, true, roomObj);
                     
                 } else {
                     this.scene.start("titleScene", {message: 'unknown error'});
