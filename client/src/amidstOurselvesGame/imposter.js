@@ -28,9 +28,8 @@ export default class imposter {
         return false;
     }
 
-    killWrapper(time, lastActionTime, killButton, players, id, deadBodies) {
-
-        if (time - lastActionTime >= this.killCooldown && killButton.isDown) {
+    killWrapper(time, lastActionTime, players, id, deadBodies) {
+        if (time - lastActionTime >= this.killCooldown) {
             this.update(players[id]);
             let kill_flag = this.kill(players, deadBodies);
             if (kill_flag) {

@@ -106,6 +106,14 @@ export default class gameScene extends Phaser.Scene {
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' });
         this.createEndButtonForHost();
         this.createMuteButton();
+
+        this.keyMiniMap.on('down', () => {
+            this.displayMiniMap();
+        });
+
+        this.killButton.on('down', () => {
+            this.lastActionTime = this.imposter.killWrapper(this.time.now, this.lastActionTime, this.players, this.socket.id, this.deadBodies);
+        });
     }
     
     update(time, deltaTime) {
@@ -121,15 +129,6 @@ export default class gameScene extends Phaser.Scene {
                     x: this.players[this.socket.id].x,
                     y: this.players[this.socket.id].y
                 });
-            }
-
-            this.counter += deltaTime;
-            // Call a function every 200 milliseconds
-            if (this.counter > 200) {
-                this.displayMiniMap();
-                this.lastActionTime = this.imposter.killWrapper(time, this.lastActionTime, 
-                    this.killButton, this.players, this.socket.id, this.deadBodies);
-                this.counter = 0;
             }
         }
     }
@@ -259,7 +258,6 @@ export default class gameScene extends Phaser.Scene {
         this.miniMap.setAlpha(0.9);
         this.miniMap.setScrollFactor(0);
         this.miniMap.visible = false;
-        this.miniMap_bool = false;
         this.counter = 0;
         this.miniMapPlayer = this.add.sprite((this.players[this.socket.id].x - 50) * 0.4 + 433,
          (this.players[this.socket.id].y - 300) * 0.4 + 230, 'minimapPlayer');
@@ -271,15 +269,13 @@ export default class gameScene extends Phaser.Scene {
     }
 
     displayMiniMap() {
-        if (this.keyMiniMap.isDown && !this.miniMap_bool) {
+        if (!this.miniMap.visible) {
             this.miniMap.visible = true;
-            this.miniMap_bool = true;
             this.graphics.visible = true;
             this.miniMapPlayer.visible = true;
         }
-        else if (this.keyMiniMap.isDown && this.miniMap_bool) {
+        else if (this.miniMap.visible) {
             this.miniMap.visible = false;
-            this.miniMap_bool = false;
             this.miniMapPlayer.visible = false;
             this.graphics.visible = false;
         }
