@@ -2,9 +2,12 @@ import playerpng from "../assets/player.png";
 import shippng from "../assets/ship.png";
 import skeldpng from "../assets/skeld.png";
 import audioIconpng from "../assets/audioIcon.png";
+import minimapPlayer from "../assets/minimapPlayer.png";
+import deadpng from "../assets/dead.png";
 import Phaser from 'phaser';
 import { SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT } from "../constants"
 import lobbyScene from "./lobbyScene";
+import imposter from "../imposter"
 
 
 export default class gameScene extends Phaser.Scene {
@@ -19,8 +22,11 @@ export default class gameScene extends Phaser.Scene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.players = {};
+        this.deadBodies = {};
         this.audioIcons = {};
         this.webRTC = this.registry.get('webRTC');
+        this.imposter = new imposter(this.socket);
+        this.lastActionTime = 0;
     }
 
     preload() {
@@ -32,6 +38,12 @@ export default class gameScene extends Phaser.Scene {
         this.load.spritesheet('audioIcon', audioIconpng,
             {frameWidth: 500, frameHeight: 500}
         );
+        this.load.spritesheet('minimapPlayer', minimapPlayer,
+            {frameWidth: 500, frameHeight: 500}
+        );
+        this.load.spritesheet('dead', deadpng,
+            {frameWidth: 500, frameHeight: 500}
+        );
     }
     
     create() {
@@ -40,7 +52,11 @@ export default class gameScene extends Phaser.Scene {
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.createSpritesFromTempPlayers();
+        this.createMiniMap();
+        // this.createDeadBody();
     
         this.socket.on('move', (playerObj) => {
             this.players[playerObj.id].x = playerObj.x;
@@ -48,6 +64,12 @@ export default class gameScene extends Phaser.Scene {
             this.audioIcons[playerObj.id].x = playerObj.x;
             this.audioIcons[playerObj.id].y = playerObj.y - PLAYER_HEIGHT/2;
             this.webRTC.move(playerObj);
+        });
+
+        this.socket.on('kill', (playerObj) => {
+            this.deadBodies[playerObj.id].x = playerObj.x;
+            this.deadBodies[playerObj.id].y = playerObj.y;
+            this.deadBodies[playerObj.id].visible = true;
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -63,12 +85,14 @@ export default class gameScene extends Phaser.Scene {
         this.socket.on('join', (playerObj) => {
             this.createSprite(playerObj);
             this.createAudioSprite(playerObj.id, playerObj.x, playerObj.y)
+            this.createDeadBody(playerObj.id, playerObj.x, playerObj.y);
             console.log('player joined ' + playerObj.id);
         });
         
         this.socket.on('leave', (playerObj) => {
             this.destroySprite(playerObj.id);
-            this.destroyAudioSprite(playerObj.id)
+            this.destroyAudioSprite(playerObj.id);
+            this.destroyDeadBodySprite(playerObj.id);
             console.log('player left ' + playerObj.id);
         });
 
@@ -82,9 +106,17 @@ export default class gameScene extends Phaser.Scene {
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' });
         this.createEndButtonForHost();
         this.createMuteButton();
+
+        this.keyMiniMap.on('down', () => {
+            this.displayMiniMap();
+        });
+
+        this.killButton.on('down', () => {
+            this.lastActionTime = this.imposter.killWrapper(this.time.now, this.lastActionTime, this.players, this.socket.id, this.deadBodies);
+        });
     }
     
-    update() {
+    update(time, deltaTime) {
         if (this.players[this.socket.id]) {
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
             if (this.movePlayer()) {
@@ -105,6 +137,7 @@ export default class gameScene extends Phaser.Scene {
         for (let playerId in this.tempPlayers) {
             this.createSprite(this.tempPlayers[playerId]);
             this.createAudioSprite(this.tempPlayers[playerId].id, this.tempPlayers[playerId].x, this.tempPlayers[playerId].y)
+            this.createDeadBody(this.tempPlayers[playerId].id, this.tempPlayers[playerId].x, this.tempPlayers[playerId].y);
         }
         delete this.tempPlayers;
     }
@@ -134,6 +167,11 @@ export default class gameScene extends Phaser.Scene {
         this.audioIcons[playerId].destroy();
         delete this.audioIcons[playerId];
     }
+
+    destroyDeadBodySprite(playerId) {
+        this.deadBodies[playerId].destroy();
+        delete this.deadBodies[playerId];
+    }
     
     movePlayer() {
         let moved = false;
@@ -155,6 +193,8 @@ export default class gameScene extends Phaser.Scene {
         }
         this.audioIcons[this.socket.id].x = this.players[this.socket.id].x
         this.audioIcons[this.socket.id].y = this.players[this.socket.id].y - PLAYER_HEIGHT/2;
+        this.miniMapPlayer.x = (this.players[this.socket.id].x - 50) * 0.4 + 433;
+        this.miniMapPlayer.y = (this.players[this.socket.id].y - 300) * 0.4 + 230;
         return moved;
     }
 
@@ -201,5 +241,50 @@ export default class gameScene extends Phaser.Scene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+    }
+
+    createMiniMap() {
+
+        this.graphics = this.add.graphics();
+        this.graphics.fillStyle(0x000000, 1);
+        this.graphics.fillCircle(this.cameras.main.width/2, this.cameras.main.height/2,
+             1000);
+        this.graphics.setAlpha(0.7);
+        this.graphics.setScrollFactor(0);
+
+        this.miniMap = this.add.image(0, 0, 'ship');
+        this.miniMap.setOrigin(0,0);
+        this.miniMap.setScale(0.4);
+        this.miniMap.setAlpha(0.9);
+        this.miniMap.setScrollFactor(0);
+        this.miniMap.visible = false;
+        this.counter = 0;
+        this.miniMapPlayer = this.add.sprite((this.players[this.socket.id].x - 50) * 0.4 + 433,
+         (this.players[this.socket.id].y - 300) * 0.4 + 230, 'minimapPlayer');
+        this.miniMapPlayer.displayHeight = PLAYER_HEIGHT/2;
+        this.miniMapPlayer.displayWidth = PLAYER_WIDTH;
+        this.miniMapPlayer.setScrollFactor(0);
+        this.miniMapPlayer.visible = false;
+        this.graphics.visible = false;
+    }
+
+    displayMiniMap() {
+        if (!this.miniMap.visible) {
+            this.miniMap.visible = true;
+            this.graphics.visible = true;
+            this.miniMapPlayer.visible = true;
+        }
+        else if (this.miniMap.visible) {
+            this.miniMap.visible = false;
+            this.miniMapPlayer.visible = false;
+            this.graphics.visible = false;
+        }
+    }
+
+    createDeadBody(playerId, x, y) {
+        this.deadBodies[playerId] = this.add.sprite(x , y, 'dead')
+        this.deadBodies[playerId].displayHeight = PLAYER_HEIGHT/2;
+        this.deadBodies[playerId].displayWidth = PLAYER_WIDTH/2;
+        this.deadBodies[playerId].visible = false;
     }
 }
