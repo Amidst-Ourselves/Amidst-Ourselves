@@ -1,5 +1,12 @@
 import Phaser from 'phaser';
-import { PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, MAP_SCALE, MAP1_WALLS, FRAMES_PER_COLOUR } from "../constants"
+import {
+    PLAYER_HEIGHT,
+    PLAYER_STATE,
+    PLAYER_WIDTH,
+    MAP_SCALE,
+    MAP1_WALLS,
+    FRAMES_PER_COLOUR
+} from "../constants"
 
 
 export default class AbstractGameplayScene extends Phaser.Scene {
@@ -8,6 +15,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players = {};
         this.playerNames = {};
         this.audioIcons = {};
+        this.deadBodies = {};
     }
 
     movePlayer(speed, oldX, oldY, up, down, left, right) {
@@ -65,10 +73,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.webRTC.move({id: playerId, x: newX, y: newY});
     }
 
-    updatePlayerColour(newColour, playerId) {
-        this.players[playerId].setFrame(newColour * FRAMES_PER_COLOUR);
-    }
-
     createSpritesFromTempPlayers() {
         for (let playerId in this.tempPlayers) {
             this.createSprite(this.tempPlayers[playerId]);
@@ -80,13 +84,19 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
     
     createSprite(playerObj) {
-        console.log(playerObj.playerState);
+        console.log(playerObj);
 
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', playerObj.colour * FRAMES_PER_COLOUR).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
+
+        this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', 8).setOrigin(0.5, 1);
+        this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;
+        this.deadBodies[playerObj.id].displayWidth = PLAYER_WIDTH;
+        this.deadBodies[playerObj.id].visible = false;
 
         this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
 
@@ -115,6 +125,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
 
         this.audioIcons[playerId].destroy();
         delete this.audioIcons[playerId];
+
+        this.deadBodies[playerId].destroy();
+        delete this.deadBodies[playerId];
     }
 
     isWithinManhattanDist(x1, y1, x2, y2, minDist) {

@@ -32,6 +32,14 @@ export const FRAMES_PER_COLOUR = 9;
 
 export const MAP1_SPAWN_X = 230 * MAP_SCALE;
 export const MAP1_SPAWN_Y = 130 * MAP_SCALE;
+
+export const MAP1_WIDTH = 430;
+export const MAP1_HEIGHT = 310;
+
+export const MAP1_MINIMAP_SCALE = WIDTH/MAP1_WIDTH;
+export const MAP1_MINIMAP_PLAYER_WIDTH = SPRITE_WIDTH * MAP1_MINIMAP_SCALE;
+export const MAP1_MINIMAP_PLAYER_HEIGHT = SPRITE_HEIGHT * MAP1_MINIMAP_SCALE;
+
 export const MAP1_WALLS = new Set(JSON.parse(`
 [
     "100-132",

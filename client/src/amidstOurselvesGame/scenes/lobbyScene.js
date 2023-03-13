@@ -1,6 +1,15 @@
 import audioIconpng from "../assets/audioIcon.png";
 import Phaser from 'phaser';
-import { MAP_SCALE, MAP1_SPAWN_X, MAP1_SPAWN_Y, SPRITE_CONFIG, LOBBY_COLOUR_X, LOBBY_COLOUR_Y, LOBBY_COLOUR_MIN_DISTANCE } from "../constants"
+import {
+    MAP_SCALE,
+    MAP1_SPAWN_X,
+    MAP1_SPAWN_Y,
+    SPRITE_CONFIG,
+    LOBBY_COLOUR_X,
+    LOBBY_COLOUR_Y,
+    LOBBY_COLOUR_MIN_DISTANCE,
+    FRAMES_PER_COLOUR
+} from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
 
@@ -72,13 +81,7 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
 
         this.socket.on('webRTC_speaking', (config) => {
-            // console.log("received" + config.bool);
-            if(config.bool == true) {
-                this.audioIcons[config.id].visible = true;
-            }
-            else {
-                this.audioIcons[config.id].visible = false;
-            }
+            this.audioIcons[config.id].visible = config.bool;
         });
 
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
@@ -97,6 +100,10 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.keyLeft.isDown,
             this.keyRight.isDown
         );
+    }
+
+    updatePlayerColour(newColour, playerId) {
+        this.players[playerId].setFrame(newColour * FRAMES_PER_COLOUR);
     }
 
     createStartButtonForHost() {
