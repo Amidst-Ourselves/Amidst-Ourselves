@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import titleScene from '../../amidstOurselvesGame/scenes/titleScene'
-import loadGameScene from '../../amidstOurselvesGame/scenes/loadGameScene';
-import gameSettingsScene from '../../amidstOurselvesGame/scenes/gameSettingsScene';
+import TitleScene from '../../amidstOurselvesGame/scenes/titleScene'
+import LoadGameScene from '../../amidstOurselvesGame/scenes/loadGameScene';
+import GameSettingsScene from '../../amidstOurselvesGame/scenes/gameSettingsScene';
 import { WIDTH, HEIGHT } from '../../amidstOurselvesGame/constants';
 import React, { useRef, useEffect } from 'react';
 
@@ -15,7 +15,8 @@ export default function Game() {
             width: WIDTH,
             height: HEIGHT,
             parent: gameContainerRef.current,
-            scene: [titleScene, loadGameScene, gameSettingsScene]
+            pixelArt: true,
+            scene: [TitleScene, LoadGameScene, GameSettingsScene]
         };
   
         const game = new Phaser.Game(config);

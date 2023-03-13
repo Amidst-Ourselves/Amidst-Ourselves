@@ -1,8 +1,14 @@
-export default class imposter {
+import Phaser from "phaser";
 
-    constructor(socket) {
+export default class Imposter extends Phaser.GameObjects.Container {
+
+    constructor(scene, socket) {
+        super(scene);
+
         this.killCooldown = 20000; // in sec
         this.socket = socket;
+
+        this.lastActionTime = 0;
     }
 
     update(player) {
@@ -11,7 +17,7 @@ export default class imposter {
 
     kill(players, deadBodies) {
         for (let player in players) {
-            if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 10 && player != this.socket.id) {
+            if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 10 && player !== this.socket.id) {
                 console.log("I'm killing: "+players[player].id);
                 this.socket.emit('kill', {
                     id: player,
@@ -37,5 +43,9 @@ export default class imposter {
             }
         }
         return lastActionTime;
+    }
+
+    attemptKill(players, deadBodies) {
+        this.lastActionTime = this.killWrapper(this.scene.time.now, this.lastActionTime, players, this.socket.id, deadBodies);
     }
 }

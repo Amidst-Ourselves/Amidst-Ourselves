@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 
-export default class titleScene extends Phaser.Scene {
+export default class TitleScene extends Phaser.Scene {
     constructor() {
         super("titleScene")
     }
