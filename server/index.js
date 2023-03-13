@@ -94,9 +94,11 @@ io.on('connection', (socket) => {
         //TODO: put a mutex here
         let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: [], colour: 0};
         rooms[roomCodeObj.roomCode].players[socket.id] = player;
+        rooms[roomCodeObj.roomCode].deadBodies[socket.id] = player;
 
         if (roomFull(rooms[roomCodeObj.roomCode])) {
             delete rooms[roomCodeObj.roomCode].players[socket.id];
+            delete rooms[roomCodeObj.roomCode].deadBodies[socket.id];
             socket.emit('roomResponse', {message: "room full"});
             return;
         }
@@ -116,6 +118,7 @@ io.on('connection', (socket) => {
             // do nothing
         } else {
             delete rooms[socket.roomCode].players[socket.id];
+            delete rooms[socket.roomCode].deadBodies[socket.id];
             if (playerCount(rooms[socket.roomCode]) === 0) {
                 delete rooms[socket.roomCode];
             }
@@ -140,6 +143,16 @@ io.on('connection', (socket) => {
             rooms[socket.roomCode].players[socket.id].colour = nextColour;
             io.to(socket.roomCode).emit('colour', {id: socket.id, colour: nextColour});
         }
+    });
+    
+    socket.on('kill', (playerObj) => {
+        socket.broadcast.to(socket.roomCode).emit('kill', {
+            id: playerObj.id,
+            x: playerObj.x,
+            y: playerObj.y
+        });
+        rooms[socket.roomCode].deadBodies[playerObj.id].x = playerObj.x;
+        rooms[socket.roomCode].deadBodies[playerObj.id].y = playerObj.y;
     });
     
     socket.on('startGame', () => {
@@ -278,7 +291,9 @@ function chooseRandomItemsFromList(list, numberOfItemsToChoose) {
 function createRoom(roomObj, hostPlayerObj) {
     let roomCode = createRoomCode();
     let players = {};
+    let deadBodies = {};
     players[hostPlayerObj.id] = hostPlayerObj;
+    deadBodies[hostPlayerObj.id] = hostPlayerObj;
     let newRoom = {
         roomCode: roomCode,
         playerLimit: roomObj.playerLimit,
@@ -289,6 +304,7 @@ function createRoom(roomObj, hostPlayerObj) {
         host: hostPlayerObj.id,
         gameState: GAME_STATE.lobby,
         players: players,
+        deadBodies: deadBodies,
         webRTC: roomObj.webRTC
     }
     rooms[roomCode] = newRoom;
