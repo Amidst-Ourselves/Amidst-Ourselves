@@ -8,20 +8,7 @@ const LeaderboardPage = ({ onClose }) => {
       .then((response) => response.json())
       .then((data) => {
         console.log(data)
-        const sortedData = data.sort((a, b) => {
-            const aPercentage = a.totalgames === 0 ? 0 : a.wins / a.totalgames;
-            const bPercentage = b.totalgames === 0 ? 0 : b.wins / b.totalgames;
-          
-            if (a.totalgames === 0 && b.totalgames === 0) {
-              return 0;
-            } else if (a.totalgames === 0) {
-              return 1;
-            } else if (b.totalgames === 0) {
-              return -1;
-            } else {
-              return bPercentage - aPercentage;
-            }
-          });
+        const sortedData = data.sort((a, b) => b.wins - a.wins);
         setLeaderboardData(sortedData);
       })
       .catch((error) => {

@@ -23,7 +23,6 @@ export const ForgotPassword = (props) => {
             body: JSON.stringify(user),
         });
         const data = await response.json();
-
         if (data.message === "updated") {
             console.log(data.message);
             props.onFormSwitch('login')
@@ -38,10 +37,6 @@ export const ForgotPassword = (props) => {
         console.log("Error Occured in fetch");
     }
 
-
-
-
-    props.onFormSwitch('login')
   };
 
   return (

@@ -65,19 +65,23 @@ const updatePassword = async (req) => {
   const saltRounds = 10;
   const password = req.body.newpassword.toString();
 
-  bcrypt.hash(password, saltRounds, async function(err, hash) {
-    if (err) throw err;
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(password, saltRounds, async function(err, hash) {
+      if (err) {
+        reject(err);
+        return;
+      }
 
-    const filter = { username: req.body.username.toString(), question: req.body.question.toString() };
-    const update = { $set: { password: hash } };
+      const filter = { username: req.body.username.toString(), question: req.body.question.toString() };
+      const update = { $set: { password: hash } };
 
-    const record = await db_connect.collection("Users").updateOne(filter, update);
+      const result = await db_connect.collection("Users").updateOne(filter, update);
 
-    return record;
-
+      resolve(result.modifiedCount);
+    });
   });
-
 };
+
 
 
 
@@ -85,8 +89,7 @@ userRoutes.route("/user/forgotpassword").post(async function (req, res) {
 
   try {
     const record = await updatePassword(req);
-
-    if( record){
+    if(record > 0){
       res.json({ message: "updated" });
     }else {
       res.json({ message: "notupdated" });
