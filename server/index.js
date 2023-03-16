@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
     });
     
     socket.on('kill', (playerObj) => {
-        socket.broadcast.to(socket.roomCode).emit('kill', {
+        io.to(socket.roomCode).emit('kill', {
             id: playerObj.id,
             x: playerObj.x,
             y: playerObj.y

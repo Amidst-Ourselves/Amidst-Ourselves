@@ -5,6 +5,9 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
+    PLAYER_STATE,
+    FRAMES_PER_COLOUR,
+    GHOST_FRAME_OFFSET
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
@@ -24,6 +27,14 @@ export default class GameScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+
+        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+
+        this.miniMap = new MiniMap(this, Phaser.Input.Keyboard.KeyCodes.M);
     }
 
     preload() {
@@ -35,21 +46,17 @@ export default class GameScene extends AbstractGameplayScene {
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
-        
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
 
         this.createSpritesFromTempPlayers();
-        this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
+        this.localPlayer = this.players[this.socket.id];
+
+        this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
         this.imposter = new Imposter(this, this.socket);
 
-        this.keyMiniMap.on('down', () => {
-            this.miniMap.toggleMiniMap();
-        });
+        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.createEndButtonForHost();
+        this.createMuteButton();
 
         this.killButton.on('down', () => {
             this.imposter.attemptKill(this.players, this.deadBodies);
@@ -76,22 +83,17 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('kill', (playerObj) => {
-            this.deadBodies[playerObj.id].x = playerObj.x;
-            this.deadBodies[playerObj.id].y = playerObj.y;
-            this.deadBodies[playerObj.id].visible = true;
+            this.changePlayerToGhost(playerObj.id);
+            this.showDeadBoby(playerObj.id, playerObj.x, playerObj.y);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
-
-        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.createEndButtonForHost();
-        this.createMuteButton();
     }
 
     update() {
+        this.miniMap.update();
         this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
@@ -99,12 +101,42 @@ export default class GameScene extends AbstractGameplayScene {
             this.keyUp.isDown,
             this.keyDown.isDown,
             this.keyLeft.isDown,
-            this.keyRight.isDown
+            this.keyRight.isDown,
+            this.players[this.socket.id].playerState
         );
-        this.miniMap.updateMiniMap(
-            this.players[this.socket.id].x,
-            this.players[this.socket.id].y,
-        );
+    }
+
+    showDeadBoby(id, x, y) {
+        this.deadBodies[id].x = x;
+        this.deadBodies[id].y = y;
+        this.deadBodies[id].visible = true;
+    }
+
+    changePlayerToGhost(id) {
+        if (this.socket.id === id) {
+            this.showAllPlayers();
+            this.setImposterNameColours();
+        } else if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost) {
+            this.players[id].visible = false;
+            this.playerNames[id].visible = false;
+            this.audioIcons[id].visible = false;
+        }
+
+        this.players[id].setFrame(this.players[id].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET);
+        this.players[id].setAlpha(0.5);
+        this.players[id].playerState = PLAYER_STATE.ghost;
+    }
+
+    showAllPlayers() {
+        for (let player in this.players) {
+            this.players[player].visible = true;
+        }
+        for (let playerName in this.playerNames) {
+            this.playerNames[playerName].visible = true;
+        }
+        for (let audioIcon in this.audioIcons) {
+            this.audioIcons[audioIcon].visible = true;
+        }
     }
 
     createEndButtonForHost() {

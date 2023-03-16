@@ -24,10 +24,6 @@ export default class Imposter extends Phaser.GameObjects.Container {
                     x: players[player].x,
                     y: players[player].y
                 });
-
-                deadBodies[player].x = players[player].x;
-                deadBodies[player].y = players[player].y;
-                deadBodies[player].visible = true;
                 return true;
             } 
         }

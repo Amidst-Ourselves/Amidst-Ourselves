@@ -5,7 +5,8 @@ import {
     PLAYER_WIDTH,
     MAP_SCALE,
     MAP1_WALLS,
-    FRAMES_PER_COLOUR
+    FRAMES_PER_COLOUR,
+    GHOST_FRAME_OFFSET,
 } from "../constants"
 
 
@@ -18,7 +19,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.deadBodies = {};
     }
 
-    movePlayer(speed, oldX, oldY, up, down, left, right) {
+    movePlayer(speed, oldX, oldY, up, down, left, right, state) {
         let newX = oldX;
         let newY = oldY;
     
@@ -40,19 +41,22 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             moved = true;
         }
         if (!moved) return;
+
+        if (state === PLAYER_STATE.ghost) {
+            this.updateLocalPlayerPosition(newX, newY);
+            return;
+        }
     
         let wallnewX = Math.floor(newX/MAP_SCALE);
         let wallnewY = Math.floor(newY/MAP_SCALE);
         let walloldX = Math.floor(oldX/MAP_SCALE);
         let walloldY = Math.floor(oldY/MAP_SCALE);
-    
+
         if (!MAP1_WALLS.has(`${wallnewX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(newX, newY);
-        }
-        else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
+        } else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(oldX, newY);
-        }
-        else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
+        } else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
             this.updateLocalPlayerPosition(newX, oldY);
         }
     }
@@ -86,7 +90,21 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     createSprite(playerObj) {
         console.log(playerObj);
 
-        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', playerObj.colour * FRAMES_PER_COLOUR).setOrigin(0.5, 1);
+        if (playerObj.playerState === PLAYER_STATE.ghost) {
+            this.players[playerObj.id] = this.add.sprite(
+                playerObj.x,
+                playerObj.y,
+                'player',
+                playerObj.colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
+            ).setOrigin(0.5, 1).setAlpha(0.5);
+        } else {
+            this.players[playerObj.id] = this.add.sprite(
+                playerObj.x,
+                playerObj.y,
+                'player',
+                playerObj.colour * FRAMES_PER_COLOUR
+            ).setOrigin(0.5, 1);
+        }
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.players[playerObj.id].colour = playerObj.colour;

@@ -5,13 +5,14 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
-    LOBBY_COLOUR_X,
-    LOBBY_COLOUR_Y,
-    LOBBY_COLOUR_MIN_DISTANCE,
-    FRAMES_PER_COLOUR
+    FRAMES_PER_COLOUR,
+    COLOUR_STATION_MIN_DIST,
+    COLOUR_STATION_X,
+    COLOUR_STATION_Y
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
+import ColourStation from "../containers/colourStation";
 
 
 export default class LobbyScene extends AbstractGameplayScene {
@@ -26,35 +27,39 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+
+        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+        this.colourStation = new ColourStation(
+            this,
+            COLOUR_STATION_X,
+            COLOUR_STATION_Y,
+            COLOUR_STATION_MIN_DIST,
+            Phaser.Input.Keyboard.KeyCodes.F,
+            () => {this.socket.emit('colour')}
+        );
     }
 
     preload() {
         this.load.image('map1', 'amidstOurselvesAssets/map1.png');
         this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
         this.load.spritesheet('audioIcon', audioIconpng, {frameWidth: 500, frameHeight: 500});
+        this.colourStation.preload();
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
-
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyF = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
         this.createSpritesFromTempPlayers();
+        this.colourStation.create(this.players[this.socket.id]);
 
-        this.keyF.on('down', () => {
-            if (!this.isWithinManhattanDist(
-                this.players[this.socket.id].x,
-                this.players[this.socket.id].y,
-                LOBBY_COLOUR_X,
-                LOBBY_COLOUR_Y,
-                LOBBY_COLOUR_MIN_DISTANCE
-            )) return;
-            this.socket.emit('colour');
-        });
+        this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.createStartButtonForHost();
+        this.createMuteButton();
 
         this.socket.on('colour', (playerObj) => {
             this.updatePlayerColour(playerObj.colour, playerObj.id);
@@ -83,14 +88,10 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
-
-        this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.createStartButtonForHost();
-        this.createMuteButton();
     }
     
     update() {
+        this.colourStation.update();
         this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
@@ -98,7 +99,8 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.keyUp.isDown,
             this.keyDown.isDown,
             this.keyLeft.isDown,
-            this.keyRight.isDown
+            this.keyRight.isDown,
+            this.players[this.socket.id].playerState
         );
     }
 
