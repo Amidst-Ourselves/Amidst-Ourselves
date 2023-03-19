@@ -41,6 +41,8 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         }
         if (!moved) return;
     
+        // console.log(newX);
+        // console.log(newY);
         let wallnewX = Math.floor(newX/MAP_SCALE);
         let wallnewY = Math.floor(newY/MAP_SCALE);
         let walloldX = Math.floor(oldX/MAP_SCALE);

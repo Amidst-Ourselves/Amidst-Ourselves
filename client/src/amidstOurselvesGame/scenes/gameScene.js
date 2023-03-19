@@ -10,6 +10,7 @@ import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
 import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
+import TaskManager from "../containers/taskManager";
 
 
 export default class GameScene extends AbstractGameplayScene {
@@ -42,10 +43,12 @@ export default class GameScene extends AbstractGameplayScene {
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+        this.iteractButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
 
         this.createSpritesFromTempPlayers();
         this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
         this.imposter = new Imposter(this, this.socket);
+        this.taskManager = new TaskManager(this, this.socket);
 
         this.keyMiniMap.on('down', () => {
             this.miniMap.toggleMiniMap();
@@ -53,6 +56,15 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.killButton.on('down', () => {
             this.imposter.attemptKill(this.players, this.deadBodies);
+        });
+
+        this.iteractButton.on('down', () => {
+            const player = this.players[this.socket.id]; // replace this with your player sprite
+            const task = this.taskManager.tasks.find(task => Phaser.Math.Distance.Between(task.x, task.y, player.x, player.y) < 50);
+            if (task) {
+                console.log("starting task");
+                this.taskManager.startTask(task);
+            }
         });
     
         this.socket.on('move', (playerObj) => {
@@ -90,6 +102,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.createEndButtonForHost();
         this.createMuteButton();
         this.imposter.createKillCooldown();
+        this.taskManager.addTask(1350, 650);
     }
 
     update() {
@@ -107,6 +120,7 @@ export default class GameScene extends AbstractGameplayScene {
             this.players[this.socket.id].y,
         );
         this.imposter.updateCooldown();
+        this.taskManager.update();
     }
 
     createEndButtonForHost() {
