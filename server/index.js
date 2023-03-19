@@ -189,6 +189,10 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('teleportToLobby', room);
     });
 
+    socket.on('taskCompleted', (task) => {
+        io.to(socket.roomCode).emit('taskCompleted', task);
+    });
+
     /* Below are webRTC events
     **************************
     **************************

@@ -63,8 +63,16 @@ export default class GameScene extends AbstractGameplayScene {
             const task = this.taskManager.tasks.find(task => Phaser.Math.Distance.Between(task.x, task.y, player.x, player.y) < 50);
             if (task) {
                 console.log("starting task");
-                this.taskManager.startTask(task);
+                let taskCompleted = this.taskManager.startTask(task);
+                if (taskCompleted) {
+                    this.socket.emit('taskCompleted', task);
+                }
             }
+        });
+
+        this.socket.on('taskCompleted', (task) => {
+            this.taskManager.updateCompletedTasks(task);
+            this.taskManager.updateTotalProgressBar();
         });
     
         this.socket.on('move', (playerObj) => {

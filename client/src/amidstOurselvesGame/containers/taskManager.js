@@ -47,6 +47,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
     
     addTask(x, y) {
         const task = this.scene.add.sprite(x, y, 'task');
+        task.isComplete = false;
         task.setInteractive();
         task.on('pointerdown', () => {
             this.startTask(task);
@@ -55,7 +56,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
     }
     
     startTask(task) {
-        if (this.taskInProgress) return;
+        if (this.taskInProgress) return false;
 
         this.taskInProgress = task;
         this.progressBar.setVisible(true);
@@ -69,18 +70,19 @@ export default class TaskManager extends Phaser.GameObjects.Container {
                 duration: 3000,
                 onComplete: () => {
                     if (!this.taskInProgress || !progressTween) {
-                        return;
+                        return false;
                     }
                     progressTween.stop();
                     progressTween = null;
                     this.completeTask();
+                    return true;
                 }
             });
         };
 
         const stopProgress = () => {
             if (!this.taskInProgress || !progressTween) {
-                return;
+                return false;
             }
             if (progressTween) {
                 progressTween.stop();
@@ -91,6 +93,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
 
         this.scene.input.keyboard.on('keydown-F', startProgress);
         this.scene.input.keyboard.on('keyup-F', stopProgress);
+        // return false;
 
     }
 
@@ -104,21 +107,46 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         console.log("I'm here");
         this.progressBar.setVisible(false);
 
-        // find index of completed task in tasks array
-        const index = this.tasks.indexOf(this.taskInProgress);
+        // // find index of completed task in tasks array
+        // const index = this.tasks.indexOf(this.taskInProgress);
 
-        // remove completed task from tasks array
-        if (index !== -1) {
-            this.tasks.splice(index, 1);
-        }
-        this.completedTasks += 1;
-        // update total progress bar
-        const totalProgress = (this.completedTasks / this.totalTasks) * 200;
-        this.totalProgressBar.clear();
-        this.totalProgressBar.fillStyle(0x00ff00, 1);
-        this.totalProgressBar.fillRect(0, 0, totalProgress, 20);
+        // // // remove completed task from tasks array
+        // // if (index !== -1) {
+        // //     this.tasks.splice(index, 1);
+        // // }
+        // if (this.tasks[index].isComplete) {
+        //     return;
+        // }
+        // this.completedTasks += 1;
+        this.updateCompletedTasks(this.taskInProgress);
+        this.updateTotalProgressBar();
 
         // this.taskInProgress.destroy();
         this.taskInProgress = null;
+    }
+
+    updateTotalProgressBar() {
+            // update total progress bar
+            const totalProgress = (this.completedTasks / this.totalTasks) * 200;
+            this.totalProgressBar.clear();
+            this.totalProgressBar.fillStyle(0x00ff00, 1);
+            this.totalProgressBar.fillRect(0, 0, totalProgress, 20);
+    }
+
+    updateCompletedTasks(task) {
+        // find index of completed task in tasks array
+        const index = this.tasks.indexOf(task);
+
+        // // remove completed task from tasks array
+        // if (index !== -1) {
+        //     this.tasks.splice(index, 1);
+        // }
+
+        if (this.tasks[index].isComplete) {
+            return;
+        }
+
+        this.tasks[index].isComplete = true;
+        this.completedTasks += 1;
     }
 }
