@@ -10,6 +10,8 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         this.progressBar = null;
         this.progressTween = null;
         this.taskInProgress = null;
+        this.totalTasks = 6;
+        this.completedTasks = 0;
     
         // create progress bar
         this.createProgressBar();
@@ -31,6 +33,16 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         .setOrigin(0.5)
         .setPadding(10)
         .setStyle({ backgroundColor: '#000000'});
+
+
+        this.totalProgressBarBg = this.scene.add.graphics().setScrollFactor(0);
+        this.totalProgressBarBg.fillStyle(0x000000, 0.5);
+        this.totalProgressBarBg.fillRect(0, 0, 200, 20);
+        this.totalProgressBar = this.scene.add.graphics().setScrollFactor(0);
+        this.totalProgressBar.fillStyle(0x00ff00, 1);
+        this.totalProgressBar.fillRect(0, 0, 0, 20);
+        this.totalProgressBarContainer = this.scene.add.container(500, 550, [this.totalProgressBarBg, this.totalProgressBar]);
+    
     }
     
     addTask(x, y) {
@@ -56,6 +68,9 @@ export default class TaskManager extends Phaser.GameObjects.Container {
                 scaleX: 0,
                 duration: 3000,
                 onComplete: () => {
+                    if (!this.taskInProgress || !progressTween) {
+                        return;
+                    }
                     progressTween.stop();
                     progressTween = null;
                     this.completeTask();
@@ -86,6 +101,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
     }
     
     completeTask() {
+        console.log("I'm here");
         this.progressBar.setVisible(false);
 
         // find index of completed task in tasks array
@@ -95,6 +111,12 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         if (index !== -1) {
             this.tasks.splice(index, 1);
         }
+        this.completedTasks += 1;
+        // update total progress bar
+        const totalProgress = (this.completedTasks / this.totalTasks) * 200;
+        this.totalProgressBar.clear();
+        this.totalProgressBar.fillStyle(0x00ff00, 1);
+        this.totalProgressBar.fillRect(0, 0, totalProgress, 20);
 
         // this.taskInProgress.destroy();
         this.taskInProgress = null;
