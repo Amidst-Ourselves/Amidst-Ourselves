@@ -89,6 +89,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createEndButtonForHost();
         this.createMuteButton();
+        this.imposter.createKillCooldown();
     }
 
     update() {
@@ -105,6 +106,7 @@ export default class GameScene extends AbstractGameplayScene {
             this.players[this.socket.id].x,
             this.players[this.socket.id].y,
         );
+        this.imposter.updateCooldown();
     }
 
     createEndButtonForHost() {
