@@ -24,6 +24,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         this.taskCompleteCallback = null;
         this.scene.input.keyboard.on('keydown', this.handleKeyDown, this);
         this.scene.input.keyboard.on('keyup', this.handleKeyUp, this);
+        this.taskAvailable = false;
     }
     
     createProgressBar() {
@@ -120,7 +121,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
 
 
     handleKeyDown(event) {
-        if (event.key === 'f' && !this.taskInProgress) {
+        if (event.key === 'f' && !this.taskInProgress && this.taskAvailable) {
             this.taskInProgress = true;
             this.taskTimeRemaining = 3000;
             

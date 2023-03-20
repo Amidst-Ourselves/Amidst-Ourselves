@@ -62,6 +62,7 @@ export default class GameScene extends AbstractGameplayScene {
             const task = this.taskManager.findTask();
             if (task) {
                 console.log("starting task");
+                this.taskManager.taskAvailable = true;
                 const index = this.taskManager.tasks.indexOf(task);
                 this.taskManager.startTask(() => {
                     // console.log('Task completed!');
@@ -69,6 +70,9 @@ export default class GameScene extends AbstractGameplayScene {
                     this.taskManager.updateTotalProgressBar();
                     this.socket.emit('taskCompleted', index);
                 });
+            }
+            else {
+                this.taskManager.taskAvailable = false;
             }
         });
 
