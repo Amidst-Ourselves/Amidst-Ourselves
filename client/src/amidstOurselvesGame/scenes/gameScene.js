@@ -59,19 +59,21 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.iteractButton.on('down', () => {
-            const player = this.players[this.socket.id]; // replace this with your player sprite
-            const task = this.taskManager.tasks.find(task => Phaser.Math.Distance.Between(task.x, task.y, player.x, player.y) < 50);
+            const task = this.taskManager.findTask();
             if (task) {
                 console.log("starting task");
-                let taskCompleted = this.taskManager.startTask(task);
-                if (taskCompleted) {
-                    this.socket.emit('taskCompleted', task);
-                }
+                const index = this.taskManager.tasks.indexOf(task);
+                this.taskManager.startTask(() => {
+                    // console.log('Task completed!');
+                    this.taskManager.updateCompletedTasks(index);
+                    this.taskManager.updateTotalProgressBar();
+                    this.socket.emit('taskCompleted', index);
+                });
             }
         });
 
-        this.socket.on('taskCompleted', (task) => {
-            this.taskManager.updateCompletedTasks(task);
+        this.socket.on('taskCompleted', (index) => {
+            this.taskManager.updateCompletedTasks(index);
             this.taskManager.updateTotalProgressBar();
         });
     
@@ -114,15 +116,19 @@ export default class GameScene extends AbstractGameplayScene {
     }
 
     update() {
-        this.movePlayer(
-            this.speed,
-            this.players[this.socket.id].x,
-            this.players[this.socket.id].y,
-            this.keyUp.isDown,
-            this.keyDown.isDown,
-            this.keyLeft.isDown,
-            this.keyRight.isDown
-        );
+        // I disabled player movement in the taskManager class to make sure 
+        // players can not move around while pressing the F key.
+        if (this.keyUp.enabled == true) {
+            this.movePlayer(
+                this.speed,
+                this.players[this.socket.id].x,
+                this.players[this.socket.id].y,
+                this.keyUp.isDown,
+                this.keyDown.isDown,
+                this.keyLeft.isDown,
+                this.keyRight.isDown
+            );
+        }
         this.miniMap.updateMiniMap(
             this.players[this.socket.id].x,
             this.players[this.socket.id].y,
