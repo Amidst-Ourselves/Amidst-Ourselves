@@ -38,11 +38,6 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         // this.progressBar = this.scene.add.container(500, 500, [progressBarBg, progressBar]);
         // this.progressBar.setVisible(false);
 
-        this.countdown = this.scene.add.text(1350, 650, 'task', { fontSize: '32px', fill: '#ffffff' })
-        .setOrigin(0.5)
-        .setPadding(10)
-        .setStyle({ backgroundColor: '#000000'});
-
 
         this.totalProgressBarBg = this.scene.add.graphics().setScrollFactor(0);
         this.totalProgressBarBg.fillStyle(0x000000, 0.5);
@@ -62,6 +57,11 @@ export default class TaskManager extends Phaser.GameObjects.Container {
             this.startTask(task);
         });
         this.tasks.push(task);
+
+        this.countdown = this.scene.add.text(x, y, 'task', { fontSize: '32px', fill: '#ffffff' })
+        .setOrigin(0.5)
+        .setPadding(10)
+        .setStyle({ backgroundColor: '#000000'});
     }
 
     // Please DO NOT remove this piece of code, I might revisit it in the future.

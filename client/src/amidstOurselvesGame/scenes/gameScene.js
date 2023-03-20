@@ -113,6 +113,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.createMuteButton();
         this.imposter.createKillCooldown();
         this.taskManager.addTask(1350, 650);
+        this.miniMap.createTaskSprites();
     }
 
     update() {

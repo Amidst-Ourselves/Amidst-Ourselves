@@ -33,6 +33,20 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMapPlayer.displayWidth = MAP1_MINIMAP_PLAYER_WIDTH;
         this.miniMapPlayer.setScrollFactor(0);
         this.miniMapPlayer.visible = false;
+
+        this.miniMapTasks = [];
+    }
+
+    createTaskSprites() {
+        console.log(this.scene.taskManager.tasks);
+        for (let task of this.scene.taskManager.tasks) {
+            const circle = this.scene.add.graphics();
+            circle.fillStyle(0xffff00, 1);
+            circle.fillCircle(Math.floor(task.x/MAP_SCALE*MAP1_MINIMAP_SCALE), Math.floor(task.y/MAP_SCALE*MAP1_MINIMAP_SCALE), 5);
+            circle.setScrollFactor(0);
+            circle.visible = false;
+            this.miniMapTasks.push(circle);
+        }
     }
 
     toggleMiniMap() { 
@@ -40,10 +54,17 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMap.visible = complement;
         this.overlay.visible = complement;
         this.miniMapPlayer.visible = complement;
+        this.updateMiniMap_tasks(complement);
     }
 
     updateMiniMap(newX, newY) {
         this.miniMapPlayer.x = Math.floor(newX/MAP_SCALE*MAP1_MINIMAP_SCALE);
         this.miniMapPlayer.y = Math.floor(newY/MAP_SCALE*MAP1_MINIMAP_SCALE);
+    }
+    updateMiniMap_tasks(complement) {
+        for (let task of this.miniMapTasks) {
+            task.visible = complement;
+        }
+
     }
 }
