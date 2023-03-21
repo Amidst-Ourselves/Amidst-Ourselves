@@ -8,7 +8,10 @@ import {
     FRAMES_PER_COLOUR,
     COLOUR_STATION_MIN_DIST,
     COLOUR_STATION_X,
-    COLOUR_STATION_Y
+    COLOUR_STATION_Y,
+    MAP1_WALLS,
+    WIDTH,
+    HEIGHT
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
@@ -51,10 +54,12 @@ export default class LobbyScene extends AbstractGameplayScene {
     }
     
     create() {
-        this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
+        this.image = this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
         this.createSpritesFromTempPlayers();
         this.colourStation.create(this.players[this.socket.id]);
+
+        this.createSight();
 
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
@@ -88,6 +93,25 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
+    }
+
+    createSight() {
+
+        let shape = this.make.graphics();
+
+        shape.fillStyle(0xffffff);
+        shape.fillPath();
+        shape.setAlpha(0.5);
+        
+
+        shape.slice(400, 300, 200, Phaser.Math.DegToRad(340), Phaser.Math.DegToRad(30), true);
+
+        let mask = shape.createGeometryMask();
+
+        this.image.setMask(mask);
+
+
+
     }
     
     update() {
