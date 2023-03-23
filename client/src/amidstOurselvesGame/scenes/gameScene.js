@@ -11,6 +11,7 @@ import AbstractGameplayScene from "./abstractGameplayScene";
 import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
 import TaskManager from "../containers/taskManager";
+import Meeting from "../containers/meeting";
 
 
 export default class GameScene extends AbstractGameplayScene {
@@ -25,12 +26,19 @@ export default class GameScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+        this.canMove = true;
     }
 
     preload() {
         this.load.image('map1', 'amidstOurselvesAssets/map1.png');
         this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
         this.load.spritesheet('audioIcon', audioIconpng, {frameWidth: 500, frameHeight: 500});
+        this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000,
+            frameHeight: 200});
+        this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100,
+            frameHeight: 100});
+        this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100,
+            frameHeight: 100});
     }
     
     create() {
@@ -44,11 +52,13 @@ export default class GameScene extends AbstractGameplayScene {
         this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.iteractButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
+        this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
         this.createSpritesFromTempPlayers();
         this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
         this.imposter = new Imposter(this, this.socket);
         this.taskManager = new TaskManager(this, this.socket);
+        this.meetingManager = new Meeting(this);
 
         this.keyMiniMap.on('down', () => {
             this.miniMap.toggleMiniMap();
@@ -56,6 +66,12 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.killButton.on('down', () => {
             this.imposter.attemptKill(this.players, this.deadBodies);
+        });
+
+        this.callButton.on('down', () => {
+            if(this.meetingManager.checkMeetingConditions()) {
+                this.socket.emit('meeting');
+            }
         });
 
         this.iteractButton.on('down', () => {
@@ -111,19 +127,29 @@ export default class GameScene extends AbstractGameplayScene {
             this.audioIcons[config.id].visible = config.bool;
         });
 
+        this.socket.on('meeting', () => {
+            this.meetingManager.show();
+        });
+
+        this.socket.on('meetingResult', (result) => {
+            this.meetingManager.showResult(result);
+
+        })
+
         this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createEndButtonForHost();
         this.createMuteButton();
         this.imposter.createKillCooldown();
         this.taskManager.addTask(1350, 650);
+        this.taskManager.addTask(1650, 650);
         this.miniMap.createTaskSprites();
     }
 
     update() {
         // I disabled player movement in the taskManager class to make sure 
         // players can not move around while pressing the F key.
-        if (this.keyUp.enabled == true) {
+        if (this.canMove) {
             this.movePlayer(
                 this.speed,
                 this.players[this.socket.id].x,

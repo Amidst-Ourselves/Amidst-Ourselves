@@ -35,6 +35,7 @@ const port = 3000;
 // app.use(require("./API/user"));
 
 const dbo = require("./connect");
+const { NONE } = require("phaser");
 httpServer.listen(3000, () => {
     console.log('listening on localhost:3000');
     dbo.connectToServer(function (err) {
@@ -126,6 +127,7 @@ io.on('connection', (socket) => {
             if (playerCount(rooms[socket.roomCode]) === 0) {
                 delete rooms[socket.roomCode];
             }
+            console.log("I'm trying to disconnect")
             io.to(socket.roomCode).emit('leave', {id: socket.id});
         }
     });
@@ -191,6 +193,40 @@ io.on('connection', (socket) => {
 
     socket.on('taskCompleted', (task) => {
         io.to(socket.roomCode).emit('taskCompleted', task);
+    });
+
+    socket.on('meeting', () => {
+        io.to(socket.roomCode).emit('meeting');
+    });
+
+    socket.on('voted', (playerID) => {
+        let room = rooms[socket.roomCode];
+        room.votes[playerID]++;
+    });
+
+    socket.on('meetingTimeUp', () => {
+        let result = NONE;
+        let room = rooms[socket.roomCode];
+        let alive = 0;
+        for (let id in room.players) {
+            if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+                room.players[id].playerState === PLAYER_STATE.imposter) {
+                alive++;
+            }
+        }
+
+        for (let id in room.votes) {
+            if (room.votes[id] > max) {
+                max = voteNum;
+                result = id;
+            }
+        }
+        if (max/alive > 0.5) {
+            io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
+        }
+        else {
+            io.to(socket.roomCode).emit('meetingResult', NONE);
+        }
     });
 
     /* Below are webRTC events
@@ -300,8 +336,10 @@ function createRoom(roomObj, hostPlayerObj) {
     let roomCode = createRoomCode();
     let players = {};
     let deadBodies = {};
+    let votes = {};
     players[hostPlayerObj.id] = hostPlayerObj;
     deadBodies[hostPlayerObj.id] = hostPlayerObj;
+    votes[hostPlayerObj.id] = 0;
     let newRoom = {
         roomCode: roomCode,
         playerLimit: roomObj.playerLimit,
@@ -313,7 +351,8 @@ function createRoom(roomObj, hostPlayerObj) {
         gameState: GAME_STATE.lobby,
         players: players,
         deadBodies: deadBodies,
-        webRTC: roomObj.webRTC
+        webRTC: roomObj.webRTC,
+        votes: votes
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
