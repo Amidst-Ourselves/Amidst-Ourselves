@@ -2,13 +2,15 @@ import Phaser from "phaser";
 import {
   WIDTH,
   HEIGHT,
-  MAP1_MINIMAP_SCALE,
-  MAP1_MINIMAP_PLAYER_HEIGHT,
-  MAP1_MINIMAP_PLAYER_WIDTH,
-  MAP_SCALE,
   FRAMES_PER_COLOUR,
   PLAYER_HEIGHT,
-  SPRITE_CONFIG,
+  PLAYER_STATE,
+  BOARD_WIDTH,
+  BOARD_HEIGHT,
+  BOARD_RADIUS,
+  BOARD_COLOR,
+  BOARD_STROKE_COLOR,
+  BOARD_STROKE_WIDTH,
 } from "../constants";
 
 export default class Meeting extends Phaser.GameObjects.Container {
@@ -23,23 +25,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.overlay.setScrollFactor(0);
         this.overlay.visible = false;
         this.overlay.setDepth(2);
-
-        // Create a text object for the skip button
-        this.skipText = this.scene.add.text(20, HEIGHT - 50, "Skip", {
-            fontSize: "32px",
-            color: "#ffffff",
-        });
-        this.skipText.setScrollFactor(0);
-        this.skipText.setInteractive();
-        this.skipText.on("pointerdown", () => {
-        // Handle skip button click event
-        });
-        this.skipText.visible = false;
-        this.skipText.setDepth(4);
-
-        // this.scene.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
-        // this.scene.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 500,
-        //     frameHeight: 50});
 
         const boardWidth = 780;
         const boardHeight = 580;
@@ -98,7 +83,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             confirm_button.on('pointerdown', () => {
                 // Handle player vote button click event
                 console.log("pressed");
-                this.updateVotes(confirm_button.id, confirm_button.idx);
+                this.updateVotes(confirm_button.player, confirm_button.idx);
             });
             confirm_button.on('pointerover', () => {
                 confirm_button.setTint(0x808080);
@@ -133,7 +118,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             this.cancel_buttons.push(cancel_button);
 
 
-            const button = this.scene.add.text(WIDTH / 2, 100 + (i * 70) - 25, id, { fontSize: '32px', fill: '#000000' });
+            const button = this.scene.add.text(WIDTH / 2, 100 + (i * 70) - 25, player.name, { fontSize: '32px', fill: '#000000' });
             button.setOrigin(0.5);
             button.setScrollFactor(0);
             button.setScale(0.5);
@@ -150,9 +135,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
             this.playerSprites.push(playerSprite);
             i++;
         }
-
-
-
     }
 
     show() {
@@ -231,6 +213,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
     }
 
     updateVotes(player, idx) {
+        console.log("voted for: ");
+        console.log(player);
         this.scene.socket.emit("voted", player);
         this.vote_tabs[idx].setTint(0x808080);
         for (const tab of this.vote_tabs) {
@@ -251,66 +235,92 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
     showResult(result) {
         console.log("show result");
-        if (result) {
-            
-        //     // Countdown timer
-        //     let countdown = 5;
-
-        //     const timer = this.scene.time.addEvent({
-        //         delay: 1000,
-        //         loop: true,
-        //         callback: () => {
-        //         // console.log(this.scene.sys.game.loop.delta);  
-        //         countdown --;
-
-        //         if (countdown <= 0) {
-        //             timer.remove();
-        //         }
-        //         },
-        //         Loop: true,
-        //     });
-        // }
-            const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
-            text.setOrigin(0.5);
+        console.log(result)
+        if (result !== null) {
+            const player = this.scene.players[result.result].name;
+            let message = `Player ${player} is voted out`; 
+            this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
             text.setScrollFactor(0);
-        
-            const message = 'Player { } is voted out';
-            const duration = 1000;
-            const delay = 200;
-        
-            let tween = this.scene.tweens.add({
-                targets: text,
-                duration: duration,
-                delay: delay,
-                ease: 'Linear',
-                repeat: message.length - 1,
-                onUpdate: function (tween, target) {
-                    const progress = tween.totalProgress();
-                    const currentIndex = Math.floor(progress * message.length);
-                    target.setText(message.substring(0, currentIndex + 1));
+            // Countdown timer
+            let countdown = 5;
+
+            const timer = this.scene.time.addEvent({
+                delay: 1000,
+                loop: true,
+                callback: () => {
+                // console.log(this.scene.sys.game.loop.delta);  
+                countdown --;
+
+                if (countdown <= 0) {
+                    timer.remove();
+                    text.destroy();
                 }
+                },
+                Loop: true,
             });
+        
+            // const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
+            // // text.setOrigin(0.5);
+            // text.setScrollFactor(0);
+        
+            // const message = 'Player { } is voted out';
+            // const duration = 1000;
+            // const delay = 200;
+        
+            // let tween = this.scene.tweens.add({
+            //     targets: text,
+            //     duration: duration,
+            //     delay: delay,
+            //     ease: 'Linear',
+            //     repeat: message.length - 1,
+            //     onUpdate: function (tween, target) {
+            //         const progress = tween.totalProgress();
+            //         const currentIndex = Math.floor(progress * message.length);
+            //         target.setText(message.substring(0, currentIndex + 1));
+            //     }
+            // });
         }
         else {
-            const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
-            text.setOrigin(0.5);
+            // const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
+            // // text.setOrigin(0.5);
+            // text.setScrollFactor(0);
+        
+            // const message = 'Nothing happened';
+            // const duration = 1000;
+            // const delay = 200;
+        
+            // let tween = this.scene.tweens.add({
+            //     targets: text,
+            //     duration: duration,
+            //     delay: delay,
+            //     ease: 'Linear',
+            //     repeat: message.length - 1,
+            //     onUpdate: function (tween, target) {
+            //         const progress = tween.totalProgress();
+            //         const currentIndex = Math.floor(progress * message.length);
+            //         target.setText(message.substring(0, currentIndex + 1));
+            //     }
+            // });
+            let message = 'Nothing happened';
+            const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
             text.setScrollFactor(0);
-        
-            const message = 'Nothing happened';
-            const duration = 1000;
-            const delay = 200;
-        
-            let tween = this.scene.tweens.add({
-                targets: text,
-                duration: duration,
-                delay: delay,
-                ease: 'Linear',
-                repeat: message.length - 1,
-                onUpdate: function (tween, target) {
-                    const progress = tween.totalProgress();
-                    const currentIndex = Math.floor(progress * message.length);
-                    target.setText(message.substring(0, currentIndex + 1));
+            // Countdown timer
+            let countdown = 5;
+
+            const timer = this.scene.time.addEvent({
+                delay: 1000,
+                loop: true,
+                callback: () => {
+                // console.log(this.scene.sys.game.loop.delta);  
+                countdown --;
+
+                if (countdown <= 0) {
+                    timer.remove();
+                    text.destroy();
                 }
+                },
+                Loop: true,
             });
         }
     }

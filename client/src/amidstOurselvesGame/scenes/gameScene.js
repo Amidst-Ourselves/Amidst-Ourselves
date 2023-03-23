@@ -5,6 +5,7 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
+    PLAYER_STATE,
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
@@ -56,7 +57,9 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.createSpritesFromTempPlayers();
         this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
-        this.imposter = new Imposter(this, this.socket);
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+            this.imposter = new Imposter(this, this.socket);
+        }
         this.taskManager = new TaskManager(this, this.socket);
         this.meetingManager = new Meeting(this);
 
@@ -65,7 +68,9 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.killButton.on('down', () => {
-            this.imposter.attemptKill(this.players, this.deadBodies);
+            if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+                this.imposter.attemptKill(this.players, this.deadBodies);
+            }
         });
 
         this.callButton.on('down', () => {
@@ -140,7 +145,9 @@ export default class GameScene extends AbstractGameplayScene {
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createEndButtonForHost();
         this.createMuteButton();
-        this.imposter.createKillCooldown();
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+            this.imposter.createKillCooldown();
+        }
         this.taskManager.addTask(1350, 650);
         this.taskManager.addTask(1650, 650);
         this.miniMap.createTaskSprites();
@@ -164,7 +171,9 @@ export default class GameScene extends AbstractGameplayScene {
             this.players[this.socket.id].x,
             this.players[this.socket.id].y,
         );
-        this.imposter.updateCooldown();
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+                this.imposter.updateCooldown();
+        }
         this.taskManager.update();
     }
 

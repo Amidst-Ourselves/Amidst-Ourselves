@@ -35,7 +35,6 @@ const port = 3000;
 // app.use(require("./API/user"));
 
 const dbo = require("./connect");
-const { NONE } = require("phaser");
 httpServer.listen(3000, () => {
     console.log('listening on localhost:3000');
     dbo.connectToServer(function (err) {
@@ -197,6 +196,12 @@ io.on('connection', (socket) => {
 
     socket.on('meeting', () => {
         io.to(socket.roomCode).emit('meeting');
+        let room = rooms[socket.roomCode];
+        room.meetingCompleted = false;
+        for (let id in room.votes) {
+            // reset all votes to 0
+            room.votes[id] = 0;
+        }
     });
 
     socket.on('voted', (playerID) => {
@@ -205,27 +210,32 @@ io.on('connection', (socket) => {
     });
 
     socket.on('meetingTimeUp', () => {
-        let result = NONE;
-        let room = rooms[socket.roomCode];
-        let alive = 0;
-        for (let id in room.players) {
-            if (room.players[id].playerState === PLAYER_STATE.crewmate || 
-                room.players[id].playerState === PLAYER_STATE.imposter) {
-                alive++;
+        if (!rooms[socket.roomCode].meetingCompleted) {
+            let result = null;
+            let max = 0;
+            let room = rooms[socket.roomCode];
+            let alive = 0;
+            for (let id in room.players) {
+                if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+                    room.players[id].playerState === PLAYER_STATE.imposter) {
+                    alive++;
+                }
             }
-        }
 
-        for (let id in room.votes) {
-            if (room.votes[id] > max) {
-                max = voteNum;
-                result = id;
+            for (let id in room.votes) {
+                if (room.votes[id] > max) {
+                    max = room.votes[id];
+                    result = id;
+                }
             }
-        }
-        if (max/alive > 0.5) {
-            io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
-        }
-        else {
-            io.to(socket.roomCode).emit('meetingResult', NONE);
+            console.log(max/alive);
+            if (max/alive > 0.5) {
+                io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
+            }
+            else {
+                io.to(socket.roomCode).emit('meetingResult', null);
+            }
+            rooms[socket.roomCode].meetingCompleted = true;
         }
     });
 
@@ -352,7 +362,8 @@ function createRoom(roomObj, hostPlayerObj) {
         players: players,
         deadBodies: deadBodies,
         webRTC: roomObj.webRTC,
-        votes: votes
+        votes: votes,
+        meetingCompleted: false
     }
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
