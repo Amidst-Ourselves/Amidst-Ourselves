@@ -51,7 +51,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
     }
 
     createTaskSprites() {
-        console.log(this.scene.taskManager.tasks);
+        console.log('tasks', this.scene.taskManager.tasks);
         for (let task of this.scene.taskManager.tasks) {
             const circle = this.scene.add.graphics();
             circle.fillStyle(0xffff00, 1);
@@ -74,11 +74,10 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMapPlayer.x = Math.floor(this.player.x/MAP_SCALE*MAP1_MINIMAP_SCALE);
         this.miniMapPlayer.y = Math.floor(this.player.y/MAP_SCALE*MAP1_MINIMAP_SCALE);
     }
-    
+
     updateMiniMap_tasks(complement) {
         for (let task of this.miniMapTasks) {
             task.visible = complement;
         }
-
     }
 }

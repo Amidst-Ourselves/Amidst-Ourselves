@@ -62,17 +62,12 @@ export default class GameScene extends AbstractGameplayScene {
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
         this.imposter = new Imposter(this, this.socket);
         
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.iteractButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
         this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
         this.createSpritesFromTempPlayers();
-        this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
+        //this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
         if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
             this.imposter = new Imposter(this, this.socket);
         }
@@ -184,10 +179,7 @@ export default class GameScene extends AbstractGameplayScene {
                 this.players[this.socket.id].playerState
             );
         }
-        this.miniMap.updateMiniMap(
-            this.players[this.socket.id].x,
-            this.players[this.socket.id].y,
-        );
+        this.miniMap.update();
         if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
                 this.imposter.updateCooldown();
         }
