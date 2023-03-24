@@ -94,6 +94,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
+        this.players[playerObj.id].name = playerObj.id;
 
         this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', 8).setOrigin(0.5, 1);
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;

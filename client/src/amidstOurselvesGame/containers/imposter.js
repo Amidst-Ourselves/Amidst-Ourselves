@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import {
+    PLAYER_STATE,
+  } from "../constants";
 
 export default class Imposter extends Phaser.GameObjects.Container {
 
@@ -23,6 +26,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
         for (let player in players) {
             if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 20 && player !== this.socket.id) {
                 console.log("I'm killing: "+players[player].id);
+                players[player].playerState = PLAYER_STATE.ghost;
                 this.socket.emit('kill', {
                     id: player,
                     x: players[player].x,

@@ -53,7 +53,6 @@ export default class TaskManager extends Phaser.GameObjects.Container {
     addTask(x, y) {
         const task = this.scene.add.sprite(x, y, 'task');
         task.isComplete = false;
-        task.setInteractive();
         task.on('pointerdown', () => {
             this.startTask(task);
         });
@@ -132,10 +131,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
             if (this.taskTimerEvent) {
                 this.scene.time.removeEvent(this.taskTimerEvent);
             }
-            this.scene.keyUp.enabled = false;
-            this.scene.keyDown.enabled = false;
-            this.scene.keyLeft.enabled = false;
-            this.scene.keyRight.enabled = false;
+            this.scene.canMove = false;
 
 
             this.taskTimerEvent = this.scene.time.addEvent({ delay: 100, callback: this.updateTaskTimer, callbackScope: this, loop: true });
@@ -147,20 +143,14 @@ export default class TaskManager extends Phaser.GameObjects.Container {
             if (this.taskTimeRemaining <= 0) {
                 // this.taskCompleteCallback();
                 if (typeof this.taskCompleteCallback === 'function') {
-                    this.scene.keyUp.enabled = true;
-                    this.scene.keyDown.enabled = true;
-                    this.scene.keyLeft.enabled = true;
-                    this.scene.keyRight.enabled = true;
+                    this.scene.canMove = true;
                     this.taskCompleteCallback();
                 }
             }
             this.taskInProgress = false;
             this.taskTimeRemaining = 0;
             this.taskTimerText.destroy();
-            this.scene.keyUp.enabled = true;
-            this.scene.keyDown.enabled = true;
-            this.scene.keyLeft.enabled = true;
-            this.scene.keyRight.enabled = true;
+            this.scene.canMove = true;
         }
     }
     
