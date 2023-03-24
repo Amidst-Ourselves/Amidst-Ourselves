@@ -41,6 +41,13 @@ export const MAP1_MINIMAP_SCALE = WIDTH/MAP1_WIDTH;
 export const MAP1_MINIMAP_PLAYER_WIDTH = SPRITE_WIDTH * MAP1_MINIMAP_SCALE;
 export const MAP1_MINIMAP_PLAYER_HEIGHT = SPRITE_HEIGHT * MAP1_MINIMAP_SCALE;
 
+export const BOARD_WIDTH = 780;
+export const BOARD_HEIGHT = 580;
+export const BOARD_RADIUS = 20;
+export const BOARD_COLOR = 0xADD8E6;
+export const BOARD_STROKE_COLOR = 0x808080;
+export const BOARD_STROKE_WIDTH = 4;
+
 export const MAP1_WALLS = new Set(JSON.parse(`
 [
     "100-132",

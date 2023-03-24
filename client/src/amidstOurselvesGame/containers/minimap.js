@@ -46,10 +46,39 @@ export default class MiniMap extends Phaser.GameObjects.Container {
             this.overlay.visible = complement;
             this.miniMapPlayer.visible = complement;
         });
+
+        this.miniMapTasks = [];
+    }
+
+    createTaskSprites() {
+        console.log(this.scene.taskManager.tasks);
+        for (let task of this.scene.taskManager.tasks) {
+            const circle = this.scene.add.graphics();
+            circle.fillStyle(0xffff00, 1);
+            circle.fillCircle(Math.floor(task.x/MAP_SCALE*MAP1_MINIMAP_SCALE), Math.floor(task.y/MAP_SCALE*MAP1_MINIMAP_SCALE), 5);
+            circle.setScrollFactor(0);
+            circle.visible = false;
+            this.miniMapTasks.push(circle);
+        }
+    }
+
+    toggleMiniMap() { 
+        let complement = !this.miniMap.visible;
+        this.miniMap.visible = complement;
+        this.overlay.visible = complement;
+        this.miniMapPlayer.visible = complement;
+        this.updateMiniMap_tasks(complement);
     }
 
     update() {
         this.miniMapPlayer.x = Math.floor(this.player.x/MAP_SCALE*MAP1_MINIMAP_SCALE);
         this.miniMapPlayer.y = Math.floor(this.player.y/MAP_SCALE*MAP1_MINIMAP_SCALE);
+    }
+    
+    updateMiniMap_tasks(complement) {
+        for (let task of this.miniMapTasks) {
+            task.visible = complement;
+        }
+
     }
 }
