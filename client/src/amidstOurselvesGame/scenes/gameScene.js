@@ -19,7 +19,7 @@ import Meeting from "../containers/meeting";
 
 export default class GameScene extends AbstractGameplayScene {
     constructor() {
-        super("gameScene")
+        super("gameScene");
     }
 
     init(roomObj) {
@@ -45,6 +45,7 @@ export default class GameScene extends AbstractGameplayScene {
             this,
             Phaser.Input.Keyboard.KeyCodes.F,
             roomObj.totalTasks,
+            roomObj.tasksComplete,
             (taskName) => { this.socket.emit('taskCompleted', {'name': taskName}); },
         );
 
@@ -68,7 +69,6 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.taskManager.create(this.players[this.socket.id]);
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
-        this.miniMap.addTasks(this.taskManager.getTaskInfo());
 
         this.imposter = new Imposter(this, this.socket);
         this.meetingManager = new Meeting(this);
@@ -123,10 +123,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.on('kill', (playerObj) => {
             if (playerObj.id === this.socket.id) {
                 this.changeLocalPlayerToGhost();
-                
-                for (let task of this.players[this.socket.id].tasks) {
-                    this.socket.emit('taskCompleted', {'name': task});
-                }
+                this.taskManager.finishAllTasks();
             } else {
                 this.changePlayerToGhost(playerObj.id);
             }
@@ -164,7 +161,7 @@ export default class GameScene extends AbstractGameplayScene {
             );
         }
         if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
-                this.imposter.updateCooldown();
+            this.imposter.updateCooldown();
         }
         this.taskManager.update();
         this.miniMap.update();
@@ -188,10 +185,14 @@ export default class GameScene extends AbstractGameplayScene {
     }
 
     cleanupSocketio() {
+        this.socket.off('taskCompleted');
         this.socket.off('move');
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+        this.socket.off('kill');
         this.socket.off('webRTC_speaking');
+        this.socket.off('meeting');
+        this.socket.off('meetingResult');
     }
 }

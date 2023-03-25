@@ -6,7 +6,8 @@ import {
     MAP1_MINIMAP_PLAYER_HEIGHT,
     MAP1_MINIMAP_PLAYER_WIDTH,
     MAP_SCALE,
-    FRAMES_PER_COLOUR
+    FRAMES_PER_COLOUR,
+    MAP1_TASKS,
 } from "../constants";
 
 export default class MiniMap extends Phaser.GameObjects.Container {
@@ -39,6 +40,12 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMapPlayer.setScrollFactor(0);
         this.miniMapPlayer.visible = false;
 
+        for (let taskName of player.tasks) {
+            if (MAP1_TASKS[taskName] !== undefined) {
+                this.addTask(taskName, MAP1_TASKS[taskName].x, MAP1_TASKS[taskName].y);
+            }
+        }
+
         this.player = player;
 
         this.keyMiniMap.on('down', () => {
@@ -46,18 +53,17 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         });
     }
 
-    addTasks(taskInfo) {
-        for (let task in taskInfo) {
-            let miniMapTaskX = Math.floor(taskInfo[task].x/MAP_SCALE*MAP1_MINIMAP_SCALE);
-            let miniMapTaskY = Math.floor(taskInfo[task].y/MAP_SCALE*MAP1_MINIMAP_SCALE);
+    addTask(name, x, y) {
+        let miniMapTaskX = Math.floor(x/MAP_SCALE*MAP1_MINIMAP_SCALE);
+        let miniMapTaskY = Math.floor(y/MAP_SCALE*MAP1_MINIMAP_SCALE);
 
-            const circle = this.scene.add.graphics();
-            circle.fillStyle(0xffff00, 1);
-            circle.fillCircle(miniMapTaskX, miniMapTaskY, 5);
-            circle.setScrollFactor(0);
-            circle.visible = false;
-            this.miniMapTasks[task] = circle;
-        }
+        let circle = this.scene.add.graphics();
+        circle.fillStyle(0xffff00, 1);
+        circle.fillCircle(miniMapTaskX, miniMapTaskY, 5);
+        circle.setScrollFactor(0);
+        circle.visible = false;
+
+        this.miniMapTasks[name] = circle;
     }
 
     finishTask(taskName) {

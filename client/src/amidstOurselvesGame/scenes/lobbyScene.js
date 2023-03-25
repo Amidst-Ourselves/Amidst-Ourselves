@@ -20,7 +20,7 @@ import ColourStation from "../containers/colourStation";
 
 export default class LobbyScene extends AbstractGameplayScene {
     constructor() {
-        super("lobbyScene")
+        super("lobbyScene");
     }
 
     init(roomObj) {
@@ -128,10 +128,6 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.keyRight.isDown,
             this.players[this.socket.id].playerState
         );
-    }
-
-    updatePlayerColour(newColour, playerId) {
-        this.players[playerId].setFrame(newColour * FRAMES_PER_COLOUR);
     }
 
     createStartButtonForHost() {

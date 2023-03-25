@@ -3,7 +3,7 @@ import { MAP1_TASKS, MAP1_TASK_MIN_DIST } from "../constants";
 
 export default class TaskManager extends Phaser.GameObjects.Container {
 
-    constructor(scene, keyCode, totalTasks, taskCompleteCallback) {
+    constructor(scene, keyCode, totalTasks, tasksComplete, taskCompleteCallback) {
         super(scene);
 
         this.tasks = {};
@@ -14,7 +14,7 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         this.progressBar = null;
         this.taskInProgress = null;
         this.totalTasks = totalTasks;
-        this.completedTasks = 0;
+        this.tasksComplete = tasksComplete;
 
         this.taskCompleteCallback = taskCompleteCallback;
 
@@ -45,12 +45,13 @@ export default class TaskManager extends Phaser.GameObjects.Container {
             }
         }
 
+        this.updateTaskbar();
+
         this.player = player;
 
         this.keyTask.on('down', () => {
             const taskName = this.findTask();
             if (taskName !== undefined) {
-                console.log("starting task");
                 this.taskAvailable = true;
                 this.startTask(taskName);
             }
@@ -61,11 +62,8 @@ export default class TaskManager extends Phaser.GameObjects.Container {
     }
 
     addTask(name, x, y) {
-        let task = this.scene.add.sprite(x, y, 'task');
-        let taskName = this.scene.add.text(x, y, name, { fontSize: '32px', fill: '#ffffff' })
-
-        this.tasks[name] = task;
-        this.taskNames[name] = taskName
+        this.tasks[name] = this.scene.add.sprite(x, y, 'task');
+        this.taskNames[name] = this.scene.add.text(x, y, name, { fontSize: '32px', fill: '#ffffff' });
     }
 
     removeTask(name) {
@@ -137,10 +135,19 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         this.incrementTaskbar(taskName);
     }
 
-    incrementTaskbar() {
-        this.completedTasks += 1;
-        let totalProgress = (this.completedTasks / this.totalTasks) * 200;
+    finishAllTasks() {           
+        for (let task in this.tasks) {
+            this.taskCompleteCallback(task);
+        }
+    }
 
+    incrementTaskbar() {
+        this.tasksComplete += 1;
+        this.updateTaskbar();
+    }
+
+    updateTaskbar() {
+        let totalProgress = (this.tasksComplete / this.totalTasks) * 200;
         this.totalProgressBar.clear();
         this.totalProgressBar.fillStyle(0x00ff00, 1);
         this.totalProgressBar.fillRect(0, 0, totalProgress, 20);

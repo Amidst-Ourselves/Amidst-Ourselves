@@ -107,8 +107,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
     
     createSprite(playerObj) {
-        console.log(playerObj);
-
         let startingDeadBodyFrame = playerObj.colour * FRAMES_PER_COLOUR + DEAD_BODY_FRAME_OFFSET;
         let startingPlayerFrame;
         let startingAlpha;
@@ -206,14 +204,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.deadBodies[playerId].visible = true;
     }
 
-    setImposterNameColours() {
-        for (let playerId in this.players) {
-            if (this.players[playerId].playerState === PLAYER_STATE.imposter) {
-                this.playerNames[playerId].setTint(0xff0000);
-            }
-        }
-    }
-
     changeLocalPlayerToGhost() {
         let startingFrame = this.players[this.socket.id].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
 
@@ -239,6 +229,18 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         } else {
             this.hidePlayer(playerId);
         }
+    }
+
+    updatePlayerColour(newColour, playerId) {
+        let newColourFrame;
+        if (this.players[playerId].playerState === PLAYER_STATE.ghost) {
+            newColourFrame = newColour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET;
+        } else {
+            newColourFrame = newColour * FRAMES_PER_COLOUR;
+        }
+
+        this.players[playerId].setFrame(newColourFrame);
+        this.players[playerId].colour = newColour
     }
 
 
