@@ -151,18 +151,19 @@ io.on('connection', (socket) => {
     });
     
     socket.on('kill', (playerObj) => {
-        io.to(socket.roomCode).emit('kill', {
-            id: playerObj.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
         rooms[socket.roomCode].deadBodies[playerObj.id].x = playerObj.x;
         rooms[socket.roomCode].deadBodies[playerObj.id].y = playerObj.y;
+        rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
+        io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
     });
     
     socket.on('startGame', () => {
         let room = rooms[socket.roomCode];
         let imposters = chooseRandomItemsFromList(Object.keys(room.players), room.imposterCount);
+
+        room.gameState = GAME_STATE.action;
+        room.totalTasks = (playerCount(room) - room.imposterCount) * room.taskCount;
+        room.tasksComplete = 0;
         for (let playerId in room.players) {
             if (imposters.includes(playerId)) {
                 room.players[playerId].playerState = PLAYER_STATE.imposter;
@@ -174,7 +175,6 @@ io.on('connection', (socket) => {
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
         }
-        room.gameState = GAME_STATE.action;
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
 
@@ -190,8 +190,17 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('teleportToLobby', room);
     });
 
-    socket.on('taskCompleted', (task) => {
-        io.to(socket.roomCode).emit('taskCompleted', task);
+    socket.on('taskCompleted', (taskObj) => {
+        let room = rooms[socket.roomCode];
+        let player = room.players[socket.id];
+
+        if (player.tasks.includes(taskObj.name)) {
+            player.tasks = player.tasks.filter(x => x !== taskObj.name);
+            room.tasksComplete += 1;
+
+            taskObj.id = socket.id;
+            io.to(socket.roomCode).emit('taskCompleted', taskObj);
+        }
     });
 
     socket.on('meeting', () => {

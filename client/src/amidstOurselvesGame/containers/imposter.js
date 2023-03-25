@@ -16,6 +16,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
         this.cooldownTimer = undefined;
         this.killReady = true;
         this.update(this.scene.players[this.socket.id]);
+        this.createKillCooldown();
     }
 
     update(player) {

@@ -7,7 +7,10 @@ import {
     MAP1_WALLS,
     FRAMES_PER_COLOUR,
     GHOST_FRAME_OFFSET,
+    DEAD_BODY_FRAME_OFFSET,
 } from "../constants"
+
+
 
 
 export default class AbstractGameplayScene extends Phaser.Scene {
@@ -18,6 +21,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.audioIcons = {};
         this.deadBodies = {};
     }
+
+
+
 
     movePlayer(speed, oldX, oldY, up, down, left, right, state) {
         let newX = oldX;
@@ -47,8 +53,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             return;
         }
     
-        // console.log(newX);
-        // console.log(newY);
         let wallnewX = Math.floor(newX/MAP_SCALE);
         let wallnewY = Math.floor(newY/MAP_SCALE);
         let walloldX = Math.floor(oldX/MAP_SCALE);
@@ -79,64 +83,65 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.webRTC.move({id: playerId, x: newX, y: newY});
     }
 
-    createSpritesFromTempPlayers() {
-        for (let playerId in this.tempPlayers) {
-            this.createSprite(this.tempPlayers[playerId]);
+
+
+
+    createPlayers(playerObjs) {
+        for (let playerId in playerObjs) {
+            this.createSprite(playerObjs[playerId]);
+            this.webRTC.move(playerObjs[playerId]);
         }
-        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
-            this.setImposterNameColours();
+
+        for (let playerId in this.players) {
+            this.setPlayerImposter(playerId);
+            this.setPlayerGhost(playerId);
         }
-        delete this.tempPlayers;
+    }
+
+    createPlayer(playerObj) {
+        this.createSprite(playerObj);
+        this.webRTC.move(playerObj);
+
+        this.setPlayerImposter(playerObj.id);
+        this.setPlayerGhost(playerObj.id);
     }
     
     createSprite(playerObj) {
         console.log(playerObj);
 
+        let startingDeadBodyFrame = playerObj.colour * FRAMES_PER_COLOUR + DEAD_BODY_FRAME_OFFSET;
+        let startingPlayerFrame;
+        let startingAlpha;
         if (playerObj.playerState === PLAYER_STATE.ghost) {
-            this.players[playerObj.id] = this.add.sprite(
-                playerObj.x,
-                playerObj.y,
-                'player',
-                playerObj.colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
-            ).setOrigin(0.5, 1).setAlpha(0.5);
+            startingPlayerFrame = playerObj.colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET;
+            startingAlpha = 0.5;
         } else {
-            this.players[playerObj.id] = this.add.sprite(
-                playerObj.x,
-                playerObj.y,
-                'player',
-                playerObj.colour * FRAMES_PER_COLOUR
-            ).setOrigin(0.5, 1);
+            startingPlayerFrame = playerObj.colour * FRAMES_PER_COLOUR;
+            startingAlpha = 1;
         }
+
+        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
+
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', startingPlayerFrame).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
         this.players[playerObj.id].name = playerObj.id;
+        this.players[playerObj.id].setAlpha(startingAlpha);
 
-        this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', 8).setOrigin(0.5, 1);
+        this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', startingDeadBodyFrame).setOrigin(0.5, 1);
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.deadBodies[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.deadBodies[playerObj.id].visible = false;
-
-        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
 
         this.audioIcons[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'audioIcon');
         this.audioIcons[playerObj.id].displayHeight = PLAYER_HEIGHT/2;
         this.audioIcons[playerObj.id].displayWidth = PLAYER_WIDTH/2;
         this.audioIcons[playerObj.id].visible = false;
-
-        this.webRTC.move(playerObj);
     }
 
-    setImposterNameColours() {
-        for (let playerId in this.players) {
-            if (this.players[playerId].playerState === PLAYER_STATE.imposter) {
-                this.playerNames[playerId].setTint(0xff0000);
-            }
-        }
-    }
-    
     destroySprite(playerId) {
         this.players[playerId].destroy();
         delete this.players[playerId];
@@ -151,9 +156,93 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         delete this.deadBodies[playerId];
     }
 
-    isWithinManhattanDist(x1, y1, x2, y2, minDist) {
-        return Math.abs(x1-x2) + Math.abs(y1-y2) < minDist;
+    setPlayerImposter(playerId) {
+        let localPlayerState = this.players[this.socket.id].playerState;
+        let currentPlayerState = this.players[playerId].playerState;
+
+        if (localPlayerState === PLAYER_STATE.imposter || localPlayerState === PLAYER_STATE.ghost) {
+            if (currentPlayerState === PLAYER_STATE.imposter) {
+                this.playerNames[playerId].setTint(0xff0000);
+            }
+        }
     }
+
+    setPlayerGhost(playerId) {
+        let localPlayerState = this.players[this.socket.id].playerState;
+        let currentPlayerState = this.players[playerId].playerState;
+
+        if (localPlayerState === PLAYER_STATE.crewmate || localPlayerState === PLAYER_STATE.imposter) {
+            if (currentPlayerState === PLAYER_STATE.ghost) {
+                this.hidePlayer(playerId);
+            } else {
+                this.showPlayer(playerId);
+            }
+        } else {
+            this.showPlayer(playerId);
+        }
+    }
+
+    hidePlayer(playerId) {
+        this.players[playerId].visible = false;
+        this.playerNames[playerId].visible = false;
+        this.audioIcons[playerId].visible = false;
+    }
+
+    showPlayer(playerId) {
+        this.players[playerId].visible = true;
+        this.playerNames[playerId].visible = true;
+        this.audioIcons[playerId].visible = true;
+    }
+
+    hideDeadBody(playerId) {
+        this.deadBodies[playerId].x = 0;
+        this.deadBodies[playerId].y = 0;
+        this.deadBodies[playerId].visible = false;
+    }
+
+    showDeadBoby(playerId, x, y) {
+        this.deadBodies[playerId].x = x;
+        this.deadBodies[playerId].y = y;
+        this.deadBodies[playerId].visible = true;
+    }
+
+    setImposterNameColours() {
+        for (let playerId in this.players) {
+            if (this.players[playerId].playerState === PLAYER_STATE.imposter) {
+                this.playerNames[playerId].setTint(0xff0000);
+            }
+        }
+    }
+
+    changeLocalPlayerToGhost() {
+        let startingFrame = this.players[this.socket.id].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
+
+        this.players[this.socket.id].setFrame(startingFrame);
+        this.players[this.socket.id].setAlpha(0.5);
+        this.players[this.socket.id].playerState = PLAYER_STATE.ghost;
+
+        for (let playerId in this.players) {
+            this.showPlayer(playerId);
+            this.setPlayerImposter(playerId);
+        }
+    }
+
+    changePlayerToGhost(playerId) {
+        let startingFrame = this.players[playerId].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
+
+        this.players[playerId].setFrame(startingFrame);
+        this.players[playerId].setAlpha(0.5);
+        this.players[playerId].playerState = PLAYER_STATE.ghost;
+
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.ghost) {
+            this.showPlayer(playerId);
+        } else {
+            this.hidePlayer(playerId);
+        }
+    }
+
+
+
 
     createMuteButton() {
         this.mute_button = this.add.text(100, 100, 'Mute')

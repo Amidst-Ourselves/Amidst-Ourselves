@@ -35,8 +35,19 @@ export default class GameScene extends AbstractGameplayScene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+        this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-        this.miniMap = new MiniMap(this, Phaser.Input.Keyboard.KeyCodes.M);
+        this.miniMap = new MiniMap(
+            this,
+            Phaser.Input.Keyboard.KeyCodes.M,
+        );
+        this.taskManager = new TaskManager(
+            this,
+            Phaser.Input.Keyboard.KeyCodes.F,
+            roomObj.totalTasks,
+            (taskName) => { this.socket.emit('taskCompleted', {'name': taskName}); },
+        );
+
         this.canMove = true;
     }
 
@@ -44,34 +55,22 @@ export default class GameScene extends AbstractGameplayScene {
         this.load.image('map1', 'amidstOurselvesAssets/map1.png');
         this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
         this.load.spritesheet('audioIcon', audioIconpng, {frameWidth: 500, frameHeight: 500});
-        this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000,
-            frameHeight: 200});
-        this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100,
-            frameHeight: 100});
-        this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100,
-            frameHeight: 100});
+        this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000, frameHeight: 200});
+        this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100, frameHeight: 100});
+        this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100, frameHeight: 100});
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
 
-        this.createSpritesFromTempPlayers();
-        this.localPlayer = this.players[this.socket.id];
+        this.createPlayers(this.tempPlayers);
 
+        this.taskManager.create(this.players[this.socket.id]);
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
-        this.imposter = new Imposter(this, this.socket);
-        
-        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
-        this.iteractButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
-        this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+        this.miniMap.addTasks(this.taskManager.getTaskInfo());
 
-        this.createSpritesFromTempPlayers();
-        //this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
-        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
-            this.imposter = new Imposter(this, this.socket);
-        }
-        this.taskManager = new TaskManager(this, this.socket);
+        this.imposter = new Imposter(this, this.socket);
         this.meetingManager = new Meeting(this);
 
         this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
@@ -91,27 +90,13 @@ export default class GameScene extends AbstractGameplayScene {
             }
         });
 
-        this.iteractButton.on('down', () => {
-            const task = this.taskManager.findTask();
-            if (task) {
-                console.log("starting task");
-                this.taskManager.taskAvailable = true;
-                const index = this.taskManager.tasks.indexOf(task);
-                this.taskManager.startTask(() => {
-                    // console.log('Task completed!');
-                    this.taskManager.updateCompletedTasks(index);
-                    this.taskManager.updateTotalProgressBar();
-                    this.socket.emit('taskCompleted', index);
-                });
+        this.socket.on('taskCompleted', (taskObj) => {
+            if (taskObj.id === this.socket.id) {
+                this.taskManager.finishTask(taskObj.name);
+                this.miniMap.finishTask(taskObj.name);
+            } else {
+                this.taskManager.incrementTaskbar();
             }
-            else {
-                this.taskManager.taskAvailable = false;
-            }
-        });
-
-        this.socket.on('taskCompleted', (index) => {
-            this.taskManager.updateCompletedTasks(index);
-            this.taskManager.updateTotalProgressBar();
         });
     
         this.socket.on('move', (playerObj) => {
@@ -119,7 +104,8 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('join', (playerObj) => {
-            this.createSprite(playerObj);
+            this.createPlayer(playerObj);
+            this.changePlayerToGhost(playerObj.id);
             console.log('player joined ' + playerObj.id);
         });
         
@@ -135,7 +121,16 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('kill', (playerObj) => {
-            this.changePlayerToGhost(playerObj.id);
+            if (playerObj.id === this.socket.id) {
+                this.changeLocalPlayerToGhost();
+                
+                for (let task of this.players[this.socket.id].tasks) {
+                    this.socket.emit('taskCompleted', {'name': task});
+                }
+            } else {
+                this.changePlayerToGhost(playerObj.id);
+            }
+
             this.showDeadBoby(playerObj.id, playerObj.x, playerObj.y);
         });
 
@@ -151,17 +146,6 @@ export default class GameScene extends AbstractGameplayScene {
             this.meetingManager.showResult(result);
 
         })
-
-        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.createEndButtonForHost();
-        this.createMuteButton();
-        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
-            this.imposter.createKillCooldown();
-        }
-        this.taskManager.addTask(1350, 650);
-        this.taskManager.addTask(1650, 650);
-        this.miniMap.createTaskSprites();
     }
 
     update() {
@@ -179,44 +163,11 @@ export default class GameScene extends AbstractGameplayScene {
                 this.players[this.socket.id].playerState
             );
         }
-        this.miniMap.update();
         if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
                 this.imposter.updateCooldown();
         }
         this.taskManager.update();
-    }
-
-    showDeadBoby(id, x, y) {
-        this.deadBodies[id].x = x;
-        this.deadBodies[id].y = y;
-        this.deadBodies[id].visible = true;
-    }
-
-    changePlayerToGhost(id) {
-        if (this.socket.id === id) {
-            this.showAllPlayers();
-            this.setImposterNameColours();
-        } else if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost) {
-            this.players[id].visible = false;
-            this.playerNames[id].visible = false;
-            this.audioIcons[id].visible = false;
-        }
-
-        this.players[id].setFrame(this.players[id].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET);
-        this.players[id].setAlpha(0.5);
-        this.players[id].playerState = PLAYER_STATE.ghost;
-    }
-
-    showAllPlayers() {
-        for (let player in this.players) {
-            this.players[player].visible = true;
-        }
-        for (let playerName in this.playerNames) {
-            this.playerNames[playerName].visible = true;
-        }
-        for (let audioIcon in this.audioIcons) {
-            this.audioIcons[audioIcon].visible = true;
-        }
+        this.miniMap.update();
     }
 
     createEndButtonForHost() {

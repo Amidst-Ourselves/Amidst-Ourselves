@@ -14,6 +14,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         super(scene);
 
         this.keyMiniMap = this.scene.input.keyboard.addKey(keyCode);
+        this.miniMapTasks = {};
     }
 
     create(player, playerKey, mapKey) {
@@ -41,43 +42,42 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.player = player;
 
         this.keyMiniMap.on('down', () => {
-            let complement = !this.miniMap.visible;
-            this.miniMap.visible = complement;
-            this.overlay.visible = complement;
-            this.miniMapPlayer.visible = complement;
+            this.toggleMiniMap();
         });
-
-        this.miniMapTasks = [];
     }
 
-    createTaskSprites() {
-        console.log('tasks', this.scene.taskManager.tasks);
-        for (let task of this.scene.taskManager.tasks) {
+    addTasks(taskInfo) {
+        for (let task in taskInfo) {
+            let miniMapTaskX = Math.floor(taskInfo[task].x/MAP_SCALE*MAP1_MINIMAP_SCALE);
+            let miniMapTaskY = Math.floor(taskInfo[task].y/MAP_SCALE*MAP1_MINIMAP_SCALE);
+
             const circle = this.scene.add.graphics();
             circle.fillStyle(0xffff00, 1);
-            circle.fillCircle(Math.floor(task.x/MAP_SCALE*MAP1_MINIMAP_SCALE), Math.floor(task.y/MAP_SCALE*MAP1_MINIMAP_SCALE), 5);
+            circle.fillCircle(miniMapTaskX, miniMapTaskY, 5);
             circle.setScrollFactor(0);
             circle.visible = false;
-            this.miniMapTasks.push(circle);
+            this.miniMapTasks[task] = circle;
         }
     }
 
-    toggleMiniMap() { 
+    finishTask(taskName) {
+        this.miniMapTasks[taskName].destroy();
+        delete this.miniMapTasks[taskName];
+    }
+
+    toggleMiniMap() {
         let complement = !this.miniMap.visible;
         this.miniMap.visible = complement;
         this.overlay.visible = complement;
         this.miniMapPlayer.visible = complement;
-        this.updateMiniMap_tasks(complement);
+
+        for (let task in this.miniMapTasks) {
+            this.miniMapTasks[task].visible = complement;
+        }
     }
 
     update() {
         this.miniMapPlayer.x = Math.floor(this.player.x/MAP_SCALE*MAP1_MINIMAP_SCALE);
         this.miniMapPlayer.y = Math.floor(this.player.y/MAP_SCALE*MAP1_MINIMAP_SCALE);
-    }
-
-    updateMiniMap_tasks(complement) {
-        for (let task of this.miniMapTasks) {
-            task.visible = complement;
-        }
     }
 }

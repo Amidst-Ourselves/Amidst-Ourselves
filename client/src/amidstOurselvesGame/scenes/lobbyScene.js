@@ -42,7 +42,7 @@ export default class LobbyScene extends AbstractGameplayScene {
             COLOUR_STATION_Y,
             COLOUR_STATION_MIN_DIST,
             Phaser.Input.Keyboard.KeyCodes.F,
-            () => {this.socket.emit('colour')}
+            () => { this.socket.emit('colour'); },
         );
     }
 
@@ -56,10 +56,12 @@ export default class LobbyScene extends AbstractGameplayScene {
     create() {
         this.image = this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
-        this.createSpritesFromTempPlayers();
+
+        this.createPlayers(this.tempPlayers);
+
         this.colourStation.create(this.players[this.socket.id]);
 
-        this.createSight();
+        //this.createSight();
 
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
@@ -75,7 +77,7 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     
         this.socket.on('join', (playerObj) => {
-            this.createSprite(playerObj);
+            this.createPlayer(playerObj);
             console.log('player joined ' + playerObj.id);
         });
         
