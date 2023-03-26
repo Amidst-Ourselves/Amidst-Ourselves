@@ -184,13 +184,11 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     hidePlayer(playerId) {
         this.players[playerId].visible = false;
         this.playerNames[playerId].visible = false;
-        this.audioIcons[playerId].visible = false;
     }
 
     showPlayer(playerId) {
         this.players[playerId].visible = true;
         this.playerNames[playerId].visible = true;
-        this.audioIcons[playerId].visible = true;
     }
 
     hideDeadBody(playerId) {
