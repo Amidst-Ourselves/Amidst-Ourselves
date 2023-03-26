@@ -248,13 +248,12 @@ io.on('connection', (socket) => {
     */
     sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
-    socket.on('webRTC_disconnect', (roomCodeObj) => {
-        if (roomCodeObj === undefined) {
+    socket.on('webRTC_disconnect', () => {
+        if (socket.roomCode === undefined) {
             console.log("something that should never happen happened");
             return;
         }
-        let roomCode = roomCodeObj.roomCode;
-        webRTC_delete(roomCode);
+        webRTC_delete(socket.roomCode);
         delete sockets[socket.id];
     });
 
@@ -301,7 +300,7 @@ io.on('connection', (socket) => {
     }
 
 
-    socket.on('webRTC_delete', webRTC_delete);
+    // socket.on('webRTC_delete', webRTC_delete);
 
     socket.on('relayICECandidate', (config) => {
         let peer_id = config.peer_id;
