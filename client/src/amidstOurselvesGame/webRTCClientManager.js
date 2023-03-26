@@ -165,8 +165,9 @@ export default class webRTCClientManager {
         let global_signaling_socket = this.signaling_socket;
 
 
-        this.signaling_socket.on('leave', (playerObj) => {
-            this.signaling_socket.emit('webRTC_disconnect');
+        this.signaling_socket.on('disconnect', () => {
+            console.log("received leave");
+            // this.signaling_socket.emit('webRTC_disconnect');
             this.reset();
         });
 
