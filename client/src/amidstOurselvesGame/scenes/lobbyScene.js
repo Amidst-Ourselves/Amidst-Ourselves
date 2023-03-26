@@ -11,7 +11,8 @@ import {
     COLOUR_STATION_Y,
     MAP1_WALLS,
     WIDTH,
-    HEIGHT
+    HEIGHT,
+    VIEW_DISTANCE
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
@@ -61,8 +62,6 @@ export default class LobbyScene extends AbstractGameplayScene {
 
         this.colourStation.create(this.players[this.socket.id]);
 
-        //this.createSight();
-
         this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createStartButtonForHost();
@@ -96,28 +95,8 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.audioIcons[config.id].visible = config.bool;
         });
     }
-
-    createSight() {
-
-        let shape = this.make.graphics();
-
-        shape.fillStyle(0xffffff);
-        shape.fillPath();
-        shape.setAlpha(0.5);
-        
-
-        shape.slice(400, 300, 200, Phaser.Math.DegToRad(340), Phaser.Math.DegToRad(30), true);
-
-        let mask = shape.createGeometryMask();
-
-        this.image.setMask(mask);
-
-
-
-    }
     
     update() {
-        this.colourStation.update();
         this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
@@ -128,6 +107,7 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.keyRight.isDown,
             this.players[this.socket.id].playerState
         );
+        this.colourStation.update();
     }
 
     createStartButtonForHost() {

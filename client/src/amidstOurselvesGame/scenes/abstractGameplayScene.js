@@ -8,6 +8,7 @@ import {
     FRAMES_PER_COLOUR,
     GHOST_FRAME_OFFSET,
     DEAD_BODY_FRAME_OFFSET,
+    VIEW_DISTANCE,
 } from "../constants"
 
 
@@ -241,6 +242,78 @@ export default class AbstractGameplayScene extends Phaser.Scene {
 
         this.players[playerId].setFrame(newColourFrame);
         this.players[playerId].colour = newColour
+    }
+
+
+
+
+    wallBetween(x0, y0, x1, y1, stepSize, iterations) {
+        const dx = Math.abs(x1 - x0);
+        const dy = Math.abs(y1 - y0);
+        const sx = (x0 < x1) ? stepSize : -stepSize;
+        const sy = (y0 < y1) ? stepSize : -stepSize;
+
+        const initialX = x0;
+        const initialY = y0;
+        const lenientX = dx - stepSize;
+        const lenientY = dy - stepSize;
+
+        let err = dx - dy;
+     
+        for (let i=0; i < iterations; i++) {
+            let exceedsX = Math.abs(x0 - initialX) >= lenientX;
+            let exceedsY = Math.abs(y0 - initialY) >= lenientY;
+            if (exceedsX && exceedsY) return false;
+
+            let wallX = Math.floor(x0/MAP_SCALE);
+            let wallY = Math.floor(y0/MAP_SCALE);
+            if (MAP1_WALLS.has(`${wallX}-${wallY}`)) return true;
+
+            let e2 = 2*err;
+            if (e2 > -dy) {
+                err -= dy;
+                x0  += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y0  += sy;
+            }
+        }
+
+        return true;
+    }
+
+    visionUpdate(localId, localX, localY) {
+        if (this.players[localId].playerState === PLAYER_STATE.ghost) {
+            for (let playerId in this.players) {
+                this.showPlayer(playerId);
+            }
+            return;
+        }
+
+        for (let playerId in this.players) {
+            if (playerId === localId) {
+                continue;
+            }
+            if (this.players[playerId].playerState === PLAYER_STATE.ghost) {
+                this.hidePlayer(playerId);
+                continue;
+            }
+
+            const wallBetween = this.wallBetween(
+                localX,
+                localY,
+                this.players[playerId].x,
+                this.players[playerId].y,
+                MAP_SCALE,
+                VIEW_DISTANCE,
+            );
+            if (wallBetween) {
+                this.hidePlayer(playerId);
+            } else {
+                this.showPlayer(playerId);
+            }
+        }
     }
 
 

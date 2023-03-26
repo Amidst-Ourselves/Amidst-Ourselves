@@ -136,6 +136,18 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('meeting', () => {
+            let newDeadBodies = [];
+
+            for (let playerId in this.players) {
+                this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId);
+
+                if (this.deadBodies[playerId].visible) {
+                    this.hideDeadBody(playerId);
+                    newDeadBodies.push(playerId);
+                }
+            }
+
+            console.log('newDeadBodies', newDeadBodies);
             this.meetingManager.show();
         });
 
@@ -163,6 +175,11 @@ export default class GameScene extends AbstractGameplayScene {
         if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
             this.imposter.updateCooldown();
         }
+        this.visionUpdate(
+            this.socket.id,
+            this.players[this.socket.id].x,
+            this.players[this.socket.id].y,
+        );
         this.taskManager.update();
         this.miniMap.update();
     }
