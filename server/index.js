@@ -158,6 +158,7 @@ io.on('connection', (socket) => {
         });
         rooms[socket.roomCode].deadBodies[playerObj.id].x = playerObj.x;
         rooms[socket.roomCode].deadBodies[playerObj.id].y = playerObj.y;
+        rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
     });
     
     socket.on('startGame', () => {

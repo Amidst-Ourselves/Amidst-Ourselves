@@ -126,6 +126,7 @@ export default class GameScene extends AbstractGameplayScene {
             this.deadBodies[playerObj.id].x = playerObj.x;
             this.deadBodies[playerObj.id].y = playerObj.y;
             this.deadBodies[playerObj.id].visible = true;
+            this.players[playerObj.id].playerState = PLAYER_STATE.ghost;
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -133,6 +134,7 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('meeting', () => {
+            // this.meetingManager.updateScene(this);
             this.meetingManager.show();
         });
 
