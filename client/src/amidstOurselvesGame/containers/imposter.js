@@ -16,6 +16,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
         this.cooldownTimer = undefined;
         this.killReady = true;
         this.update(this.scene.players[this.socket.id]);
+        this.createKillCooldown();
     }
 
     update(player) {
@@ -25,7 +26,6 @@ export default class Imposter extends Phaser.GameObjects.Container {
     kill(players, deadBodies) {
         for (let player in players) {
             if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 20 && player !== this.socket.id) {
-                console.log("I'm killing: "+players[player].id);
                 players[player].playerState = PLAYER_STATE.ghost;
                 this.socket.emit('kill', {
                     id: player,
