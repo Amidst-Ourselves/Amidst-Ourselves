@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
 export const ForgotPassword = (props) => {
   const [email, setEmail] = useState('');
   const [question, setQues] = useState('');
   const [newpassword, setNewPass] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const history = useHistory();
 
 
   const handleSubmit = async (e) => {
@@ -25,7 +27,8 @@ export const ForgotPassword = (props) => {
         const data = await response.json();
         if (data.message === "updated") {
             console.log(data.message);
-            props.onFormSwitch('login')
+            //props.onFormSwitch('login')
+            history.push('/');
         } else if (data.message === "notupdated"){
             console.log(data.message);
             setErrorMessage("Invalid Input, can't change password.");
@@ -59,7 +62,7 @@ export const ForgotPassword = (props) => {
                     </div>
         )}
       </form>
-      <p className="link-btn" onClick={() => props.onFormSwitch('login')}>Already have an account? Login here.</p>
+      <p className="link-btn" onClick={() => history.push('/')}>Already have an account? Login here.</p>
     </div>
   );
 };

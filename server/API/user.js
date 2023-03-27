@@ -41,6 +41,21 @@ const getUserRecord = async (req) => {
   return record;
 };
 
+const updateActiveStatus = async (req) => {
+  let db_connect = dbo.getDb();
+
+  return new Promise(async (resolve, reject) => {
+
+
+    const filter = { username: req.body.username.toString() };
+    const update = { $set: { activestatus: "true" } };
+
+    const result = await db_connect.collection("Users").updateOne(filter, update);
+
+    resolve(result.modifiedCount);
+
+  });
+};
 
 
 userRoutes.route("/user/login").post(async function (req, res) {
@@ -48,8 +63,13 @@ userRoutes.route("/user/login").post(async function (req, res) {
   try {
     const record = await getUserRecord(req);
 
-    if( await bcrypt.compare(req.body.password, record.password)){
-      res.json({ message: "match" });
+    if( await bcrypt.compare(req.body.password, record.password) && record.activestatus === "false"){
+      const record2 = await updateActiveStatus(req);
+      if(record2 > 0){
+        res.json({ message: "match", name:record.name, email:record.username });
+      }else {
+        res.json({ message: "nomatch" });
+      }
     }else {
       res.json({ message: "nomatch" });
     }
@@ -57,6 +77,40 @@ userRoutes.route("/user/login").post(async function (req, res) {
     res.json({ message: error });
   }
 });
+
+
+
+
+const updateActiveStatusToLogout = async (req) => {
+  let db_connect = dbo.getDb();
+
+  return new Promise(async (resolve, reject) => {
+
+
+    const filter = { username: req.body.username.toString() };
+    const update = { $set: { activestatus: "false" } };
+
+    const result = await db_connect.collection("Users").updateOne(filter, update);
+
+    resolve(result.modifiedCount);
+
+  });
+};
+userRoutes.route("/user/logout").post(async function (req, res) {
+
+  try {
+
+    const record2 = await updateActiveStatusToLogout(req);
+    if(record2 > 0){
+      res.json({ message: "logout" });
+    }else {
+      res.json({ message: "notlogout" });
+    }
+  } catch (error) {
+    res.json({ message: error });
+  }
+});
+
 
 
 
@@ -81,10 +135,6 @@ const updatePassword = async (req) => {
     });
   });
 };
-
-
-
-
 userRoutes.route("/user/forgotpassword").post(async function (req, res) {
 
   try {
@@ -107,8 +157,6 @@ const addUserRecord = async (myobj) => {
 
   return record.acknowledged;
 };
-
-
 // This section will help you create a new record.
 userRoutes.route("/user/add").post(async function (req, response) {
   const saltRounds = 10;

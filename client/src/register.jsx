@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import axios from 'axios';
+import { useHistory } from 'react-router-dom';
+import badWords from 'bad-words';
 
 export const Register = (props) => {
     const [email, setEmail] = useState('');
@@ -7,6 +9,7 @@ export const Register = (props) => {
     const [name, setName] = useState('');
     const [ques, setQues] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const history = useHistory();
 
     const user = {
         name: name,
@@ -20,6 +23,13 @@ export const Register = (props) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const badwords = new badWords();
+        if (badwords.isProfane(name)) {
+            setErrorMessage("Name contains profanity words. Please try with another name.");
+            return;
+        }
+
         try{
             const response = await fetch("http://localhost:3000/user/add", {
                 method: "POST",
@@ -30,7 +40,8 @@ export const Register = (props) => {
 
             if (data.message === "added") {
                 console.log(data.message);
-                props.onFormSwitch('login')
+                //props.onFormSwitch('login')
+                history.push('/');
             } else if (data.message === "exist"){
                 console.log(data.message);
                 setErrorMessage("User already exist.");
@@ -66,7 +77,7 @@ export const Register = (props) => {
                     </div>
             )}
         </form>
-        <p className="link-btn" onClick={() => props.onFormSwitch('login')}>Already have an account? Login here.</p>
+        <p className="link-btn" onClick={() => history.push('/')}>Already have an account? Login here.</p>
     </div>
     )
 }
