@@ -244,6 +244,10 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('new_message', (message) => { 
+        socket.broadcast.to(socket.roomCode).emit('new_message', {'player': socket.id, 'message': message});
+    });
+
     /* Below are webRTC events
     **************************
     **************************

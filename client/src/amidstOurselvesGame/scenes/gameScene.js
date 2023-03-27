@@ -143,6 +143,10 @@ export default class GameScene extends AbstractGameplayScene {
 
         })
 
+        this.socket.on('new_message', (config) => {
+            this.meetingManager.addMessage(config.player, config.message);
+        })
+
         this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createEndButtonForHost();

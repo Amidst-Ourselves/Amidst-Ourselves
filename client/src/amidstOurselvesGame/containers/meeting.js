@@ -41,7 +41,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.y = this.scene.cameras.main.centerY - 580/2;
         this.voting_board.visible = false;
 
-
+        this.textOpened = false;
         this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#000000' });
         this.textButton.setOrigin(0.5);
         this.textButton.setScrollFactor(0);
@@ -54,7 +54,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.textButton.on('pointerdown', () => {
             // Handle player vote button click event
             console.log("pressed");
-            this.showTextChat();
+            if(!this.textOpened){
+                this.showTextChat();
+            }
+            else {
+                this.hideText();
+            }
         });
         this.textButton.on('pointerover', () => {
             this.textButton.setTint(0x808080);
@@ -104,40 +109,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.inputMessageText.visible = false;
         this.inputMessage = '';
 
-        // Listen for keyboard events
-        this.scene.input.keyboard.on('keydown', (event) => {
-            // Handle special keys
-            if (event.key === 'Backspace') {
-                // Remove the last character of the input message
-                this.inputMessage = this.inputMessage.slice(0, -1);
-            } else if (event.key === 'Enter') {
-                // Display the input message in the messageDisplay area
-                this.addMessage('CurrentUser', this.inputMessage);
-
-                // Clear the input message
-                this.inputMessage = '';
-            } else {
-                if (this.inputMessage.length < 30) {
-                    const keyCode = event.keyCode;
-                    const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
-                    const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
-                
-                    if (isAlphanumeric || isCommonPunctuation) {
-                    // Update the input message with the new character
-                        this.inputMessage += event.key;
-                    }
-                }
-            }
-
-            // Update the inputMessageText object
-            this.inputMessageText.setText(this.inputMessage);
-        });
-
         let countdown = 30;
         this.countdownText = this.scene.add.text(10, 10, `Time left: ${countdown}s`, {
             fontSize: '32px',
             color: '#ffffff'
         }).setScrollFactor(0).setDepth(5);
+        this.countdownText.visible = false;
+
         
         this.simulateIncomingMessage();
         this.simulateIncomingMessage();
@@ -258,6 +236,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.skipText = true;
         this.voting_board.visible = true;
         this.textButton.visible = true;
+        this.countdownText.visible = true;
 
         for (const button of this.votingButtons) {
             button.visible = true;
@@ -270,10 +249,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
         }
         // Countdown timer
         let countdown = 30;
-        // this.countdownText = this.scene.add.text(10, 10, `Time left: ${countdown}s`, {
-        //     fontSize: '32px',
-        //     color: '#ffffff'
-        // }).setScrollFactor(0).setDepth(5);
 
         const timer = this.scene.time.addEvent({
             delay: 1000,
@@ -402,6 +377,46 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.text_board.visible = true;
         this.messageInput.visible = true;
         this.inputMessageText.visible = true;
+        this.textOpened = true;
+        this.keyboardListener = this.scene.input.keyboard.on('keydown', (event) => {
+            // Handle special keys
+            if (event.key === 'Backspace') {
+                // Remove the last character of the input message
+                this.inputMessage = this.inputMessage.slice(0, -1);
+            } else if (event.key === 'Enter') {
+                this.scene.socket.emit("new_message", this.inputMessage);
+                // Display the input message in the messageDisplay area
+                this.addMessage(this.scene.socket.id, this.inputMessage);
+
+                // Clear the input message
+                this.inputMessage = '';
+            } else {
+                if (this.inputMessage.length < 30) {
+                    const keyCode = event.keyCode;
+                    const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
+                    const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
+                
+                    if (isAlphanumeric || isCommonPunctuation) {
+                    // Update the input message with the new character
+                        this.inputMessage += event.key;
+                    }
+                }
+            }
+
+            // Update the inputMessageText object
+            this.inputMessageText.setText(this.inputMessage);
+        });
+        // this.keyboardListener = this.scene.input.keyboard.on('keydown', this.keyboardListener);
+    }
+
+    hideText() {
+        this.messageDisplay.visible = false;
+        this.text_board.visible = false;
+        this.messageInput.visible = false;
+        this.inputMessageText.visible = false;
+        this.keyboardListener.visible = false;
+        this.textOpened = false;
+        this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
     }
     updateMessageDisplay() {
         // Clear the current message display
@@ -415,7 +430,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         // Add the messages from the message history
         for (let i = 0; i < this.messageHistory.length; i++) {
           const messageObject = this.messageHistory[i];
-          const isCurrentUser = messageObject.user === 'CurrentUser';
+          const isCurrentUser = messageObject.user === this.scene.socket.id;
           const xPosition = isCurrentUser ? 600 : 200;
           const yPosition = 200 + i * 30; // Adjust this value to control the spacing between messages
       
@@ -428,18 +443,19 @@ export default class Meeting extends Phaser.GameObjects.Container {
         }
       }
     // Create a function to handle adding and displaying messages
-    addMessage = (user, message) => {
+    addMessage(user, message) {
 
         // Create a new message object and push it to the message history array
-        const newMessage = {
-            user: user,
-            message: message,
-            timestamp: new Date(),
+            const newMessage = {
+                user: user,
+                message: message,
+                timestamp: new Date(),
             };
             this.messageHistory.push(newMessage);
 
             // Update the message display
             this.updateMessageDisplay();
+            
     };
 
     // Example function for simulating incoming messages from other players
