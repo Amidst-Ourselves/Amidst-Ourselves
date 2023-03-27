@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const LeaderboardPage = ({ onClose }) => {
+export const LeaderboardPage = ({ onClose }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
 
   useEffect(() => {
@@ -41,10 +41,8 @@ const LeaderboardPage = ({ onClose }) => {
         </tbody>
       </table>
       <br></br> <p></p>
-      <button onClick={onClose}>Close</button>
       <br></br> <p></p>
     </div>
   );
 };
 
-export default LeaderboardPage;
