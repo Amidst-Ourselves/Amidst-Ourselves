@@ -79,8 +79,20 @@ let sockets = {}
 
 io.on('connection', (socket) => {
     socket.on('roomCreate', (roomCodeObj) => {
-        let hostPlayerObj = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: [], colour: 0};
-        let roomObj = createRoom(roomCodeObj, hostPlayerObj);
+        let hostPlayerObj = {
+            id: socket.id,
+            x: MAP1_SPAWN_X,
+            y: MAP1_SPAWN_Y,
+            playerState: PLAYER_STATE.ghost,
+            tasks: [],
+            colour: 0,
+        };
+        let hostDeadBodyObj = {
+            id: socket.id,
+            x: 0,
+            y: 0,
+        };
+        let roomObj = createRoom(roomCodeObj, hostPlayerObj, hostDeadBodyObj);
 
         socket.join(roomObj.roomCode);
         socket.emit('roomResponse', roomObj);
@@ -94,22 +106,33 @@ io.on('connection', (socket) => {
             socket.emit('roomResponse', {message: "bad room code"});
             return;
         }
-
-        //TODO: put a mutex here
-        let player = {id: socket.id, x: MAP1_SPAWN_X, y: MAP1_SPAWN_Y, playerState: PLAYER_STATE.ghost, tasks: [], colour: 0};
-        rooms[roomCodeObj.roomCode].players[socket.id] = player;
-        rooms[roomCodeObj.roomCode].deadBodies[socket.id] = player;
-
         if (roomFull(rooms[roomCodeObj.roomCode])) {
-            delete rooms[roomCodeObj.roomCode].players[socket.id];
-            delete rooms[roomCodeObj.roomCode].deadBodies[socket.id];
             socket.emit('roomResponse', {message: "room full"});
             return;
         }
 
-        let nextColour = findNextAvailableColour(rooms[roomCodeObj.roomCode], player.colour);
-        if (nextColour >= 0) player.colour = nextColour;
-        io.to(roomCodeObj.roomCode).emit('join', player);
+        rooms[roomCodeObj.roomCode].players[socket.id] = {
+            id: socket.id,
+            x: MAP1_SPAWN_X,
+            y: MAP1_SPAWN_Y,
+            playerState: PLAYER_STATE.ghost,
+            tasks: [],
+            colour: 0,
+        };
+        rooms[roomCodeObj.roomCode].deadBodies[socket.id] = {
+            id: socket.id,
+            x: 0,
+            y: 0,
+        };
+        let nextColour = findNextAvailableColour(
+            rooms[roomCodeObj.roomCode],
+            rooms[roomCodeObj.roomCode].players[socket.id].colour
+        );
+        if (nextColour >= 0) {
+            rooms[roomCodeObj.roomCode].players[socket.id].colour = nextColour;
+        }
+
+        io.to(roomCodeObj.roomCode).emit('join', rooms[roomCodeObj.roomCode].players[socket.id]);
         socket.join(roomCodeObj.roomCode);
         socket.emit('roomResponse', rooms[roomCodeObj.roomCode]);
         socket.roomCode = roomCodeObj.roomCode;
@@ -126,6 +149,7 @@ io.on('connection', (socket) => {
             if (playerCount(rooms[socket.roomCode]) === 0) {
                 delete rooms[socket.roomCode];
             }
+            console.log("I'm trying to disconnect")
             io.to(socket.roomCode).emit('leave', {id: socket.id});
         }
     });
@@ -141,7 +165,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('colour', () => {
-        //TODO: put a mutex here
         let nextColour = findNextAvailableColour(rooms[socket.roomCode], rooms[socket.roomCode].players[socket.id].colour);
         if (nextColour >= 0) {
             rooms[socket.roomCode].players[socket.id].colour = nextColour;
@@ -150,18 +173,22 @@ io.on('connection', (socket) => {
     });
     
     socket.on('kill', (playerObj) => {
-        socket.broadcast.to(socket.roomCode).emit('kill', {
-            id: playerObj.id,
-            x: playerObj.x,
-            y: playerObj.y
-        });
         rooms[socket.roomCode].deadBodies[playerObj.id].x = playerObj.x;
         rooms[socket.roomCode].deadBodies[playerObj.id].y = playerObj.y;
+        rooms[socket.roomCode].deadBodies[playerObj.id].visible = true;
+
+        rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
+
+        io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
     });
     
     socket.on('startGame', () => {
         let room = rooms[socket.roomCode];
         let imposters = chooseRandomItemsFromList(Object.keys(room.players), room.imposterCount);
+
+        room.gameState = GAME_STATE.action;
+        room.totalTasks = (playerCount(room) - room.imposterCount) * room.taskCount;
+        room.tasksComplete = 0;
         for (let playerId in room.players) {
             if (imposters.includes(playerId)) {
                 room.players[playerId].playerState = PLAYER_STATE.imposter;
@@ -173,7 +200,6 @@ io.on('connection', (socket) => {
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
         }
-        room.gameState = GAME_STATE.action;
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
 
@@ -187,6 +213,64 @@ io.on('connection', (socket) => {
         }
         room.gameState = GAME_STATE.lobby;
         io.to(socket.roomCode).emit('teleportToLobby', room);
+    });
+
+    socket.on('taskCompleted', (taskObj) => {
+        let room = rooms[socket.roomCode];
+        let player = room.players[socket.id];
+
+        if (player.tasks.includes(taskObj.name)) {
+            player.tasks = player.tasks.filter(x => x !== taskObj.name);
+            room.tasksComplete += 1;
+
+            taskObj.id = socket.id;
+            io.to(socket.roomCode).emit('taskCompleted', taskObj);
+        }
+    });
+
+    socket.on('meeting', () => {
+        io.to(socket.roomCode).emit('meeting');
+        let room = rooms[socket.roomCode];
+        room.meetingCompleted = false;
+        for (let id in room.votes) {
+            // reset all votes to 0
+            room.votes[id] = 0;
+        }
+    });
+
+    socket.on('voted', (playerID) => {
+        let room = rooms[socket.roomCode];
+        room.votes[playerID]++;
+    });
+
+    socket.on('meetingTimeUp', () => {
+        if (!rooms[socket.roomCode].meetingCompleted) {
+            let result = null;
+            let max = 0;
+            let room = rooms[socket.roomCode];
+            let alive = 0;
+            for (let id in room.players) {
+                if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+                    room.players[id].playerState === PLAYER_STATE.imposter) {
+                    alive++;
+                }
+            }
+
+            for (let id in room.votes) {
+                if (room.votes[id] > max) {
+                    max = room.votes[id];
+                    result = id;
+                }
+            }
+            console.log(max/alive);
+            if (max/alive > 0.5) {
+                io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
+            }
+            else {
+                io.to(socket.roomCode).emit('meetingResult', null);
+            }
+            rooms[socket.roomCode].meetingCompleted = true;
+        }
     });
 
     /* Below are webRTC events
@@ -292,12 +376,16 @@ function chooseRandomItemsFromList(list, numberOfItemsToChoose) {
     return list.slice(0, numberOfItemsToChoose);
 }
 
-function createRoom(roomObj, hostPlayerObj) {
+function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
     let roomCode = createRoomCode();
     let players = {};
     let deadBodies = {};
+    let votes = {};
+
     players[hostPlayerObj.id] = hostPlayerObj;
-    deadBodies[hostPlayerObj.id] = hostPlayerObj;
+    deadBodies[hostDeadBodyObj.id] = hostDeadBodyObj;
+    votes[hostPlayerObj.id] = 0;
+
     let newRoom = {
         roomCode: roomCode,
         playerLimit: roomObj.playerLimit,
@@ -309,8 +397,11 @@ function createRoom(roomObj, hostPlayerObj) {
         gameState: GAME_STATE.lobby,
         players: players,
         deadBodies: deadBodies,
-        webRTC: roomObj.webRTC
+        webRTC: roomObj.webRTC,
+        votes: votes,
+        meetingCompleted: false
     }
+
     rooms[roomCode] = newRoom;
     return rooms[roomCode];
 }
@@ -350,5 +441,5 @@ function playerCount(roomObj) {
 }
 
 function roomFull(roomObj) {
-    return playerCount(roomObj) > roomObj.playerLimit;
+    return playerCount(roomObj) >= roomObj.playerLimit;
 }
