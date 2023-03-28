@@ -1,9 +1,12 @@
 import React, { useState } from "react";
+import { useHistory } from 'react-router-dom';
+
 
 export const Login = (props) => {
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const history = useHistory();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -21,10 +24,12 @@ export const Login = (props) => {
 
             if (data.message === "match") {
                 console.log(data.message);
-                props.onLogin();
+                props.onLogin(data.name, data.email);
+                localStorage.setItem('email', data.email);
+                history.push('/game');
             } else {
                 console.log(data.message);
-                setErrorMessage("Invalid username or password.");
+                setErrorMessage("Invalid username/password or User already logged in.");
             }
         }catch{
             console.log("Error Occured in fetch");
@@ -52,9 +57,9 @@ export const Login = (props) => {
                 )}
             </form>
             <p></p>
-            <p className="link-btn" onClick={() => props.onLogin()}>Play Anonymously.</p>
-            <p className="link-btn" onClick={() => props.onFormSwitch('forgotPassword')}>Forgot Password?</p>
-            <p className="link-btn" onClick={() => props.onFormSwitch('register')}>Don't have an account? Register here.</p>
+            <p className="link-btn" onClick={() => history.push('/game')}>Play Anonymously.</p>
+            <p className="link-btn" onClick={() => history.push('/forgot-password')}>Forgot Password?</p>
+            <p className="link-btn" onClick={() => history.push('/register')}>Don't have an account? Register here.</p>
 
         </div>
     )
