@@ -5,16 +5,21 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
+    PLAYER_STATE,
+    FRAMES_PER_COLOUR,
+    GHOST_FRAME_OFFSET
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
 import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
+import TaskManager from "../containers/taskManager";
+import Meeting from "../containers/meeting";
 
 
 export default class GameScene extends AbstractGameplayScene {
     constructor() {
-        super("gameScene")
+        super("gameScene");
     }
 
     init(roomObj) {
@@ -24,35 +29,74 @@ export default class GameScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+
+        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+        this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+
+        this.miniMap = new MiniMap(
+            this,
+            Phaser.Input.Keyboard.KeyCodes.M,
+        );
+        this.taskManager = new TaskManager(
+            this,
+            Phaser.Input.Keyboard.KeyCodes.F,
+            roomObj.totalTasks,
+            roomObj.tasksComplete,
+            (taskName) => { this.socket.emit('taskCompleted', {'name': taskName}); },
+        );
+
+        this.canMove = true;
     }
 
     preload() {
         this.load.image('map1', 'amidstOurselvesAssets/map1.png');
         this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
         this.load.spritesheet('audioIcon', audioIconpng, {frameWidth: 500, frameHeight: 500});
+        this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000, frameHeight: 200});
+        this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100, frameHeight: 100});
+        this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100, frameHeight: 100});
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
-        
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyMiniMap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
 
-        this.createSpritesFromTempPlayers();
-        this.miniMap = new MiniMap(this, this.players[this.socket.id].colour, 'map1', 'player');
+        this.createPlayers(this.tempPlayers);
+
+        this.taskManager.create(this.players[this.socket.id]);
+        this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
+
         this.imposter = new Imposter(this, this.socket);
+        this.meetingManager = new Meeting(this);
 
-        this.keyMiniMap.on('down', () => {
-            this.miniMap.toggleMiniMap();
-        });
+        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.createEndButtonForHost();
+        this.createMuteButton();
 
         this.killButton.on('down', () => {
-            this.imposter.attemptKill(this.players, this.deadBodies);
+            if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+                this.imposter.attemptKill(this.players, this.deadBodies);
+            }
+        });
+
+        this.callButton.on('down', () => {
+            if(this.meetingManager.checkMeetingConditions()) {
+                this.socket.emit('meeting');
+            }
+        });
+
+        this.socket.on('taskCompleted', (taskObj) => {
+            if (taskObj.id === this.socket.id) {
+                this.taskManager.finishTask(taskObj.name);
+                this.miniMap.finishTask(taskObj.name);
+            } else {
+                this.taskManager.incrementTaskbar();
+            }
         });
     
         this.socket.on('move', (playerObj) => {
@@ -60,7 +104,8 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('join', (playerObj) => {
-            this.createSprite(playerObj);
+            this.createPlayer(playerObj);
+            this.changePlayerToGhost(playerObj.id);
             console.log('player joined ' + playerObj.id);
         });
         
@@ -85,35 +130,71 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('kill', (playerObj) => {
-            this.deadBodies[playerObj.id].x = playerObj.x;
-            this.deadBodies[playerObj.id].y = playerObj.y;
-            this.deadBodies[playerObj.id].visible = true;
+            if (playerObj.id === this.socket.id) {
+                this.changeLocalPlayerToGhost();
+                this.taskManager.finishAllTasks();
+            } else {
+                this.changePlayerToGhost(playerObj.id);
+            }
+
+            this.showDeadBoby(playerObj.id, playerObj.x, playerObj.y);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
 
-        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.createEndButtonForHost();
-        this.createMuteButton();
+        this.socket.on('meeting', () => {
+            let newDeadBodies = [];
+
+            for (let playerId in this.players) {
+                this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId);
+
+                if (this.deadBodies[playerId].visible) {
+                    this.hideDeadBody(playerId);
+                    newDeadBodies.push(playerId);
+                }
+            }
+
+            console.log('newDeadBodies', newDeadBodies);
+            this.meetingManager.show();
+        });
+
+        this.socket.on('meetingResult', (result) => {
+            this.meetingManager.showResult(result);
+
+        })
+
+        this.socket.on('new_message', (config) => {
+            this.meetingManager.addMessage(config.player, config.message);
+        })
     }
 
     update() {
-        this.movePlayer(
-            this.speed,
+        // I disabled player movement in the taskManager class to make sure 
+        // players can not move around while pressing the F key.
+        if (this.canMove) {
+            this.movePlayer(
+                this.speed,
+                this.players[this.socket.id].x,
+                this.players[this.socket.id].y,
+                this.keyUp.isDown,
+                this.keyDown.isDown,
+                this.keyLeft.isDown,
+                this.keyRight.isDown,
+                this.players[this.socket.id].playerState
+            );
+        }
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+            this.imposter.updateCooldown();
+        }
+        this.visionUpdate(
+            this.socket.id,
             this.players[this.socket.id].x,
             this.players[this.socket.id].y,
-            this.keyUp.isDown,
-            this.keyDown.isDown,
-            this.keyLeft.isDown,
-            this.keyRight.isDown
         );
-        this.miniMap.updateMiniMap(
-            this.players[this.socket.id].x,
-            this.players[this.socket.id].y,
-        );
+        this.taskManager.update();
+        this.miniMap.update();
     }
 
     createEndButtonForHost() {
@@ -134,10 +215,14 @@ export default class GameScene extends AbstractGameplayScene {
     }
 
     cleanupSocketio() {
+        this.socket.off('taskCompleted');
         this.socket.off('move');
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+        this.socket.off('kill');
         this.socket.off('webRTC_speaking');
+        this.socket.off('meeting');
+        this.socket.off('meetingResult');
     }
 }

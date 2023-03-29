@@ -5,8 +5,13 @@ import {
     PLAYER_WIDTH,
     MAP_SCALE,
     MAP1_WALLS,
-    FRAMES_PER_COLOUR
+    FRAMES_PER_COLOUR,
+    GHOST_FRAME_OFFSET,
+    DEAD_BODY_FRAME_OFFSET,
+    VIEW_DISTANCE,
 } from "../constants"
+
+
 
 
 export default class AbstractGameplayScene extends Phaser.Scene {
@@ -18,7 +23,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.deadBodies = {};
     }
 
-    movePlayer(speed, oldX, oldY, up, down, left, right) {
+
+
+
+    movePlayer(speed, oldX, oldY, up, down, left, right, state) {
         let newX = oldX;
         let newY = oldY;
     
@@ -40,19 +48,22 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             moved = true;
         }
         if (!moved) return;
+
+        if (state === PLAYER_STATE.ghost) {
+            this.updateLocalPlayerPosition(newX, newY);
+            return;
+        }
     
         let wallnewX = Math.floor(newX/MAP_SCALE);
         let wallnewY = Math.floor(newY/MAP_SCALE);
         let walloldX = Math.floor(oldX/MAP_SCALE);
         let walloldY = Math.floor(oldY/MAP_SCALE);
-    
+
         if (!MAP1_WALLS.has(`${wallnewX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(newX, newY);
-        }
-        else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
+        } else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(oldX, newY);
-        }
-        else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
+        } else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
             this.updateLocalPlayerPosition(newX, oldY);
         }
     }
@@ -73,49 +84,63 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.webRTC.move({id: playerId, x: newX, y: newY});
     }
 
-    createSpritesFromTempPlayers() {
-        for (let playerId in this.tempPlayers) {
-            this.createSprite(this.tempPlayers[playerId]);
+
+
+
+    createPlayers(playerObjs) {
+        for (let playerId in playerObjs) {
+            this.createSprite(playerObjs[playerId]);
+            this.webRTC.move(playerObjs[playerId]);
         }
-        if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
-            this.setImposterNameColours();
+
+        for (let playerId in this.players) {
+            this.setPlayerImposter(playerId);
+            this.setPlayerGhost(playerId);
         }
-        delete this.tempPlayers;
+    }
+
+    createPlayer(playerObj) {
+        this.createSprite(playerObj);
+        this.webRTC.move(playerObj);
+
+        this.setPlayerImposter(playerObj.id);
+        this.setPlayerGhost(playerObj.id);
     }
     
     createSprite(playerObj) {
-        console.log(playerObj);
+        let startingDeadBodyFrame = playerObj.colour * FRAMES_PER_COLOUR + DEAD_BODY_FRAME_OFFSET;
+        let startingPlayerFrame;
+        let startingAlpha;
+        if (playerObj.playerState === PLAYER_STATE.ghost) {
+            startingPlayerFrame = playerObj.colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET;
+            startingAlpha = 0.5;
+        } else {
+            startingPlayerFrame = playerObj.colour * FRAMES_PER_COLOUR;
+            startingAlpha = 1;
+        }
 
-        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', playerObj.colour * FRAMES_PER_COLOUR).setOrigin(0.5, 1);
+        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
+
+        this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', startingPlayerFrame).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.players[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
+        this.players[playerObj.id].name = playerObj.id;
+        this.players[playerObj.id].setAlpha(startingAlpha);
 
-        this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', 8).setOrigin(0.5, 1);
+        this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', startingDeadBodyFrame).setOrigin(0.5, 1);
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.deadBodies[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.deadBodies[playerObj.id].visible = false;
-
-        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
 
         this.audioIcons[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'audioIcon');
         this.audioIcons[playerObj.id].displayHeight = PLAYER_HEIGHT/2;
         this.audioIcons[playerObj.id].displayWidth = PLAYER_WIDTH/2;
         this.audioIcons[playerObj.id].visible = false;
-
-        this.webRTC.move(playerObj);
     }
 
-    setImposterNameColours() {
-        for (let playerId in this.players) {
-            if (this.players[playerId].playerState === PLAYER_STATE.imposter) {
-                this.playerNames[playerId].setTint(0xff0000);
-            }
-        }
-    }
-    
     destroySprite(playerId) {
         this.players[playerId].destroy();
         delete this.players[playerId];
@@ -130,9 +155,167 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         delete this.deadBodies[playerId];
     }
 
-    isWithinManhattanDist(x1, y1, x2, y2, minDist) {
-        return Math.abs(x1-x2) + Math.abs(y1-y2) < minDist;
+    setPlayerImposter(playerId) {
+        let localPlayerState = this.players[this.socket.id].playerState;
+        let currentPlayerState = this.players[playerId].playerState;
+
+        if (localPlayerState === PLAYER_STATE.imposter || localPlayerState === PLAYER_STATE.ghost) {
+            if (currentPlayerState === PLAYER_STATE.imposter) {
+                this.playerNames[playerId].setTint(0xff0000);
+            }
+        }
     }
+
+    setPlayerGhost(playerId) {
+        let localPlayerState = this.players[this.socket.id].playerState;
+        let currentPlayerState = this.players[playerId].playerState;
+
+        if (localPlayerState === PLAYER_STATE.crewmate || localPlayerState === PLAYER_STATE.imposter) {
+            if (currentPlayerState === PLAYER_STATE.ghost) {
+                this.hidePlayer(playerId);
+            } else {
+                this.showPlayer(playerId);
+            }
+        } else {
+            this.showPlayer(playerId);
+        }
+    }
+
+    hidePlayer(playerId) {
+        this.players[playerId].visible = false;
+        this.playerNames[playerId].visible = false;
+    }
+
+    showPlayer(playerId) {
+        this.players[playerId].visible = true;
+        this.playerNames[playerId].visible = true;
+    }
+
+    hideDeadBody(playerId) {
+        this.deadBodies[playerId].x = 0;
+        this.deadBodies[playerId].y = 0;
+        this.deadBodies[playerId].visible = false;
+    }
+
+    showDeadBoby(playerId, x, y) {
+        this.deadBodies[playerId].x = x;
+        this.deadBodies[playerId].y = y;
+        this.deadBodies[playerId].visible = true;
+    }
+
+    changeLocalPlayerToGhost() {
+        let startingFrame = this.players[this.socket.id].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
+
+        this.players[this.socket.id].setFrame(startingFrame);
+        this.players[this.socket.id].setAlpha(0.5);
+        this.players[this.socket.id].playerState = PLAYER_STATE.ghost;
+
+        for (let playerId in this.players) {
+            this.showPlayer(playerId);
+            this.setPlayerImposter(playerId);
+        }
+    }
+
+    changePlayerToGhost(playerId) {
+        let startingFrame = this.players[playerId].colour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET
+
+        this.players[playerId].setFrame(startingFrame);
+        this.players[playerId].setAlpha(0.5);
+        this.players[playerId].playerState = PLAYER_STATE.ghost;
+
+        if (this.players[this.socket.id].playerState === PLAYER_STATE.ghost) {
+            this.showPlayer(playerId);
+        } else {
+            this.hidePlayer(playerId);
+        }
+    }
+
+    updatePlayerColour(newColour, playerId) {
+        let newColourFrame;
+        if (this.players[playerId].playerState === PLAYER_STATE.ghost) {
+            newColourFrame = newColour * FRAMES_PER_COLOUR + GHOST_FRAME_OFFSET;
+        } else {
+            newColourFrame = newColour * FRAMES_PER_COLOUR;
+        }
+
+        this.players[playerId].setFrame(newColourFrame);
+        this.players[playerId].colour = newColour
+    }
+
+
+
+
+    wallBetween(x0, y0, x1, y1, stepSize, iterations) {
+        const dx = Math.abs(x1 - x0);
+        const dy = Math.abs(y1 - y0);
+        const sx = (x0 < x1) ? stepSize : -stepSize;
+        const sy = (y0 < y1) ? stepSize : -stepSize;
+
+        const initialX = x0;
+        const initialY = y0;
+        const lenientX = dx - stepSize;
+        const lenientY = dy - stepSize;
+
+        let err = dx - dy;
+     
+        for (let i=0; i < iterations; i++) {
+            let exceedsX = Math.abs(x0 - initialX) >= lenientX;
+            let exceedsY = Math.abs(y0 - initialY) >= lenientY;
+            if (exceedsX && exceedsY) return false;
+
+            let wallX = Math.floor(x0/MAP_SCALE);
+            let wallY = Math.floor(y0/MAP_SCALE);
+            if (MAP1_WALLS.has(`${wallX}-${wallY}`)) return true;
+
+            let e2 = 2*err;
+            if (e2 > -dy) {
+                err -= dy;
+                x0  += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y0  += sy;
+            }
+        }
+
+        return true;
+    }
+
+    visionUpdate(localId, localX, localY) {
+        if (this.players[localId].playerState === PLAYER_STATE.ghost) {
+            for (let playerId in this.players) {
+                this.showPlayer(playerId);
+            }
+            return;
+        }
+
+        for (let playerId in this.players) {
+            if (playerId === localId) {
+                continue;
+            }
+            if (this.players[playerId].playerState === PLAYER_STATE.ghost) {
+                this.hidePlayer(playerId);
+                continue;
+            }
+
+            const wallBetween = this.wallBetween(
+                localX,
+                localY,
+                this.players[playerId].x,
+                this.players[playerId].y,
+                MAP_SCALE,
+                VIEW_DISTANCE,
+            );
+            if (wallBetween) {
+                this.hidePlayer(playerId);
+            } else {
+                this.showPlayer(playerId);
+            }
+        }
+    }
+
+
+
 
     createMuteButton() {
         this.mute_button = this.add.text(100, 100, 'Mute')
