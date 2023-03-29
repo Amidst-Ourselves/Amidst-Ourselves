@@ -1,4 +1,6 @@
-
+import {
+    PLAYER_STATE,
+} from "../constants"
 const USE_AUDIO = true;
 const USE_VIDEO = false;
 
@@ -42,6 +44,7 @@ export default class webRTCClientManager {
 
             this.my_pos[playerObj.id].x = playerObj.x;
             this.my_pos[playerObj.id].y = playerObj.y;
+            this.my_pos[playerObj.id].player_state = playerObj.player_state;
         });
         
         //console.log("Connecting to signaling server");
@@ -396,25 +399,39 @@ export default class webRTCClientManager {
                             const arraySum = array.reduce((a, value) => a + value, 0);
                             const average = arraySum / array.length;
                             // console.log(Math.round(average));
-                            if (Math.round(average) > 10){
-                                // console.log(Math.round(average));
-                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
-                            }
-                            else {
-                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
-                                setTimeout(function(){
-                                    //do what you need here
-                                }, 1000);
-                            }
+                            // if (Math.round(average) > 10){
+                            //     // console.log(Math.round(average));
+                            //     tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
+                            // }
+                            // else {
+                            //     tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
+                            //     setTimeout(function(){
+                            //         //do what you need here
+                            //     }, 1000);
+                            // }
                             // console.log("my_pos is: " + Object.keys(this.my_pos).length);
 
                             if (Object.keys(this.my_pos).length >= 2 && tmp_signaling_socket.id in this.my_pos) {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
                                 my_x = this.my_pos[tmp_signaling_socket.id].x;
                                 my_y = this.my_pos[tmp_signaling_socket.id].y;
+                                my_state = this.my_pos[tmp_signaling_socket.id].player_state;
                 
                                 for (let ele in this.my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
+                                        // if ((my_state != PLAYER_STATE.ghost && this.my_pos[ele.id].player_state != PLAYER_STATE.ghost) || my_state == PLAYER_STATE.ghost) {
+                                        if (Math.round(average) > 10){
+                                            // console.log(Math.round(average));
+                                            tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
+                                        }
+                                        else {
+                                            tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
+                                            setTimeout(function(){
+                                                //do what you need here
+                                            }, 1000);
+                                        }
+                                        // }
+
                                         updateProximityFlag(ele);
                                     }
                                 }
@@ -472,5 +489,12 @@ export default class webRTCClientManager {
 
         this.my_pos[playerObj.id].x = playerObj.x;
         this.my_pos[playerObj.id].y = playerObj.y;
+    }
+
+    update_state(id, state) {
+        if (!this.my_pos[id]) {
+            this.my_pos[id] = {};
+        }
+        this.my_pos[id].player_state = state;
     }
 }
