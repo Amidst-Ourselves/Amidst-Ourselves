@@ -1,6 +1,6 @@
 import {
     PLAYER_STATE,
-} from "../constants"
+} from "./constants"
 const USE_AUDIO = true;
 const USE_VIDEO = false;
 
@@ -44,7 +44,7 @@ export default class webRTCClientManager {
 
             this.my_pos[playerObj.id].x = playerObj.x;
             this.my_pos[playerObj.id].y = playerObj.y;
-            this.my_pos[playerObj.id].player_state = playerObj.player_state;
+            // this.my_pos[playerObj.id].player_state = playerObj.player_state;
         });
         
         //console.log("Connecting to signaling server");
@@ -374,6 +374,7 @@ export default class webRTCClientManager {
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
                         let my_peers = this.peers
+                        let my_state = this.my_pos[tmp_signaling_socket.id].player_state;
                         scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -391,6 +392,12 @@ export default class webRTCClientManager {
                                 else {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = true;
+                                }
+                            }
+                            function updatePlayerStateCommunication(ele) {
+                                if ((this.my_pos[tmp_signaling_socket.id].player_state !== PLAYER_STATE.ghost && this.my_pos[ele.id].player_state === PLAYER_STATE.ghost)) {
+                                    let senderList = my_peers[ele].getReceivers();
+                                    senderList[0].track.enabled = false;
                                 }
                             }
 
@@ -433,6 +440,7 @@ export default class webRTCClientManager {
                                         // }
 
                                         updateProximityFlag(ele);
+                                        updatePlayerStateCommunication(ele);
                                     }
                                 }
                             }

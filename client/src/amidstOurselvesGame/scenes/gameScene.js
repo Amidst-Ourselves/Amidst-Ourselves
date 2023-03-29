@@ -132,13 +132,10 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('webRTC_speaking', (config) => {
-            if (this.players[this.socket.id].playerState === PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost) {
-                this.audioIcons[config.id].visible = config.bool;
-            }
-            else if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost) {
+            if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost) {
                 this.audioIcons[config.id].visible = false;
             }
-            else if (this.players[this.socket.id].playerState === PLAYER_STATE.ghost && this.players[config.id].playerState !== PLAYER_STATE.ghost) {
+            else {
                 this.audioIcons[config.id].visible = config.bool;
             }
         });
