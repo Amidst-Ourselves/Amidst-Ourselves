@@ -91,6 +91,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         for (let playerId in playerObjs) {
             this.createSprite(playerObjs[playerId]);
             this.webRTC.move(playerObjs[playerId]);
+            this.webRTC.update_state(playerId, playerObjs[playerId].playerState);
         }
 
         for (let playerId in this.players) {
@@ -102,6 +103,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     createPlayer(playerObj) {
         this.createSprite(playerObj);
         this.webRTC.move(playerObj);
+        this.webRTC.update_state(playerObj.id, playerObj.playerState);
 
         this.setPlayerImposter(playerObj.id);
         this.setPlayerGhost(playerObj.id);

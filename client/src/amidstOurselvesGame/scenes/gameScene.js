@@ -191,7 +191,7 @@ export default class GameScene extends AbstractGameplayScene {
         );
         this.taskManager.update();
         this.miniMap.update();
-        this.webRTC.update_state(this.players[this.socket.id].playerState);
+        this.webRTC.update_state(this.socket.id, this.players[this.socket.id].playerState);
     }
 
     createEndButtonForHost() {

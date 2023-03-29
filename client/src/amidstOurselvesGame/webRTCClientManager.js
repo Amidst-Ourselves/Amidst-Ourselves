@@ -374,7 +374,9 @@ export default class webRTCClientManager {
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
                         let my_peers = this.peers
+                        console.log(this.my_pos);
                         let my_state = this.my_pos[tmp_signaling_socket.id].player_state;
+                        console.log(my_state);
                         scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -395,7 +397,7 @@ export default class webRTCClientManager {
                                 }
                             }
                             function updatePlayerStateCommunication(ele) {
-                                if ((this.my_pos[tmp_signaling_socket.id].player_state !== PLAYER_STATE.ghost && this.my_pos[ele.id].player_state === PLAYER_STATE.ghost)) {
+                                if ((my_state !== PLAYER_STATE.ghost && this.my_pos[ele].player_state === PLAYER_STATE.ghost)) {
                                     let senderList = my_peers[ele].getReceivers();
                                     senderList[0].track.enabled = false;
                                 }
@@ -406,16 +408,16 @@ export default class webRTCClientManager {
                             const arraySum = array.reduce((a, value) => a + value, 0);
                             const average = arraySum / array.length;
                             // console.log(Math.round(average));
-                            // if (Math.round(average) > 10){
-                            //     // console.log(Math.round(average));
-                            //     tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
-                            // }
-                            // else {
-                            //     tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
-                            //     setTimeout(function(){
-                            //         //do what you need here
-                            //     }, 1000);
-                            // }
+                            if (Math.round(average) > 10){
+                                // console.log(Math.round(average));
+                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
+                            }
+                            else {
+                                tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
+                                setTimeout(function(){
+                                    //do what you need here
+                                }, 1000);
+                            }
                             // console.log("my_pos is: " + Object.keys(this.my_pos).length);
 
                             if (Object.keys(this.my_pos).length >= 2 && tmp_signaling_socket.id in this.my_pos) {
@@ -426,18 +428,6 @@ export default class webRTCClientManager {
                 
                                 for (let ele in this.my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
-                                        // if ((my_state != PLAYER_STATE.ghost && this.my_pos[ele.id].player_state != PLAYER_STATE.ghost) || my_state == PLAYER_STATE.ghost) {
-                                        if (Math.round(average) > 10){
-                                            // console.log(Math.round(average));
-                                            tmp_signaling_socket.emit('webRTC_speaking', {'bool': true, 'id': tmp_signaling_socket.id});
-                                        }
-                                        else {
-                                            tmp_signaling_socket.emit('webRTC_speaking', {'bool': false, 'id': tmp_signaling_socket.id});
-                                            setTimeout(function(){
-                                                //do what you need here
-                                            }, 1000);
-                                        }
-                                        // }
 
                                         updateProximityFlag(ele);
                                         updatePlayerStateCommunication(ele);
