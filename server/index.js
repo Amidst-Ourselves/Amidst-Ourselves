@@ -154,6 +154,7 @@ io.on('connection', (socket) => {
                 delete rooms[socket.roomCode];
             }
             console.log("I'm trying to disconnect");
+            io.to(socket.roomCode).emit('leave', {id: socket.id});
             delete sockets[socket.id];
         }
     });

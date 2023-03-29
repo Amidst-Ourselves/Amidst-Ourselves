@@ -116,19 +116,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
         }).setScrollFactor(0).setDepth(5);
         this.countdownText.visible = false;
 
-        
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
-        this.simulateIncomingMessage();
         ///////////////////////////
 
 
