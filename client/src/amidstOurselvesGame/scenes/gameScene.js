@@ -127,6 +127,15 @@ export default class GameScene extends AbstractGameplayScene {
         
         this.socket.on('leave', (playerObj) => {
             this.destroySprite(playerObj.id);
+
+            const message = 'player left ' + playerObj.id;
+            const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
+            const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
+            announcement.setX(announcementX)
+            this.time.delayedCall(5000, function() {
+            announcement.destroy();
+            });
+
             console.log('player left ' + playerObj.id);
         });
 
