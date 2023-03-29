@@ -155,6 +155,10 @@ export default class GameScene extends AbstractGameplayScene {
             this.meetingManager.showResult(result);
 
         })
+
+        this.socket.on('new_message', (config) => {
+            this.meetingManager.addMessage(config.player, config.message);
+        })
     }
 
     update() {
