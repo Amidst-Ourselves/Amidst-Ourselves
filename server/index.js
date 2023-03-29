@@ -144,13 +144,18 @@ io.on('connection', (socket) => {
         if (socket.roomCode === undefined) {
             // do nothing
         } else {
+
+            console.log("webRTC deleting1");
+            webRTC_delete(socket.roomCode);
+
             delete rooms[socket.roomCode].players[socket.id];
             delete rooms[socket.roomCode].deadBodies[socket.id];
             if (playerCount(rooms[socket.roomCode]) === 0) {
                 delete rooms[socket.roomCode];
             }
-            console.log("I'm trying to disconnect")
+            console.log("I'm trying to disconnect");
             io.to(socket.roomCode).emit('leave', {id: socket.id});
+            delete sockets[socket.id];
         }
     });
 
@@ -273,6 +278,10 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('new_message', (message) => { 
+        socket.broadcast.to(socket.roomCode).emit('new_message', {'player': socket.id, 'message': message});
+    });
+
     /* Below are webRTC events
     **************************
     **************************
@@ -281,13 +290,13 @@ io.on('connection', (socket) => {
     */
     sockets[socket.id] = socket;
     // this event should be called before the above disconnect function
-    socket.on('webRTC_disconnect', (roomCodeObj) => {
-        if (roomCodeObj === undefined) {
+    socket.on('webRTC_disconnect', () => {
+        if (socket.roomCode === undefined) {
             console.log("something that should never happen happened");
             return;
         }
-        let roomCode = roomCodeObj.roomCode;
-        webRTC_delete(roomCode);
+        console.log("webRTC deleting");
+        webRTC_delete(socket.roomCode);
         delete sockets[socket.id];
     });
 
@@ -324,17 +333,18 @@ io.on('connection', (socket) => {
         if (rooms[roomCode].players === undefined) {
             return;
         }
+        console.log("webRTC deleting");
 
         // delete socket.channels[channel];
         // notify all users the room has been deleted
         for (let player in rooms[roomCode].players) {
             sockets[player].emit('removePeer', {'peer_id': socket.id});
-            socket.emit('removePeer', {'peer_id': id});
+            socket.emit('removePeer', {'peer_id': player});
         }
     }
 
 
-    socket.on('webRTC_delete', webRTC_delete);
+    // socket.on('webRTC_delete', webRTC_delete);
 
     socket.on('relayICECandidate', (config) => {
         let peer_id = config.peer_id;

@@ -16,7 +16,6 @@ import {
 export default class Meeting extends Phaser.GameObjects.Container {
     constructor(scene) {
         super(scene);
-
         // Create and configure the overlay graphics object
         this.overlay = this.scene.add.graphics();
         this.overlay.fillStyle(0x000000, 1);
@@ -41,6 +40,84 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.x = this.scene.cameras.main.centerX - 780/2;
         this.voting_board.y = this.scene.cameras.main.centerY - 580/2;
         this.voting_board.visible = false;
+
+        this.textOpened = false;
+        this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#000000' });
+        this.textButton.setOrigin(0.5);
+        this.textButton.setScrollFactor(0);
+        this.textButton.setScale(0.5);
+        this.textButton.visible = false;
+        this.textButton.setDepth(5);
+        this.textButton.setPadding(10)
+        this.textButton.setStyle({ backgroundColor: '#111' })
+        this.textButton.setInteractive({ useHandCursor: true })
+        this.textButton.on('pointerdown', () => {
+            // Handle player vote button click event
+            console.log("pressed");
+            if(!this.textOpened){
+                this.showTextChat();
+            }
+            else {
+                this.hideText();
+            }
+        });
+        this.textButton.on('pointerover', () => {
+            this.textButton.setTint(0x808080);
+        });
+        this.textButton.on('pointerout', () => {
+            // vote_tab.fillStyle(0x000000);
+            this.textButton.clearTint();
+        });
+        //////////////////////////////
+        this.text_board = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
+        this.text_board.fillStyle(boardFillColor);
+        this.text_board.lineStyle(boardStrokeWidth+4, boardStrokeColor);
+        this.text_board.fillRoundedRect(250, 200, boardWidth, boardHeight, boardRadius);
+        this.text_board.strokeRoundedRect(250, 200, boardWidth, boardHeight, boardRadius);
+        this.text_board.x = this.scene.cameras.main.centerX - 780/2;
+        this.text_board.y = this.scene.cameras.main.centerY - 580/2;
+        this.text_board.setScale(0.6);
+        this.text_board.visible = false;
+
+        // Create a large rectangle for displaying messages
+        const messageDisplayX = this.text_board.x - 20;
+        const messageDisplayY = this.text_board.y - 60;
+        const messageDisplayWidth = boardWidth * 0.6 - 40;
+        const messageDisplayHeight = boardHeight * 0.6 - 40 - boardHeight * 0.2;
+        this.messageDisplay = this.scene.add.container(messageDisplayX, messageDisplayY).setScrollFactor(0).setDepth(7);
+        this.messageDisplay.visible = false;
+        // Create a smaller rectangle for inputting messages
+        const messageInputX = this.text_board.x + 150;
+        const messageInputY = this.text_board.y + messageDisplayHeight + 240;
+        const messageInputWidth = boardWidth * 0.6;
+        const messageInputHeight = boardHeight * 0.1;
+        // this.messageInput = this.scene.add.zone(messageInputX, messageInputY, messageInputWidth, messageInputHeight).setOrigin(0.5).setScrollFactor(0).setDepth(7);
+
+        this.messageInput = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
+        this.messageInput.fillStyle(0xFFFFFF);
+        this.messageInput.lineStyle(boardStrokeWidth, boardStrokeColor);
+        this.messageInput.fillRoundedRect(messageInputX, messageInputY, messageInputWidth, messageInputHeight, boardRadius);
+        this.messageInput.strokeRoundedRect(messageInputX, messageInputY, messageInputWidth, messageInputHeight, boardRadius);
+        this.messageInput.visible = false;
+        // Create the message history array
+        this.messageHistory = [];
+
+        const inputMessageX = messageInputX + 10;
+        const inputMessageY = messageInputY + 20;
+        this.inputMessageText = this.scene.add.text(inputMessageX, inputMessageY, '').setScrollFactor(0).setDepth(7);
+        this.inputMessageText.setColor('0x000000')
+        this.inputMessageText.visible = false;
+        this.inputMessage = '';
+
+        let countdown = 30;
+        this.countdownText = this.scene.add.text(10, 10, `Time left: ${countdown}s`, {
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setScrollFactor(0).setDepth(5);
+        this.countdownText.visible = false;
+
+        ///////////////////////////
+
 
         let i = 0;
         this.votingButtons = [];
@@ -145,6 +222,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.overlay.visible = true;
         this.skipText = true;
         this.voting_board.visible = true;
+        this.textButton.visible = true;
+        this.countdownText.visible = true;
 
         for (const button of this.votingButtons) {
             button.visible = true;
@@ -155,13 +234,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
         for (const tab of this.vote_tabs) {
             tab.visible = true;
         }
-
-          // Countdown timer
+        // Countdown timer
         let countdown = 30;
-        const countdownText = this.scene.add.text(10, 10, `Time left: ${countdown}s`, {
-            fontSize: '32px',
-            color: '#ffffff'
-        }).setScrollFactor(0).setDepth(5);
 
         const timer = this.scene.time.addEvent({
             delay: 1000,
@@ -169,12 +243,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
             callback: () => {
             // console.log(this.scene.sys.game.loop.delta);  
             countdown --;
-            countdownText.setText(`Time left: ${Math.round(countdown)}s`);
+            this.countdownText.setText(`Time left: ${Math.round(countdown)}s`);
 
             if (countdown <= 0) {
                 this.hide();
                 timer.remove();
-                countdownText.visible = false;
+                this.countdownText.visible = false;
+                // this.countdownText = null;
             }
             },
             Loop: true,
@@ -259,49 +334,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 },
                 Loop: true,
             });
-        
-            // const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
-            // // text.setOrigin(0.5);
-            // text.setScrollFactor(0);
-        
-            // const message = 'Player { } is voted out';
-            // const duration = 1000;
-            // const delay = 200;
-        
-            // let tween = this.scene.tweens.add({
-            //     targets: text,
-            //     duration: duration,
-            //     delay: delay,
-            //     ease: 'Linear',
-            //     repeat: message.length - 1,
-            //     onUpdate: function (tween, target) {
-            //         const progress = tween.totalProgress();
-            //         const currentIndex = Math.floor(progress * message.length);
-            //         target.setText(message.substring(0, currentIndex + 1));
-            //     }
-            // });
         }
         else {
-            // const text = this.scene.add.text(400, 200, '', { fontSize: '32px', fill: '#ffffff' });
-            // // text.setOrigin(0.5);
-            // text.setScrollFactor(0);
-        
-            // const message = 'Nothing happened';
-            // const duration = 1000;
-            // const delay = 200;
-        
-            // let tween = this.scene.tweens.add({
-            //     targets: text,
-            //     duration: duration,
-            //     delay: delay,
-            //     ease: 'Linear',
-            //     repeat: message.length - 1,
-            //     onUpdate: function (tween, target) {
-            //         const progress = tween.totalProgress();
-            //         const currentIndex = Math.floor(progress * message.length);
-            //         target.setText(message.substring(0, currentIndex + 1));
-            //     }
-            // });
             let message = 'Nothing happened';
             const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
             text.setScrollFactor(0);
@@ -323,5 +357,109 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 Loop: true,
             });
         }
+    }
+
+    showTextChat() {
+        this.messageDisplay.visible = true;
+        this.text_board.visible = true;
+        this.messageInput.visible = true;
+        this.inputMessageText.visible = true;
+        this.textOpened = true;
+        this.keyboardListener = this.scene.input.keyboard.on('keydown', (event) => {
+            // Handle special keys
+            if (event.key === 'Backspace') {
+                // Remove the last character of the input message
+                this.inputMessage = this.inputMessage.slice(0, -1);
+            } else if (event.key === 'Enter') {
+                this.scene.socket.emit("new_message", this.inputMessage);
+                // Display the input message in the messageDisplay area
+                this.addMessage(this.scene.socket.id, this.inputMessage);
+
+                // Clear the input message
+                this.inputMessage = '';
+            } else {
+                if (this.inputMessage.length < 30) {
+                    const keyCode = event.keyCode;
+                    const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
+                    const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
+                
+                    if (isAlphanumeric || isCommonPunctuation) {
+                    // Update the input message with the new character
+                        this.inputMessage += event.key;
+                    }
+                }
+            }
+
+            // Update the inputMessageText object
+            this.inputMessageText.setText(this.inputMessage);
+        });
+        // this.keyboardListener = this.scene.input.keyboard.on('keydown', this.keyboardListener);
+    }
+
+    hideText() {
+        this.messageDisplay.visible = false;
+        this.text_board.visible = false;
+        this.messageInput.visible = false;
+        this.inputMessageText.visible = false;
+        this.keyboardListener.visible = false;
+        this.textOpened = false;
+        this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
+    }
+    updateMessageDisplay() {
+        // Clear the current message display
+        this.messageDisplay.removeAll(true);
+
+        while (this.messageHistory.length > 10) {
+            // Remove the oldest message from the history
+            this.messageHistory.shift();
+        }
+      
+        // Add the messages from the message history
+        for (let i = 0; i < this.messageHistory.length; i++) {
+          const messageObject = this.messageHistory[i];
+          const isCurrentUser = messageObject.user === this.scene.socket.id;
+          const xPosition = isCurrentUser ? 600 : 200;
+          const yPosition = 200 + i * 30; // Adjust this value to control the spacing between messages
+      
+          // Create a text object for the message
+          const messageText = this.scene.add.text(xPosition, yPosition, `${messageObject.user}: ${messageObject.message}`).setScrollFactor(0).setDepth(7).setBackgroundColor('#FFF9E6').setColor('#000000');
+          messageText.setOrigin(isCurrentUser ? 1 : 0, 0);
+      
+          // Add the message text to the message display
+          this.messageDisplay.add(messageText);
+        }
+      }
+    // Create a function to handle adding and displaying messages
+    addMessage(user, message) {
+
+        // Create a new message object and push it to the message history array
+            const newMessage = {
+                user: user,
+                message: message,
+                timestamp: new Date(),
+            };
+            this.messageHistory.push(newMessage);
+
+            // Update the message display
+            this.updateMessageDisplay();
+            
+    };
+
+    // Example function for simulating incoming messages from other players
+    simulateIncomingMessage = () => {
+        const otherPlayerName = 'OtherPlayer';
+        const exampleMessage = 'Hello!';
+        this.addMessage(otherPlayerName, exampleMessage);
+    };
+
+    // Example function for simulating sending a message as the current user
+    simulateSendMessage = () => {
+        const currentUserName = 'CurrentUser';
+        const exampleMessage = 'Hi there!';
+        this.addMessage(currentUserName, exampleMessage);
+    };
+
+    updateScene(scene) {
+        this.scene = scene;   
     }
 }

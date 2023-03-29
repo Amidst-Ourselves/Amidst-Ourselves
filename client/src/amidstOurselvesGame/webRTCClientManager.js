@@ -138,7 +138,7 @@ export default class webRTCClientManager {
 
         try {
             this.signaling_socket.on('removePeer', (config) => {
-                // console.log('Signaling server said to remove peer:', config);
+                console.log('Signaling server said to remove peer:', config);
                 let peer_id = config.peer_id;
                 if (peer_id in this.peer_media_elements) {
                     this.peer_media_elements[peer_id].remove();
@@ -149,6 +149,7 @@ export default class webRTCClientManager {
                 //console.log("deleting peer")
                 delete this.peers[peer_id];
                 delete this.peer_media_elements[config.peer_id];
+                delete this.my_pos[config.peer_id];
             });
         }
         catch(error) {
@@ -165,8 +166,9 @@ export default class webRTCClientManager {
         let global_signaling_socket = this.signaling_socket;
 
 
-        this.signaling_socket.on('leave', (playerObj) => {
-            this.signaling_socket.emit('webRTC_disconnect');
+        this.signaling_socket.on('disconnect', () => {
+            console.log("received leave");
+            // this.signaling_socket.emit('webRTC_disconnect');
             this.reset();
         });
 
