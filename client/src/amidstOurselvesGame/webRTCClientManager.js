@@ -375,12 +375,12 @@ export default class webRTCClientManager {
                         let my_pos = this.my_pos;
                         let my_peers = this.peers;
                         // let my_states = this.playerStates;
-                        console.log(this.playerStates);
+                        // console.log(this.playerStates);
                         // while(Object.keys(this.playerStates).length === 0);
                         let my_states = this.playerStates;
-                        console.log(this.playerStates[this.signaling_socket.id]);
+                        // console.log(this.playerStates[this.signaling_socket.id]);
                         let my_state = this.playerStates[this.signaling_socket.id].playerState;
-                        console.log(my_state);
+                        // console.log(my_state);
                         scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -407,10 +407,10 @@ export default class webRTCClientManager {
                                 if (my_state != PLAYER_STATE.ghost && my_states[ele].playerState == PLAYER_STATE.ghost) {
                                     // console.log(ele);
                                     // console.log(my_peers[ele]);
-                                    console.log(my_state);
-                                    console.log(my_states[ele].playerState);
+                                    // console.log(my_state);
+                                    // console.log(my_states[ele].playerState);
                                     let senderList = my_peers[ele].getReceivers();
-                                    console.log("ghost muted");
+                                    // console.log("ghost muted");
                                     senderList[0].track.enabled = false;
                                 }
                             }

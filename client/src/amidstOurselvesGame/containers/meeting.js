@@ -155,12 +155,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
             confirm_button.setOrigin(0,0);
             confirm_button.setScale(0.4);
             confirm_button.setInteractive();
-            confirm_button.player = id;
+            confirm_button.id = id;
             confirm_button.idx = i;
             confirm_button.on('pointerdown', () => {
                 // Handle player vote button click event
                 console.log("pressed");
-                this.updateVotes(confirm_button.player, confirm_button.idx);
+                this.updateVotes(confirm_button.id, confirm_button.idx);
             });
             confirm_button.on('pointerover', () => {
                 confirm_button.setTint(0x808080);
@@ -178,6 +178,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             cancel_button.setScale(0.3);
             cancel_button.setInteractive();
             cancel_button.idx = i;
+            cancel_button.player = player;
             cancel_button.on('pointerdown', () => {
                 // Handle player vote button click event
                 console.log("pressed");
@@ -200,6 +201,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             button.setScrollFactor(0);
             button.setScale(0.5);
             button.visible = false;
+            button.player = player;
             button.setDepth(5);
             this.votingButtons.push(button);
 
@@ -209,6 +211,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             playerSprite.setDepth(5);
             playerSprite.setScale(2);
             playerSprite.visible = false;
+            playerSprite.player = player;
             this.playerSprites.push(playerSprite);
             i++;
         }
@@ -226,18 +229,25 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.countdownText.visible = true;
 
         for (const button of this.votingButtons) {
-            button.visible = true;
+            if (button.player.playerState != PLAYER_STATE.ghost) {
+                button.visible = true;
+            }
         }
         for (const player of this.playerSprites) {
-            player.visible = true;
+            if(player.player.playerState != PLAYER_STATE.ghost) {
+                player.visible = true;
+            }
+            // player.visible = true;
         }
         for (const tab of this.vote_tabs) {
-            tab.visible = true;
+            if (tab.player.playerState != PLAYER_STATE.ghost) {
+                tab.visible = true;
+            }
         }
         // Countdown timer
         let countdown = 30;
 
-        const timer = this.scene.time.addEvent({
+        this.meetingTimer = this.scene.time.addEvent({
             delay: 1000,
             loop: true,
             callback: () => {
@@ -247,7 +257,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
             if (countdown <= 0) {
                 this.hide();
-                timer.remove();
+                this.hideText();
+                this.meetingTimer.remove();
                 this.countdownText.visible = false;
                 // this.countdownText = null;
             }
@@ -314,7 +325,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
         if (result !== null) {
             const player = this.scene.players[result.result].name;
             let message = `Player ${player} is voted out`; 
-            this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            // this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            if (result.result === this.scene.socket.id) {
+                this.scene.changeLocalPlayerToGhost();
+                this.scene.taskManager.finishAllTasks();
+            } else {
+                this.scene.changePlayerToGhost(result.result);
+            }
             const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
             text.setScrollFactor(0);
             // Countdown timer
@@ -401,7 +418,9 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.text_board.visible = false;
         this.messageInput.visible = false;
         this.inputMessageText.visible = false;
-        this.keyboardListener.visible = false;
+        if (this.keyboardListener) {
+            this.keyboardListener.visible = false;
+        }
         this.textOpened = false;
         this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
     }
@@ -461,5 +480,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
     updateScene(scene) {
         this.scene = scene;   
+    }
+
+    endMeeting() {
+        this.hide();
+        this.hideText();
+        this.meetingTimer.remove();
+        this.countdownText.visible = false;
     }
 }

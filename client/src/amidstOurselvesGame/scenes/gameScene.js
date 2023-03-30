@@ -153,10 +153,12 @@ export default class GameScene extends AbstractGameplayScene {
             }
 
             console.log('newDeadBodies', newDeadBodies);
+            this.socket.emit('meetingCountdown');
             this.meetingManager.show();
         });
 
         this.socket.on('meetingResult', (result) => {
+            this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
 
         })
