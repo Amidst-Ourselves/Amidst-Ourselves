@@ -215,6 +215,9 @@ export default class Meeting extends Phaser.GameObjects.Container {
             this.playerSprites.push(playerSprite);
             i++;
         }
+
+        const badWords = require('bad-words');
+        this.filter = new badWords();
     }
 
     show() {
@@ -389,8 +392,11 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 this.inputMessage = this.inputMessage.slice(0, -1);
             } else if (event.key === 'Enter') {
                 this.scene.socket.emit("new_message", this.inputMessage);
-                // Display the input message in the messageDisplay area
-                this.addMessage(this.scene.socket.id, this.inputMessage);
+
+                if (!this.filter.isProfane(this.inputMessage)) {
+                    // Display the input message in the messageDisplay area
+                    this.addMessage(this.scene.socket.id, this.inputMessage);
+                } 
 
                 // Clear the input message
                 this.inputMessage = '';
