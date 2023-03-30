@@ -75,7 +75,6 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.taskManager.create(this.players[this.socket.id]);
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
-
         this.imposter = new Imposter(this, this.socket);
         this.meetingManager = new Meeting(this);
 

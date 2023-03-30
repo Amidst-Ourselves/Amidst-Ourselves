@@ -67,6 +67,10 @@ export default class Imposter extends Phaser.GameObjects.Container {
         .setOrigin(0.5)
         .setPadding(10)
         .setStyle({ backgroundColor: '#000000'});
+
+        if(this.scene.players[this.scene.socket.id].playerState !== PLAYER_STATE.imposter) {
+            this.countdown.visible = false;
+        }
       
     }
 
