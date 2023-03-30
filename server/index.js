@@ -237,7 +237,7 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('meeting');
         let room = rooms[socket.roomCode];
         room.meetingCompleted = false;
-        for (let id in room.votes) {
+        for (let id in room.players) {
             // reset all votes to 0
             room.votes[id] = 0;
         }
@@ -294,15 +294,10 @@ io.on('connection', (socket) => {
         }
         let sum = 0;
         for (let playerID in room.votes) {
-            console.log("votes are:")
-            console.log(room.votes[playerID])
             sum += room.votes[playerID];
         }
-        console.log("sum is: ");
-        console.log(sum);
 
         if (sum >= alive) {
-            console.log("vote end1");
             let result = null;
             let max = 0;
             let room = rooms[socket.roomCode];

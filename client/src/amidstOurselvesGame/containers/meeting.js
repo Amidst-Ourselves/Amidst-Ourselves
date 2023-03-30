@@ -42,7 +42,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = false;
 
         this.textOpened = false;
-        this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#000000' });
+        this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#FFFFFF' });
         this.textButton.setOrigin(0.5);
         this.textButton.setScrollFactor(0);
         this.textButton.setScale(0.5);
