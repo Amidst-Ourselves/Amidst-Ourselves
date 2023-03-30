@@ -108,6 +108,7 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.players[this.socket.id].playerState
         );
         this.colourStation.update();
+        this.webRTC.updateState(this.players);
     }
 
     createStartButtonForHost() {

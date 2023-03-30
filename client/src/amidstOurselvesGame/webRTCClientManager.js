@@ -1,4 +1,6 @@
-
+import {
+    PLAYER_STATE,
+} from "./constants"
 const USE_AUDIO = true;
 const USE_VIDEO = false;
 
@@ -26,6 +28,7 @@ export default class webRTCClientManager {
             this.my_y = null;
             this.isMicrophoneOn = true;
             this.mute_flag = true;
+            this.playerStates = {};
         }
         catch(error) {
             console.log("error " + error);
@@ -370,7 +373,14 @@ export default class webRTCClientManager {
                         let my_x = this.my_x;
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
-                        let my_peers = this.peers
+                        let my_peers = this.peers;
+                        // let my_states = this.playerStates;
+                        console.log(this.playerStates);
+                        // while(Object.keys(this.playerStates).length === 0);
+                        let my_states = this.playerStates;
+                        console.log(this.playerStates[this.signaling_socket.id]);
+                        let my_state = this.playerStates[this.signaling_socket.id].playerState;
+                        console.log(my_state);
                         scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -381,13 +391,27 @@ export default class webRTCClientManager {
                                 //console.log("proximity")
                                 //console.log('my x: ' + my_x);
                                 //console.log('target x: ' + my_pos[ele].x);
-                                if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
-                                    let senderList = my_peers[ele].getReceivers();
-                                    senderList[0].track.enabled = false;
+                                if (my_peers && my_peers[ele]) {
+                                    if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
+                                        let senderList = my_peers[ele].getReceivers();
+                                        senderList[0].track.enabled = false;
+                                    }
+                                    else {
+                                        let senderList = my_peers[ele].getReceivers();
+                                        senderList[0].track.enabled = true;
+                                    }
                                 }
-                                else {
+                            }
+                            function updateStateTrack(ele) {
+                                // console.log(my_states);
+                                if (my_state != PLAYER_STATE.ghost && my_states[ele].playerState == PLAYER_STATE.ghost) {
+                                    // console.log(ele);
+                                    // console.log(my_peers[ele]);
+                                    console.log(my_state);
+                                    console.log(my_states[ele].playerState);
                                     let senderList = my_peers[ele].getReceivers();
-                                    senderList[0].track.enabled = true;
+                                    console.log("ghost muted");
+                                    senderList[0].track.enabled = false;
                                 }
                             }
 
@@ -412,10 +436,12 @@ export default class webRTCClientManager {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
                                 my_x = this.my_pos[tmp_signaling_socket.id].x;
                                 my_y = this.my_pos[tmp_signaling_socket.id].y;
+                                my_state = this.playerStates[this.signaling_socket.id].playerState;
                 
                                 for (let ele in this.my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
                                         updateProximityFlag(ele);
+                                        updateStateTrack(ele);
                                     }
                                 }
                             }
@@ -472,5 +498,14 @@ export default class webRTCClientManager {
 
         this.my_pos[playerObj.id].x = playerObj.x;
         this.my_pos[playerObj.id].y = playerObj.y;
+    }
+
+    updateState(players) {
+        for (let playerId in players) {
+            if (!this.playerStates[playerId]) {
+                this.playerStates[playerId] = {};
+            }
+            this.playerStates[playerId].playerState = players[playerId].playerState;
+        }
     }
 }
