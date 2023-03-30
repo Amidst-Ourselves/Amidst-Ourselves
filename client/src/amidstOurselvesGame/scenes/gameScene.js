@@ -30,6 +30,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+        this.eButtonPressed = false;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -60,11 +61,15 @@ export default class GameScene extends AbstractGameplayScene {
         this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000, frameHeight: 200});
         this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100, frameHeight: 100});
         this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100, frameHeight: 100});
+        this.load.spritesheet('ebutton', 'amidstOurselvesAssets/Ebutton.png', {frameWidth: 100, frameHeight: 100});
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
+
+        this.eButton = this.add.sprite(1400, 700, 'ebutton');
+        this.eButton.setOrigin(0.5, 1);
 
         this.createPlayers(this.tempPlayers);
 
