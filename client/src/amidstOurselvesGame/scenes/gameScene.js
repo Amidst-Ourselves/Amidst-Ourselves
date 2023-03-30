@@ -7,7 +7,8 @@ import {
     SPRITE_CONFIG,
     PLAYER_STATE,
     FRAMES_PER_COLOUR,
-    GHOST_FRAME_OFFSET
+    GHOST_FRAME_OFFSET,
+    VIEW_DISTANCE
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
@@ -132,7 +133,17 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('webRTC_speaking', (config) => {
-            if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost) {
+            if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost
+                || Phaser.Math.Distance.Between(
+                    this.players[this.socket.id].x,
+                    this.players[this.socket.id].y,
+                    this.players[config.id].x,
+                    this.players[config.id].y
+                  ) > 150 
+                || this.wallBetween(this.players[this.socket.id].x,
+                    this.players[this.socket.id].y,
+                    this.players[config.id].x,
+                    this.players[config.id].y, MAP_SCALE, VIEW_DISTANCE)) {
                 this.audioIcons[config.id].visible = false;
             }
             else {

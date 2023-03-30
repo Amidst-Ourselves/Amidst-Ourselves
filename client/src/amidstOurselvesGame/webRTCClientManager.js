@@ -389,13 +389,48 @@ export default class webRTCClientManager {
                             function m_distance(x1,y1,x2,y2) {
                                 return Math.abs(x1 - x2) + Math.abs(y1 - y2);
                             }
+                            function wallBetween(x0, y0, x1, y1, stepSize, iterations) {
+                                const dx = Math.abs(x1 - x0);
+                                const dy = Math.abs(y1 - y0);
+                                const sx = (x0 < x1) ? stepSize : -stepSize;
+                                const sy = (y0 < y1) ? stepSize : -stepSize;
+                        
+                                const initialX = x0;
+                                const initialY = y0;
+                                const lenientX = dx - stepSize;
+                                const lenientY = dy - stepSize;
+                        
+                                let err = dx - dy;
+                             
+                                for (let i=0; i < iterations; i++) {
+                                    let exceedsX = Math.abs(x0 - initialX) >= lenientX;
+                                    let exceedsY = Math.abs(y0 - initialY) >= lenientY;
+                                    if (exceedsX && exceedsY) return false;
+                        
+                                    let wallX = Math.floor(x0/MAP_SCALE);
+                                    let wallY = Math.floor(y0/MAP_SCALE);
+                                    if (MAP1_WALLS.has(`${wallX}-${wallY}`)) return true;
+                        
+                                    let e2 = 2*err;
+                                    if (e2 > -dy) {
+                                        err -= dy;
+                                        x0  += sx;
+                                    }
+                                    if (e2 < dx) {
+                                        err += dx;
+                                        y0  += sy;
+                                    }
+                                }
+                        
+                                return true;
+                            }
                         
                             function updateProximityFlag(ele) {
                                 //console.log("proximity")
                                 //console.log('my x: ' + my_x);
                                 //console.log('target x: ' + my_pos[ele].x);
                                 if (my_peers && my_peers[ele]) {
-                                    if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150 && !this.wallBetween(my_x, my_y, my_pos[ele].x, my_pos[ele].y, MAP_SCALE, VIEW_DISTANCE)) {
+                                    if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150 || wallBetween(my_x, my_y, my_pos[ele].x, my_pos[ele].y, MAP_SCALE, VIEW_DISTANCE)) {
                                         let senderList = my_peers[ele].getReceivers();
                                         senderList[0].track.enabled = false;
                                     }
@@ -510,41 +545,5 @@ export default class webRTCClientManager {
             }
             this.playerStates[playerId].playerState = players[playerId].playerState;
         }
-    }
-
-    wallBetween(x0, y0, x1, y1, stepSize, iterations) {
-        const dx = Math.abs(x1 - x0);
-        const dy = Math.abs(y1 - y0);
-        const sx = (x0 < x1) ? stepSize : -stepSize;
-        const sy = (y0 < y1) ? stepSize : -stepSize;
-
-        const initialX = x0;
-        const initialY = y0;
-        const lenientX = dx - stepSize;
-        const lenientY = dy - stepSize;
-
-        let err = dx - dy;
-     
-        for (let i=0; i < iterations; i++) {
-            let exceedsX = Math.abs(x0 - initialX) >= lenientX;
-            let exceedsY = Math.abs(y0 - initialY) >= lenientY;
-            if (exceedsX && exceedsY) return false;
-
-            let wallX = Math.floor(x0/MAP_SCALE);
-            let wallY = Math.floor(y0/MAP_SCALE);
-            if (MAP1_WALLS.has(`${wallX}-${wallY}`)) return true;
-
-            let e2 = 2*err;
-            if (e2 > -dy) {
-                err -= dy;
-                x0  += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y0  += sy;
-            }
-        }
-
-        return true;
     }
 }
