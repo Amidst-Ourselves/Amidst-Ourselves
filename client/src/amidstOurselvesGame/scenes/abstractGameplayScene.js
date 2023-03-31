@@ -311,6 +311,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             this.webRTC.updateWallBetween(playerId, wallBetween);
             if (wallBetween) {
                 this.hidePlayer(playerId);
+                this.audioIcons[playerId].visible = false;
             } else {
                 this.showPlayer(playerId);
             }

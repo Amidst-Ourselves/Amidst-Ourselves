@@ -143,11 +143,7 @@ export default class GameScene extends AbstractGameplayScene {
                     this.players[this.socket.id].y,
                     this.players[config.id].x,
                     this.players[config.id].y
-                  ) > 150 
-                || this.wallBetween(this.players[this.socket.id].x,
-                    this.players[this.socket.id].y,
-                    this.players[config.id].x,
-                    this.players[config.id].y, MAP_SCALE, VIEW_DISTANCE)) {
+                  ) > 150 ) {
                 this.audioIcons[config.id].visible = false;
             }
             else {

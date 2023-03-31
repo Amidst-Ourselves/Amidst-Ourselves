@@ -253,26 +253,7 @@ io.on('connection', (socket) => {
 
             if (!rooms[socket.roomCode].meetingCompleted) {
 
-                for (let id in room.players) {
-                    if (room.players[id].playerState === PLAYER_STATE.crewmate || 
-                        room.players[id].playerState === PLAYER_STATE.imposter) {
-                        alive++;
-                    }
-                }
-                for (let id in room.votes) {
-                    if (room.votes[id] > max) {
-                        max = room.votes[id];
-                        result = id;
-                    }
-                }
-                console.log(max/alive);
-                if (max/alive > 0.5) {
-                    io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
-                }
-                else {
-                    io.to(socket.roomCode).emit('meetingResult', null);
-                }
-                rooms[socket.roomCode].meetingCompleted = true;
+                getMeetingResult(socket);
             }
           }, 30000);
     });
@@ -301,13 +282,6 @@ io.on('connection', (socket) => {
             let result = null;
             let max = 0;
             let room = rooms[socket.roomCode];
-            // let alive = 0;
-            // for (let id in room.players) {
-            //     if (room.players[id].playerState === PLAYER_STATE.crewmate || 
-            //         room.players[id].playerState === PLAYER_STATE.imposter) {
-            //         alive++;
-            //     }
-            // }
             if (!rooms[socket.roomCode].meetingCompleted) {
                 for (let id in room.votes) {
                     if (room.votes[id] > max) {
@@ -327,36 +301,6 @@ io.on('connection', (socket) => {
         }
         
     });
-
-    // socket.on('meetingTimeUp', () => {
-    //     if (!rooms[socket.roomCode].meetingCompleted) {
-    //         let result = null;
-    //         let max = 0;
-    //         let room = rooms[socket.roomCode];
-    //         let alive = 0;
-    //         for (let id in room.players) {
-    //             if (room.players[id].playerState === PLAYER_STATE.crewmate || 
-    //                 room.players[id].playerState === PLAYER_STATE.imposter) {
-    //                 alive++;
-    //             }
-    //         }
-
-    //         for (let id in room.votes) {
-    //             if (room.votes[id] > max) {
-    //                 max = room.votes[id];
-    //                 result = id;
-    //             }
-    //         }
-    //         console.log(max/alive);
-    //         if (max/alive > 0.5) {
-    //             io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
-    //         }
-    //         else {
-    //             io.to(socket.roomCode).emit('meetingResult', null);
-    //         }
-    //         rooms[socket.roomCode].meetingCompleted = true;
-    //     }
-    // });
 
     socket.on('new_message', (message) => { 
         socket.broadcast.to(socket.roomCode).emit('new_message', {'player': socket.id, 'message': message});
@@ -532,4 +476,31 @@ function playerCount(roomObj) {
 
 function roomFull(roomObj) {
     return playerCount(roomObj) >= roomObj.playerLimit;
+}
+
+function getMeetingResult(socket) {
+    let result = null;
+    let max = 0;
+    let room = rooms[socket.roomCode];
+    let alive = 0;
+    for (let id in room.players) {
+        if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+            room.players[id].playerState === PLAYER_STATE.imposter) {
+            alive++;
+        }
+    }
+    for (let id in room.votes) {
+        if (room.votes[id] > max) {
+            max = room.votes[id];
+            result = id;
+        }
+    }
+    console.log(max/alive);
+    if (max/alive > 0.5) {
+        io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
+    }
+    else {
+        io.to(socket.roomCode).emit('meetingResult', null);
+    }
+    rooms[socket.roomCode].meetingCompleted = true;
 }
