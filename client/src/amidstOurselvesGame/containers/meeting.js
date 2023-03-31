@@ -276,6 +276,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.overlay.visible = false;
         this.skipText = false;
         this.voting_board.visible = false;
+        this.textButton.visible = false;
 
         for (const button of this.votingButtons) {
             button.visible = false;
