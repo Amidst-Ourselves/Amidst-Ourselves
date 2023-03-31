@@ -308,6 +308,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 MAP_SCALE,
                 VIEW_DISTANCE,
             );
+            this.webRTC.updateWallBetween(playerId, wallBetween);
             if (wallBetween) {
                 this.hidePlayer(playerId);
             } else {
