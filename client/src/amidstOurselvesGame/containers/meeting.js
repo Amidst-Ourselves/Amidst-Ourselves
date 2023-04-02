@@ -315,6 +315,9 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
     checkMeetingConditions() {
         const player = this.scene.players[this.scene.socket.id];
+        if (player.playerState == PLAYER_STATE.ghost) {
+            return false;
+        }
         if (Phaser.Math.Distance.Between(this.scene.eButton.x, this.scene.eButton.y, player.x, player.y) < 50 && !this.scene.eButtonPressed) {
             this.scene.eButtonPressed = true;
             return true;
