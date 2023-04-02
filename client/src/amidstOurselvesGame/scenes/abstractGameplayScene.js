@@ -9,6 +9,7 @@ import {
     GHOST_FRAME_OFFSET,
     DEAD_BODY_FRAME_OFFSET,
     VIEW_DISTANCE,
+    COLOUR_NAMES,
 } from "../constants"
 
 
@@ -29,6 +30,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     movePlayer(speed, oldX, oldY, up, down, left, right, state) {
         let newX = oldX;
         let newY = oldY;
+        let newVelocity = 0;
     
         let moved = false;
         if (up) {
@@ -42,16 +44,24 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         if (left) {
             newX -= speed;
             moved = true;
+            newVelocity = -1;
         }
         if (right) {
             newX += speed;
             moved = true;
+            newVelocity = 1;
         }
-        if (!moved) return;
+
+        if (!moved) {
+            this.stopLocalPlayer();
+            return
+        } else {
+            this.startLocalPlayer();
+        }
 
         if (state === PLAYER_STATE.ghost) {
-            this.updateLocalPlayerPosition(newX, newY);
-            return;
+            this.updateLocalPlayerPosition(newX, newY, newVelocity);
+            return true;
         }
     
         let wallnewX = Math.floor(newX/MAP_SCALE);
@@ -60,27 +70,70 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         let walloldY = Math.floor(oldY/MAP_SCALE);
 
         if (!MAP1_WALLS.has(`${wallnewX}-${wallnewY}`)) {
-            this.updateLocalPlayerPosition(newX, newY);
+            this.updateLocalPlayerPosition(newX, newY, newVelocity);
         } else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
-            this.updateLocalPlayerPosition(oldX, newY);
+            this.updateLocalPlayerPosition(oldX, newY, newVelocity);
         } else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
-            this.updateLocalPlayerPosition(newX, oldY);
+            this.updateLocalPlayerPosition(newX, oldY, newVelocity);
         }
+        return true;
     }
 
-    updateLocalPlayerPosition(newX, newY) {
+    startMovingPlayer(playerId) {
+        if (this.players[playerId].moving) {
+            return;
+        }
+        this.players[playerId].moving = true;
+
+        let colour = this.players[playerId].colour;
+        this.players[playerId].anims.load(COLOUR_NAMES[colour]);
+        this.players[playerId].anims.play(COLOUR_NAMES[colour], true);
+    }
+
+    stopMovingPlayer(playerId) {
+        if (!this.players[playerId].moving) {
+            return;
+        }
+        this.players[playerId].moving = false;
+
+        let startingFrame = this.players[playerId].colour * FRAMES_PER_COLOUR;
+        this.players[playerId].anims.stop();
+        this.players[playerId].setFrame(startingFrame);
+    }
+
+    startLocalPlayer() {
+        if (this.players[this.socket.id].moving) {
+            return;
+        }
+        this.startMovingPlayer(this.socket.id);
+    }
+
+    stopLocalPlayer() {
+        if (!this.players[this.socket.id].moving) {
+            return;
+        }
+        this.stopMovingPlayer(this.socket.id);
+        this.socket.emit('moveStop');
+    }
+
+    updateLocalPlayerPosition(newX, newY, newVelocity) {
         this.cameras.main.centerOn(newX, newY);
-        this.socket.emit('move', {x: newX, y: newY});
-        this.updatePlayerPosition(newX, newY, this.socket.id);
+        this.socket.emit('move', {x: newX, y: newY, velocity: newVelocity});
+        this.updatePlayerPosition(newX, newY, this.socket.id, newVelocity);
     }
 
-    updatePlayerPosition(newX, newY, playerId) {
+    updatePlayerPosition(newX, newY, playerId, velocity) {
         this.players[playerId].x = newX;
         this.players[playerId].y = newY;
         this.playerNames[playerId].x = newX;
         this.playerNames[playerId].y = newY;
         this.audioIcons[playerId].x = newX;
         this.audioIcons[playerId].y = newY - PLAYER_HEIGHT/2;
+
+        if (velocity !== undefined && velocity !== 0) {
+            this.players[playerId].setFlipX(velocity < 0);
+        }
+        
         this.webRTC.move({id: playerId, x: newX, y: newY});
     }
 
@@ -92,6 +145,8 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             this.createSprite(playerObjs[playerId]);
             this.webRTC.move(playerObjs[playerId]);
         }
+        console.log(playerObjs);
+        this.webRTC.updateState(playerObjs);
 
         for (let playerId in this.players) {
             this.setPlayerImposter(playerId);
@@ -128,6 +183,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
         this.players[playerObj.id].name = playerObj.id;
+        this.players[playerObj.id].moving = false;
         this.players[playerObj.id].setAlpha(startingAlpha);
 
         this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', startingDeadBodyFrame).setOrigin(0.5, 1);
@@ -139,6 +195,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.audioIcons[playerObj.id].displayHeight = PLAYER_HEIGHT/2;
         this.audioIcons[playerObj.id].displayWidth = PLAYER_WIDTH/2;
         this.audioIcons[playerObj.id].visible = false;
+
+        this.generateAnimations();
+        this.updateAnimationColour(playerObj.colour, playerObj.id);
     }
 
     destroySprite(playerId) {
@@ -239,7 +298,31 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         }
 
         this.players[playerId].setFrame(newColourFrame);
-        this.players[playerId].colour = newColour
+        this.players[playerId].colour = newColour;
+
+        this.updateAnimationColour(newColour, playerId);
+    }
+
+    updateAnimationColour(newColour, playerId) {
+        this.players[playerId].anims.stop();
+        this.players[playerId].anims.load(COLOUR_NAMES[newColour]);
+    }
+
+    generateAnimations() {
+        for (let i = 0; i < COLOUR_NAMES.length; i++) {
+            this.anims.create({
+                key: COLOUR_NAMES[i],
+                frames: this.anims.generateFrameNumbers(
+                    'player',
+                    {
+                        start: i * FRAMES_PER_COLOUR,
+                        end: i * FRAMES_PER_COLOUR + DEAD_BODY_FRAME_OFFSET - 1
+                    }
+                ),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
     }
 
 
@@ -306,8 +389,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 MAP_SCALE,
                 VIEW_DISTANCE,
             );
+            this.webRTC.updateWallBetween(playerId, wallBetween);
             if (wallBetween) {
                 this.hidePlayer(playerId);
+                this.audioIcons[playerId].visible = false;
             } else {
                 this.showPlayer(playerId);
             }

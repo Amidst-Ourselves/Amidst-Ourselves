@@ -30,8 +30,22 @@ export const COLOUR_STATION_X = 200 * MAP_SCALE;
 export const COLOUR_STATION_Y = 100 * MAP_SCALE;
 export const COLOUR_STATION_MIN_DIST = 10 * MAP_SCALE;
 export const FRAMES_PER_COLOUR = 11;
-export const GHOST_FRAME_OFFSET = 9;
+export const NUMBER_OF_COLOURS = 10;
+export const GHOST_FRAME_OFFSET = 0; // this is 0 because I don't want to make ghost animations
 export const DEAD_BODY_FRAME_OFFSET = 8;
+
+export const COLOUR_NAMES = [
+    'red',
+    'blue',
+    'green',
+    'pink',
+    'orange',
+    'yellow',
+    'black',
+    'white',
+    'purple',
+    'brown'
+];
 
 export const MAP1_SPAWN_X = 230 * MAP_SCALE;
 export const MAP1_SPAWN_Y = 130 * MAP_SCALE;

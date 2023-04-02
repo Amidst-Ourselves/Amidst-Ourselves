@@ -1,4 +1,9 @@
-
+import {
+    PLAYER_STATE,
+    MAP_SCALE,
+    MAP1_WALLS,
+    VIEW_DISTANCE,
+} from "./constants"
 const USE_AUDIO = true;
 const USE_VIDEO = false;
 
@@ -26,135 +31,84 @@ export default class webRTCClientManager {
             this.my_y = null;
             this.isMicrophoneOn = true;
             this.mute_flag = true;
+            this.playerStates = {};
+            this.wallBetween = {};
         }
         catch(error) {
             console.log("error " + error);
         }
     }
-
     create() {
-
-        this.signaling_socket.on('my_pos2', (playerObj) => {
-
-            if (!this.my_pos[playerObj.id]) {
-                this.my_pos[playerObj.id] = {};
-            }
-
-            this.my_pos[playerObj.id].x = playerObj.x;
-            this.my_pos[playerObj.id].y = playerObj.y;
-        });
+        this.signaling_socket.on('my_pos2', this.handleMyPos.bind(this));
+        this.setUpMedia(() => this.joinChatRoom(this.roomCode));
         
-        //console.log("Connecting to signaling server");
-        try{
-            this.setUpMedia(() => {
-                // join the char room that has same roomCode as the game room
-                joinChatRoom(this.signaling_socket, this.roomCode);
-            });
-        }
-        catch(error) {
-            console.log("error " + error);
-        }
-
-        function joinChatRoom(signaling_socket, roomCode) {
-            //console.log("send join chat channel request");
-            try {
-                signaling_socket.emit('webRTC_join', {roomCode});
-            }
-            catch (error) {
-                // code that handles the error
-                console.error('An error occurred:', error.message);
-            }
-        }
+        this.signaling_socket.on('sessionDescription', this.handleSessionDescription.bind(this));
         
-
-        // Haven't use this function so far, but could use it in the future. At this stage I don't know what is the
-        // consequence of leaving a bunch of open channel
-        function deleteChannel(channel) {
-            this.signaling_socket.emit('webRTC_delete', channel);
-        }
-
+        this.signaling_socket.on('iceCandidate', this.handleIceCandidate.bind(this));
+        
+        this.signaling_socket.on('removePeer', this.handleRemovePeer.bind(this));
+    }
+    
+    handleMyPos(playerObj) {
+        const { id, x, y } = playerObj;
+        this.my_pos[id] = this.my_pos[id] || {};
+        this.my_pos[id].x = x;
+        this.my_pos[id].y = y;
+    }
+    
+    joinChatRoom(roomCode) {
+        this.signaling_socket.emit('webRTC_join', { roomCode });
+    }
+    
+    handleSessionDescription(config) {
         try {
-            // this listener is for remote/peer session_description
-            this.signaling_socket.on('sessionDescription', (config) => {
-                
-                //console.log('Remote description received: ', config);
-                try {
-                    let peer_id = config.peer_id;
-                    let peer = this.peers[peer_id];
-                    let remote_description = config.session_description;
-                    //console.log(config.session_description);
-
-                    let desc = new RTCSessionDescription(remote_description);
-                    peer.setRemoteDescription(desc, 
-                        () => {
-                            //console.log("setRemoteDescription succeeded");
-                            if (remote_description.type == "offer") {
-                                //console.log("Creating answer");
-                                peer.createAnswer(
-                                    (session_description) => {
-                                        // console.log("Answer description is: ", session_description);
-                                        peer.setLocalDescription(session_description,
-                                            () => { 
-                                                this.signaling_socket.emit('relaySessionDescription', 
-                                                    {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-                                                // console.log("Answer setLocalDescription succeeded");
-                                            },
-                                            () => { console.log("Answer setLocalDescription failed!"); }
-                                        );
-                                    },
-                                    (error) => {
-                                        console.log("Error creating answer: ", error);
-                                        console.log(peer);
-                                    });
-                            }
-                        },
-                        (error) => {
-                            console.log("setRemoteDescription error: ", error);
-                        }
-                    );
+            const { peer_id, session_description } = config;
+            const peer = this.peers[peer_id];
+            const desc = new RTCSessionDescription(session_description);
+            peer.setRemoteDescription(desc, () => {
+            if (session_description.type === 'offer') {
+                peer.createAnswer(
+                (answer) => {
+                    peer.setLocalDescription(answer, () => {
+                    this.signaling_socket.emit('relaySessionDescription', {
+                        peer_id,
+                        session_description: answer,
+                        roomCode: this.roomCode,
+                    });
+                    });
+                },
+                (error) => {
+                    console.error('Error creating answer:', error);
                 }
-                catch (error) {
-                    // code that handles the error
-                    console.error('An error occurred:', error.message);
-                }
-
+                );
+            }
             });
+        } catch (error) {
+            console.error('An error occurred:', error.message);
         }
-        catch(error) {
-            console.log("error " + error);
-        }
-
+    }
+    
+    handleIceCandidate(config) {
         try {
-            // https://developer.mozilla.org/en-US/docs/Glossary/ICE
-            this.signaling_socket.on('iceCandidate', (config) => {
-                let peer = this.peers[config.peer_id];
-                let ice_candidate = config.ice_candidate;
-                peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
-            });
+            const { peer_id, ice_candidate } = config;
+            const peer = this.peers[peer_id];
+            peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+        } catch (error) {
+            console.error('An error occurred:', error.message);
         }
-        catch(error) {
-            console.log("error " + error);
+    }
+    
+    handleRemovePeer(config) {
+        const { peer_id } = config;
+        if (peer_id in this.peer_media_elements) {
+            this.peer_media_elements[peer_id].remove();
+            delete this.peer_media_elements[peer_id];
         }
-
-        try {
-            this.signaling_socket.on('removePeer', (config) => {
-                console.log('Signaling server said to remove peer:', config);
-                let peer_id = config.peer_id;
-                if (peer_id in this.peer_media_elements) {
-                    this.peer_media_elements[peer_id].remove();
-                }
-                if (peer_id in this.peers) {
-                    this.peers[peer_id].close();
-                }
-                //console.log("deleting peer")
-                delete this.peers[peer_id];
-                delete this.peer_media_elements[config.peer_id];
-                delete this.my_pos[config.peer_id];
-            });
+        if (peer_id in this.peers) {
+            this.peers[peer_id].close();
+            delete this.peers[peer_id];
         }
-        catch(error) {
-            console.log("error " + error);
-        }
+        delete this.my_pos[peer_id];
     }
 
 
@@ -370,7 +324,15 @@ export default class webRTCClientManager {
                         let my_x = this.my_x;
                         let my_y = this.my_y;
                         let my_pos = this.my_pos;
-                        let my_peers = this.peers
+                        let my_peers = this.peers;
+                        // let my_states = this.playerStates;
+                        // console.log(this.playerStates);
+                        // while(Object.keys(this.playerStates).length === 0);
+                        let my_states = this.playerStates;
+                        // console.log(this.playerStates[this.signaling_socket.id]);
+                        let my_state = this.playerStates[this.signaling_socket.id].playerState;
+                        let local_wallBetween = this.wallBetween;
+                        // console.log(my_state);
                         scriptProcessor.onaudioprocess = () => {
 
                             function m_distance(x1,y1,x2,y2) {
@@ -381,13 +343,27 @@ export default class webRTCClientManager {
                                 //console.log("proximity")
                                 //console.log('my x: ' + my_x);
                                 //console.log('target x: ' + my_pos[ele].x);
-                                if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150) {
-                                    let senderList = my_peers[ele].getReceivers();
-                                    senderList[0].track.enabled = false;
+                                if (my_peers && my_peers[ele]) {
+                                    if (m_distance(my_x, my_y, my_pos[ele].x, my_pos[ele].y) > 150 || local_wallBetween[ele] === true) {
+                                        let senderList = my_peers[ele].getReceivers();
+                                        senderList[0].track.enabled = false;
+                                    }
+                                    else {
+                                        let senderList = my_peers[ele].getReceivers();
+                                        senderList[0].track.enabled = true;
+                                    }
                                 }
-                                else {
+                            }
+                            function updateStateTrack(ele) {
+                                // console.log(my_states);
+                                if (my_state != PLAYER_STATE.ghost && my_states[ele].playerState == PLAYER_STATE.ghost) {
+                                    // console.log(ele);
+                                    // console.log(my_peers[ele]);
+                                    // console.log(my_state);
+                                    // console.log(my_states[ele].playerState);
                                     let senderList = my_peers[ele].getReceivers();
-                                    senderList[0].track.enabled = true;
+                                    // console.log("ghost muted");
+                                    senderList[0].track.enabled = false;
                                 }
                             }
 
@@ -412,10 +388,12 @@ export default class webRTCClientManager {
                                 // use the values of my_pos_x, my_pos_y, my_pos_x2, and my_pos_y2
                                 my_x = this.my_pos[tmp_signaling_socket.id].x;
                                 my_y = this.my_pos[tmp_signaling_socket.id].y;
+                                my_state = this.playerStates[this.signaling_socket.id].playerState;
                 
                                 for (let ele in this.my_pos) {
                                     if (ele != tmp_signaling_socket.id) {
                                         updateProximityFlag(ele);
+                                        updateStateTrack(ele);
                                     }
                                 }
                             }
@@ -472,5 +450,20 @@ export default class webRTCClientManager {
 
         this.my_pos[playerObj.id].x = playerObj.x;
         this.my_pos[playerObj.id].y = playerObj.y;
+    }
+
+    updateState(players) {
+        for (let playerId in players) {
+            if (!this.playerStates[playerId]) {
+                this.playerStates[playerId] = {};
+            }
+            this.playerStates[playerId].playerState = players[playerId].playerState;
+        }
+    }
+    updateWallBetween(playerID, isWall) {
+        if (!this.wallBetween[playerID]) {
+            this.wallBetween[playerID] = {};
+        }
+        this.wallBetween[playerID] = isWall;
     }
 }

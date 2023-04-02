@@ -42,7 +42,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = false;
 
         this.textOpened = false;
-        this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#000000' });
+        this.textButton = this.scene.add.text(100, 500, 'Text Chat', { fontSize: '32px', fill: '#FFFFFF' });
         this.textButton.setOrigin(0.5);
         this.textButton.setScrollFactor(0);
         this.textButton.setScale(0.5);
@@ -68,6 +68,17 @@ export default class Meeting extends Phaser.GameObjects.Container {
             // vote_tab.fillStyle(0x000000);
             this.textButton.clearTint();
         });
+
+
+        this.ghostReminder = this.scene.add.text(300, 50, 'You cant vote as a ghost', { fontSize: '32px', fill: '#FFFFFF' });
+        this.ghostReminder.setOrigin(0.5);
+        this.ghostReminder.setScrollFactor(0);
+        this.ghostReminder.setScale(0.5);
+        this.ghostReminder.visible = false;
+        this.ghostReminder.setDepth(5);
+        this.ghostReminder.setPadding(10)
+        this.ghostReminder.setStyle({ backgroundColor: '#111' })
+
         //////////////////////////////
         this.text_board = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
         this.text_board.fillStyle(boardFillColor);
@@ -155,12 +166,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
             confirm_button.setOrigin(0,0);
             confirm_button.setScale(0.4);
             confirm_button.setInteractive();
-            confirm_button.player = id;
+            confirm_button.id = id;
             confirm_button.idx = i;
             confirm_button.on('pointerdown', () => {
                 // Handle player vote button click event
                 console.log("pressed");
-                this.updateVotes(confirm_button.player, confirm_button.idx);
+                this.updateVotes(confirm_button.id, confirm_button.idx);
             });
             confirm_button.on('pointerover', () => {
                 confirm_button.setTint(0x808080);
@@ -178,6 +189,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             cancel_button.setScale(0.3);
             cancel_button.setInteractive();
             cancel_button.idx = i;
+            cancel_button.player = player;
             cancel_button.on('pointerdown', () => {
                 // Handle player vote button click event
                 console.log("pressed");
@@ -200,6 +212,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             button.setScrollFactor(0);
             button.setScale(0.5);
             button.visible = false;
+            button.player = player;
             button.setDepth(5);
             this.votingButtons.push(button);
 
@@ -209,9 +222,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
             playerSprite.setDepth(5);
             playerSprite.setScale(2);
             playerSprite.visible = false;
+            playerSprite.player = player;
             this.playerSprites.push(playerSprite);
             i++;
         }
+
+        const badWords = require('bad-words');
+        this.filter = new badWords();
     }
 
     show() {
@@ -226,18 +243,33 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.countdownText.visible = true;
 
         for (const button of this.votingButtons) {
-            button.visible = true;
+            if (button.player.playerState != PLAYER_STATE.ghost) {
+                button.visible = true;
+            }
         }
         for (const player of this.playerSprites) {
-            player.visible = true;
+            if(player.player.playerState != PLAYER_STATE.ghost) {
+                player.visible = true;
+            }
+            // player.visible = true;
         }
         for (const tab of this.vote_tabs) {
-            tab.visible = true;
+            if (tab.player.playerState != PLAYER_STATE.ghost) {
+                tab.visible = true;
+                if (this.scene.players[this.scene.socket.id].playerState == PLAYER_STATE.ghost) {
+                    tab.disableInteractive();
+                }
+            }
         }
+
+        if (this.scene.players[this.scene.socket.id].playerState == PLAYER_STATE.ghost) {
+            this.ghostReminder.visible = true;
+        }
+
         // Countdown timer
         let countdown = 30;
 
-        const timer = this.scene.time.addEvent({
+        this.meetingTimer = this.scene.time.addEvent({
             delay: 1000,
             loop: true,
             callback: () => {
@@ -247,7 +279,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
             if (countdown <= 0) {
                 this.hide();
-                timer.remove();
+                this.hideText();
+                this.meetingTimer.remove();
                 this.countdownText.visible = false;
                 // this.countdownText = null;
             }
@@ -262,6 +295,8 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.overlay.visible = false;
         this.skipText = false;
         this.voting_board.visible = false;
+        this.textButton.visible = false;
+        this.ghostReminder.visible = false;
 
         for (const button of this.votingButtons) {
             button.visible = false;
@@ -273,7 +308,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
             tab.visible = false;
             tab.clearTint();
             tab.setInteractive();
-            this.scene.socket.emit("meetingTimeUp");
         }
     }
 
@@ -300,6 +334,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
     checkMeetingConditions() {
         const player = this.scene.players[this.scene.socket.id];
+        if (player.playerState == PLAYER_STATE.ghost) {
+            return false;
+        }
+        if (Phaser.Math.Distance.Between(this.scene.eButton.x, this.scene.eButton.y, player.x, player.y) < 50 && !this.scene.eButtonPressed) {
+            this.scene.eButtonPressed = true;
+            return true;
+        }
         for (const deadBody in this.scene.deadBodies) {
             if (Phaser.Math.Distance.Between(this.scene.deadBodies[deadBody].x, this.scene.deadBodies[deadBody].y, player.x, player.y) < 50) {
                 return true;
@@ -314,7 +355,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
         if (result !== null) {
             const player = this.scene.players[result.result].name;
             let message = `Player ${player} is voted out`; 
-            this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            // this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            if (result.result === this.scene.socket.id) {
+                this.scene.changeLocalPlayerToGhost();
+                this.scene.taskManager.finishAllTasks();
+            } else {
+                this.scene.changePlayerToGhost(result.result);
+            }
             const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
             text.setScrollFactor(0);
             // Countdown timer
@@ -371,9 +418,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 // Remove the last character of the input message
                 this.inputMessage = this.inputMessage.slice(0, -1);
             } else if (event.key === 'Enter') {
-                this.scene.socket.emit("new_message", this.inputMessage);
-                // Display the input message in the messageDisplay area
-                this.addMessage(this.scene.socket.id, this.inputMessage);
+
+                if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
+                    // Display the input message in the messageDisplay area
+                    this.scene.socket.emit("new_message", this.inputMessage);
+                    this.addMessage(this.scene.socket.id, this.inputMessage);
+                } 
 
                 // Clear the input message
                 this.inputMessage = '';
@@ -401,7 +451,9 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.text_board.visible = false;
         this.messageInput.visible = false;
         this.inputMessageText.visible = false;
-        this.keyboardListener.visible = false;
+        if (this.keyboardListener) {
+            this.keyboardListener.visible = false;
+        }
         this.textOpened = false;
         this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
     }
@@ -461,5 +513,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
     updateScene(scene) {
         this.scene = scene;   
+    }
+
+    endMeeting() {
+        this.hide();
+        this.hideText();
+        this.meetingTimer.remove();
+        this.countdownText.visible = false;
     }
 }
