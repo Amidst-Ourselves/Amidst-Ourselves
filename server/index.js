@@ -248,7 +248,7 @@ io.on('connection', (socket) => {
 
         if (!rooms[socket.roomCode].meetingCountdownStarted) {
                 rooms[socket.roomCode].meetingCountdownStarted = true;
-                setTimeout(() => {
+                rooms[socket.roomCode].timeoutId = setTimeout(() => {
                     console.log("vote end");
                     if(rooms[socket.roomCode]) {
                         if (!rooms[socket.roomCode].meetingCompleted) {
@@ -279,9 +279,13 @@ io.on('connection', (socket) => {
         for (let playerID in room.votes) {
             sum += room.votes[playerID];
         }
-
+        console.log("sum");
+        console.log(sum);
+        console.log("alive");
+        console.log(alive);
         if (sum >= alive) {
             if (!rooms[socket.roomCode].meetingCompleted) {
+                clearTimeout(rooms[socket.roomCode].timeoutId);
                 getMeetingResult(socket);
             }
         }
@@ -420,7 +424,8 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         webRTC: roomObj.webRTC,
         votes: votes,
         meetingCompleted: false,
-        meetingCountdownStarted: false
+        meetingCountdownStarted: false,
+        timeoutId: 0 
     }
 
     rooms[roomCode] = newRoom;
@@ -484,6 +489,7 @@ function getMeetingResult(socket) {
     }
     console.log(max/alive);
     if (max/alive > 0.5) {
+        rooms[socket.roomCode].players[result].playerState = PLAYER_STATE.ghost;
         io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
     }
     else {

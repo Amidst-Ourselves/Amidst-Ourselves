@@ -234,5 +234,8 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');
         this.socket.off('meetingResult');
+        this.socket.off('meetingCountdown');
+        this.socket.off('voted');
+        this.socket.off('new_message');
     }
 }

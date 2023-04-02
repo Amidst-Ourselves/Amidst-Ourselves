@@ -68,6 +68,17 @@ export default class Meeting extends Phaser.GameObjects.Container {
             // vote_tab.fillStyle(0x000000);
             this.textButton.clearTint();
         });
+
+
+        this.ghostReminder = this.scene.add.text(300, 50, 'You cant vote as a ghost', { fontSize: '32px', fill: '#FFFFFF' });
+        this.ghostReminder.setOrigin(0.5);
+        this.ghostReminder.setScrollFactor(0);
+        this.ghostReminder.setScale(0.5);
+        this.ghostReminder.visible = false;
+        this.ghostReminder.setDepth(5);
+        this.ghostReminder.setPadding(10)
+        this.ghostReminder.setStyle({ backgroundColor: '#111' })
+
         //////////////////////////////
         this.text_board = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
         this.text_board.fillStyle(boardFillColor);
@@ -250,6 +261,11 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 }
             }
         }
+
+        if (this.scene.players[this.scene.socket.id].playerState == PLAYER_STATE.ghost) {
+            this.ghostReminder.visible = true;
+        }
+
         // Countdown timer
         let countdown = 30;
 
@@ -280,6 +296,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.skipText = false;
         this.voting_board.visible = false;
         this.textButton.visible = false;
+        this.ghostReminder.visible = false;
 
         for (const button of this.votingButtons) {
             button.visible = false;
@@ -291,7 +308,6 @@ export default class Meeting extends Phaser.GameObjects.Container {
             tab.visible = false;
             tab.clearTint();
             tab.setInteractive();
-            this.scene.socket.emit("meetingTimeUp");
         }
     }
 
