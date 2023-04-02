@@ -163,10 +163,15 @@ io.on('connection', (socket) => {
         socket.broadcast.to(socket.roomCode).emit('move', {
             id: socket.id,
             x: playerObj.x,
-            y: playerObj.y
+            y: playerObj.y,
+            velocity: playerObj.velocity,
         });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
+    });
+
+    socket.on('moveStop', () => {
+        socket.broadcast.to(socket.roomCode).emit('moveStop', {id: socket.id});
     });
 
     socket.on('colour', () => {
