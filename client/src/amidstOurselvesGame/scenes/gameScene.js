@@ -92,6 +92,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.callButton.on('down', () => {
             if(this.meetingManager.checkMeetingConditions()) {
                 this.socket.emit('meeting');
+                this.socket.emit('meetingCountdown');
             }
         });
 
@@ -164,7 +165,6 @@ export default class GameScene extends AbstractGameplayScene {
             }
 
             console.log('newDeadBodies', newDeadBodies);
-            this.socket.emit('meetingCountdown');
             this.meetingManager.show();
         });
 
