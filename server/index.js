@@ -237,6 +237,7 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('meeting');
         let room = rooms[socket.roomCode];
         room.meetingCompleted = false;
+        room.meetingCountdownStarted = false;
         for (let id in room.players) {
             // reset all votes to 0
             room.votes[id] = 0;
@@ -244,18 +245,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('meetingCountdown', () => {
-        setTimeout(() => {
-            console.log("vote end");
-            let result = null;
-            let max = 0;
-            let room = rooms[socket.roomCode];
-            let alive = 0;
 
-            if (!rooms[socket.roomCode].meetingCompleted) {
+        if (!rooms[socket.roomCode].meetingCountdownStarted) {
+                rooms[socket.roomCode].meetingCountdownStarted = true;
+                setTimeout(() => {
+                    console.log("vote end");
+                    if (!rooms[socket.roomCode].meetingCompleted) {
 
-                getMeetingResult(socket);
+                        getMeetingResult(socket);
+                    }
+                }, 30000);
             }
-          }, 30000);
     });
 
     socket.on('voted', (playerID) => {
