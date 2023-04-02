@@ -433,7 +433,8 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         deadBodies: deadBodies,
         webRTC: roomObj.webRTC,
         votes: votes,
-        meetingCompleted: false
+        meetingCompleted: false,
+        meetingCountdownStarted: false
     }
 
     rooms[roomCode] = newRoom;
