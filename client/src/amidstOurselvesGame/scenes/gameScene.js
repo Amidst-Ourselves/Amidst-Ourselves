@@ -171,7 +171,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.on('meetingResult', (result) => {
             this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
-
+            this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
         })
 
         this.socket.on('new_message', (config) => {
