@@ -10,6 +10,7 @@ import {
     GHOST_FRAME_OFFSET
 } from "../constants";
 import LobbyScene from "./lobbyScene";
+import gameEndScene from "./gameEndScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
 import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
@@ -29,6 +30,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -107,12 +109,20 @@ export default class GameScene extends AbstractGameplayScene {
             this.createPlayer(playerObj);
             this.changePlayerToGhost(playerObj.id);
             console.log('player joined ' + playerObj.id);
+
+            const message = 'Player joined ' + playerObj.id;
+            const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
+            const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
+            announcement.setX(announcementX)
+            this.time.delayedCall(5000, function() {
+            announcement.destroy();
+            });
         });
         
         this.socket.on('leave', (playerObj) => {
             this.destroySprite(playerObj.id);
 
-            const message = 'player left ' + playerObj.id;
+            const message = 'Player left ' + playerObj.id;
             const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
             const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
             announcement.setX(announcementX)
@@ -127,6 +137,16 @@ export default class GameScene extends AbstractGameplayScene {
             this.cleanupSocketio();
             this.scene.add("lobbyScene", LobbyScene, true, roomObj);
             this.scene.remove("gameScene");
+        });
+
+        this.socket.on('gameEndScene', (roomObj) => {
+            this.cleanupSocketio();
+            this.scene.add("gameEndScene", gameEndScene, true, roomObj);
+            this.scene.remove("gameScene");
+        });
+
+        this.socket.on('endGameInitiate', (roomObj) => {
+            this.socket.emit('endGame',roomObj);
         });
 
         this.socket.on('kill', (playerObj) => {
@@ -195,6 +215,44 @@ export default class GameScene extends AbstractGameplayScene {
         );
         this.taskManager.update();
         this.miniMap.update();
+
+        // console.log(this.taskManager.totalTasks);
+        // console.log(this.taskManager.tasksComplete);
+
+        // if (this.taskManager.totalTasks === this.taskManager.tasksComplete) {
+        //     console.log("Crewmates won task")
+        //     this.gameWinner = "Crewmates";
+        //     this.socket.emit('endGame');
+        // }
+
+        // let nCrewmate=0;
+        // let nImposter=0;
+        // let nGhost=0;
+        // for(let player in this.tempPlayers){
+
+        //     if(this.tempPlayers[player].playerState === PLAYER_STATE.crewmate){
+        //         nCrewmate+=1;
+        //     }else if(this.tempPlayers[player].playerState === PLAYER_STATE.imposter){
+        //         nImposter+=1;
+        //     }else{
+        //         nGhost+=1;
+        //     }
+        // }
+        // // console.log(nCrewmate);
+        // // console.log(nImposter);
+        // // console.log(nGhost);
+        // if(nImposter-nCrewmate >0){
+        //     console.log("imposter won")
+        //     this.gameWinner = "Imposters";
+        //     this.socket.emit('endGame');
+        // }else if (nImposter = 0){
+        //     console.log("Crewmates won")
+        //     this.gameWinner = "Crewmates";
+        //     this.socket.emit('endGame');
+        // }
+
+
+
     }
 
     createEndButtonForHost() {
@@ -220,6 +278,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+        this.socket.off('gameEndScene');
         this.socket.off('kill');
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');

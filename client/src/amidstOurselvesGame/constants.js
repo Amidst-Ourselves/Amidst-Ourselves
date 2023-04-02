@@ -17,7 +17,8 @@ export const SERVER_ADDRESS = 'http://localhost:3000';
 
 export const GAME_STATE = {
     lobby: "lobby",
-    action: "action"
+    action: "action",
+    end: "end"
 };
 
 export const PLAYER_STATE = {

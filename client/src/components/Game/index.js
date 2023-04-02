@@ -18,6 +18,7 @@ export default function Game(props) {
             height: HEIGHT,
             parent: gameContainerRef.current,
             pixelArt: true,
+            username: storedName,
             scene: [TitleScene, LoadGameScene, GameSettingsScene]
         };
   

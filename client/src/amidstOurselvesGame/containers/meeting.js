@@ -314,25 +314,32 @@ export default class Meeting extends Phaser.GameObjects.Container {
         if (result !== null) {
             const player = this.scene.players[result.result].name;
             let message = `Player ${player} is voted out`; 
-            this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
-            const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
-            text.setScrollFactor(0);
-            // Countdown timer
-            let countdown = 5;
+            // this.scene.players[result.result].playerState = PLAYER_STATE.ghost;
+            // const text = this.scene.add.text(100, 200, message, { fontSize: '32px', fill: '#ffffff' });
+            // text.setScrollFactor(0);
+            // // Countdown timer
+            // let countdown = 5;
 
-            const timer = this.scene.time.addEvent({
-                delay: 1000,
-                loop: true,
-                callback: () => {
-                // console.log(this.scene.sys.game.loop.delta);  
-                countdown --;
+            // const timer = this.scene.time.addEvent({
+            //     delay: 1000,
+            //     loop: true,
+            //     callback: () => {
+            //     // console.log(this.scene.sys.game.loop.delta);  
+            //     countdown --;
 
-                if (countdown <= 0) {
-                    timer.remove();
-                    text.destroy();
-                }
-                },
-                Loop: true,
+            //     if (countdown <= 0) {
+            //         timer.remove();
+            //         text.destroy();
+            //     }
+            //     },
+            //     Loop: true,
+            // });
+
+            const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
+            const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
+            announcement.setX(announcementX)
+            this.time.delayedCall(5000, function() {
+            announcement.destroy();
             });
         }
         else {

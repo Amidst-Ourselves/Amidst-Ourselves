@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import { SERVER_ADDRESS, GAME_STATE } from '../constants';
 import LobbyScene from './lobbyScene';
 import GameScene from './gameScene';
+import gameEndScene from "./gameEndScene";
 import webRTCClientManager from "../webRTCClientManager"
 
 
@@ -46,6 +47,11 @@ export default class LoadGameScene extends Phaser.Scene {
 
                     this.initWebRTC(roomObj);
                     this.scene.add("gameScene", GameScene, true, roomObj);
+                    
+                }else if (roomObj.gameState === GAME_STATE.end) {
+
+                    this.initWebRTC(roomObj);
+                    this.scene.add("gameEndScene", gameEndScene, true, roomObj);
                     
                 } else {
                     this.scene.start("titleScene", {message: 'unknown error'});

@@ -127,6 +127,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
+        //this.players[playerObj.id].name = playerObj.id;
         this.players[playerObj.id].name = playerObj.id;
         this.players[playerObj.id].setAlpha(startingAlpha);
 

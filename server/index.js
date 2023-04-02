@@ -3,7 +3,8 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const GAME_STATE = {
     lobby: "lobby",
-    action: "action"
+    action: "action",
+    end: "end"
 };
 const PLAYER_STATE = {
     crewmate: "crewmate",
@@ -184,7 +185,39 @@ io.on('connection', (socket) => {
 
         rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
 
-        io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
+        let room = rooms[socket.roomCode];
+
+        let nCrewmate=0;
+        let nImposter=0;
+        let nGhost=0;
+        for(let player in rooms[socket.roomCode].players){
+
+            if(player.playerState === PLAYER_STATE.crewmate){
+                nCrewmate+=1;
+            }else if(player.playerState === PLAYER_STATE.imposter){
+                nImposter+=1;
+            }else{
+                nGhost+=1;
+            }
+        }
+        // console.log("Backend kill socket");
+        // console.log(nCrewmate);
+        // console.log(nImposter);
+        // console.log(nGhost);
+
+        if(nImposter-nCrewmate >=0){
+            console.log("imposter won")
+            room["winner"] = "imposters";
+                io.to(socket.roomCode).emit('endGameInitiate',room);
+        }else if (nImposter = 0){
+            console.log("Crewmates won")
+            room["winner"] = "crewmates";
+                io.to(socket.roomCode).emit('endGameInitiate',room);
+        }else{
+            io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
+        }
+
+        
     });
     
     socket.on('startGame', () => {
@@ -208,16 +241,20 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
 
-    socket.on('endGame', () => {
+    socket.on('endGame', (roomObj) => {
         let room = rooms[socket.roomCode];
+
+        roomObj["playersAtEnd"]=room.players;
+       
         for (let playerId in room.players) {
             room.players[playerId].playerState = PLAYER_STATE.ghost;
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
             room.players[playerId].tasks = [];
         }
-        room.gameState = GAME_STATE.lobby;
-        io.to(socket.roomCode).emit('teleportToLobby', room);
+        room.gameState = GAME_STATE.end;
+
+        io.to(socket.roomCode).emit('gameEndScene', roomObj);
     });
 
     socket.on('taskCompleted', (taskObj) => {
@@ -228,8 +265,20 @@ io.on('connection', (socket) => {
             player.tasks = player.tasks.filter(x => x !== taskObj.name);
             room.tasksComplete += 1;
 
-            taskObj.id = socket.id;
-            io.to(socket.roomCode).emit('taskCompleted', taskObj);
+
+            console.log(room.totalTasks);
+            console.log(room.tasksComplete);
+
+            if (room.totalTasks === room.tasksComplete) {
+                console.log("Crewmates won all tasks completed")
+                room["winner"] = "crewmateTask";
+                io.to(socket.roomCode).emit('endGameInitiate',room);
+            }else{
+                taskObj.id = socket.id;
+                io.to(socket.roomCode).emit('taskCompleted', taskObj);
+            }
+
+            
         }
     });
 
@@ -409,7 +458,8 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         deadBodies: deadBodies,
         webRTC: roomObj.webRTC,
         votes: votes,
-        meetingCompleted: false
+        meetingCompleted: false,
+        gameWinner:roomObj.gameWinner
     }
 
     rooms[roomCode] = newRoom;
