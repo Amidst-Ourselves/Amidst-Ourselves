@@ -5,13 +5,9 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
-    FRAMES_PER_COLOUR,
     COLOUR_STATION_MIN_DIST,
     COLOUR_STATION_X,
     COLOUR_STATION_Y,
-    WIDTH,
-    HEIGHT,
-    VIEW_DISTANCE
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';

@@ -6,9 +6,6 @@ import {
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
     PLAYER_STATE,
-    FRAMES_PER_COLOUR,
-    GHOST_FRAME_OFFSET,
-    VIEW_DISTANCE
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";

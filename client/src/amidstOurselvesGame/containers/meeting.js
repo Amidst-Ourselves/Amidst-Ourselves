@@ -5,12 +5,6 @@ import {
   FRAMES_PER_COLOUR,
   PLAYER_HEIGHT,
   PLAYER_STATE,
-  BOARD_WIDTH,
-  BOARD_HEIGHT,
-  BOARD_RADIUS,
-  BOARD_COLOR,
-  BOARD_STROKE_COLOR,
-  BOARD_STROKE_WIDTH,
 } from "../constants";
 
 export default class Meeting extends Phaser.GameObjects.Container {
@@ -93,7 +87,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         // Create a large rectangle for displaying messages
         const messageDisplayX = this.text_board.x - 20;
         const messageDisplayY = this.text_board.y - 60;
-        const messageDisplayWidth = boardWidth * 0.6 - 40;
+        // const messageDisplayWidth = boardWidth * 0.6 - 40;
         const messageDisplayHeight = boardHeight * 0.6 - 40 - boardHeight * 0.2;
         this.messageDisplay = this.scene.add.container(messageDisplayX, messageDisplayY).setScrollFactor(0).setDepth(7);
         this.messageDisplay.visible = false;

@@ -386,12 +386,13 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 continue;
             }
 
+            
             const wallBetween = this.wallBetween(
                 localX,
                 localY,
                 this.players[playerId].x,
                 this.players[playerId].y,
-                MAP_SCALE,
+                1,
                 VIEW_DISTANCE,
             );
             this.webRTC.updateWallBetween(playerId, wallBetween);

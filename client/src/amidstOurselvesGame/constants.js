@@ -1,5 +1,5 @@
 export const MAP_SCALE = 6;
-export const VIEW_DISTANCE = 50;
+export const VIEW_DISTANCE = 500;
 
 export const SPRITE_WIDTH = 13;
 export const SPRITE_HEIGHT = 13;
