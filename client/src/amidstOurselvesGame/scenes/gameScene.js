@@ -7,7 +7,8 @@ import {
     SPRITE_CONFIG,
     PLAYER_STATE,
     FRAMES_PER_COLOUR,
-    GHOST_FRAME_OFFSET
+    GHOST_FRAME_OFFSET,
+    VIEW_DISTANCE
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import gameEndScene from "./gameEndScene";
@@ -31,6 +32,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.gameWinner = roomObj.gameWinner;
+        this.eButtonPressed = false;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -61,17 +63,20 @@ export default class GameScene extends AbstractGameplayScene {
         this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000, frameHeight: 200});
         this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100, frameHeight: 100});
         this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100, frameHeight: 100});
+        this.load.spritesheet('ebutton', 'amidstOurselvesAssets/Ebutton.png', {frameWidth: 100, frameHeight: 100});
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
 
+        this.eButton = this.add.sprite(1400, 700, 'ebutton');
+        this.eButton.setOrigin(0.5, 1);
+
         this.createPlayers(this.tempPlayers);
 
         this.taskManager.create(this.players[this.socket.id]);
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
-
         this.imposter = new Imposter(this, this.socket);
         this.meetingManager = new Meeting(this);
 
@@ -89,6 +94,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.callButton.on('down', () => {
             if(this.meetingManager.checkMeetingConditions()) {
                 this.socket.emit('meeting');
+                this.socket.emit('meetingCountdown');
             }
         });
 
@@ -102,7 +108,12 @@ export default class GameScene extends AbstractGameplayScene {
         });
     
         this.socket.on('move', (playerObj) => {
-            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id);
+            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id, playerObj.velocity);
+            this.startMovingPlayer(playerObj.id);
+        });
+
+        this.socket.on('moveStop', (playerObj) => {
+            this.stopMovingPlayer(playerObj.id);
         });
 
         this.socket.on('join', (playerObj) => {
@@ -161,14 +172,25 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('webRTC_speaking', (config) => {
-            this.audioIcons[config.id].visible = config.bool;
+            if (this.players[this.socket.id].playerState !== PLAYER_STATE.ghost && this.players[config.id].playerState === PLAYER_STATE.ghost
+                || Phaser.Math.Distance.Between(
+                    this.players[this.socket.id].x,
+                    this.players[this.socket.id].y,
+                    this.players[config.id].x,
+                    this.players[config.id].y
+                  ) > 150 ) {
+                this.audioIcons[config.id].visible = false;
+            }
+            else {
+                this.audioIcons[config.id].visible = config.bool;
+            }
         });
 
         this.socket.on('meeting', () => {
             let newDeadBodies = [];
 
             for (let playerId in this.players) {
-                this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId);
+                this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId, 1);
 
                 if (this.deadBodies[playerId].visible) {
                     this.hideDeadBody(playerId);
@@ -181,8 +203,9 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('meetingResult', (result) => {
+            this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
-
+            this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
         })
 
         this.socket.on('new_message', (config) => {
@@ -253,6 +276,7 @@ export default class GameScene extends AbstractGameplayScene {
 
 
 
+        this.webRTC.updateState(this.players);
     }
 
     createEndButtonForHost() {
@@ -275,6 +299,7 @@ export default class GameScene extends AbstractGameplayScene {
     cleanupSocketio() {
         this.socket.off('taskCompleted');
         this.socket.off('move');
+        this.socket.off('moveStop');
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
@@ -283,5 +308,8 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');
         this.socket.off('meetingResult');
+        this.socket.off('meetingCountdown');
+        this.socket.off('voted');
+        this.socket.off('new_message');
     }
 }

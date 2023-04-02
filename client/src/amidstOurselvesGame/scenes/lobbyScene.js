@@ -73,7 +73,12 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     
         this.socket.on('move', (playerObj) => {
-            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id);
+            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id, playerObj.velocity);
+            this.startMovingPlayer(playerObj.id);
+        });
+
+        this.socket.on('moveStop', (playerObj) => {
+            this.stopMovingPlayer(playerObj.id);
         });
     
         this.socket.on('join', (playerObj) => {
@@ -109,6 +114,7 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.players[this.socket.id].playerState
         );
         this.colourStation.update();
+        this.webRTC.updateState(this.players);
     }
 
     createStartButtonForHost() {
@@ -132,6 +138,7 @@ export default class LobbyScene extends AbstractGameplayScene {
     cleanupSocketio() {
         this.socket.off('colour');
         this.socket.off('move');
+        this.socket.off('moveStop');
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToGame');

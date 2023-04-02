@@ -25,7 +25,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
 
     kill(players, deadBodies) {
         for (let player in players) {
-            if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 20 && player !== this.socket.id) {
+            if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 100 && player !== this.socket.id && players[player].playerState != PLAYER_STATE.ghost) {
                 players[player].playerState = PLAYER_STATE.ghost;
                 this.socket.emit('kill', {
                     id: player,
@@ -36,6 +36,8 @@ export default class Imposter extends Phaser.GameObjects.Container {
                 deadBodies[player].x = players[player].x;
                 deadBodies[player].y = players[player].y;
                 deadBodies[player].visible = true;
+
+                this.scene.updateLocalPlayerPosition(players[player].x, players[player].y);
 
                 this.startCooldown();
                 return true;
@@ -65,6 +67,10 @@ export default class Imposter extends Phaser.GameObjects.Container {
         .setOrigin(0.5)
         .setPadding(10)
         .setStyle({ backgroundColor: '#000000'});
+
+        if(this.scene.players[this.scene.socket.id].playerState !== PLAYER_STATE.imposter) {
+            this.countdown.visible = false;
+        }
       
     }
 
@@ -95,7 +101,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
         this.countdown.setStyle({ fill: '#ffffff' });
         for (let player in this.scene.players) {
 
-            if((Math.abs(this.scene.players[player].x - this.player.x) + Math.abs(this.scene.players[player].y - this.player.y)) < 20 && player !== this.socket.id) {
+            if((Math.abs(this.scene.players[player].x - this.player.x) + Math.abs(this.scene.players[player].y - this.player.y)) < 100 && player !== this.socket.id && this.scene.players[player].playerState != PLAYER_STATE.ghost) {
                 this.countdown.setStyle({ fill: '#ff0000' });
             }
         }

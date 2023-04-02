@@ -164,10 +164,15 @@ io.on('connection', (socket) => {
         socket.broadcast.to(socket.roomCode).emit('move', {
             id: socket.id,
             x: playerObj.x,
-            y: playerObj.y
+            y: playerObj.y,
+            velocity: playerObj.velocity,
         });
         rooms[socket.roomCode].players[socket.id].x = playerObj.x;
         rooms[socket.roomCode].players[socket.id].y = playerObj.y;
+    });
+
+    socket.on('moveStop', () => {
+        socket.broadcast.to(socket.roomCode).emit('moveStop', {id: socket.id});
     });
 
     socket.on('colour', () => {
@@ -286,45 +291,59 @@ io.on('connection', (socket) => {
         io.to(socket.roomCode).emit('meeting');
         let room = rooms[socket.roomCode];
         room.meetingCompleted = false;
-        for (let id in room.votes) {
+        room.meetingCountdownStarted = false;
+        for (let id in room.players) {
             // reset all votes to 0
             room.votes[id] = 0;
         }
     });
 
-    socket.on('voted', (playerID) => {
-        let room = rooms[socket.roomCode];
-        room.votes[playerID]++;
+    socket.on('meetingCountdown', () => {
+
+        if (!rooms[socket.roomCode].meetingCountdownStarted) {
+                rooms[socket.roomCode].meetingCountdownStarted = true;
+                rooms[socket.roomCode].timeoutId = setTimeout(() => {
+                    console.log("vote end");
+                    if(rooms[socket.roomCode]) {
+                        if (!rooms[socket.roomCode].meetingCompleted) {
+
+                            getMeetingResult(socket);
+                        }
+                    }
+                }, 30000);
+            }
     });
 
-    socket.on('meetingTimeUp', () => {
-        if (!rooms[socket.roomCode].meetingCompleted) {
-            let result = null;
-            let max = 0;
-            let room = rooms[socket.roomCode];
-            let alive = 0;
-            for (let id in room.players) {
-                if (room.players[id].playerState === PLAYER_STATE.crewmate || 
-                    room.players[id].playerState === PLAYER_STATE.imposter) {
-                    alive++;
-                }
-            }
+    socket.on('voted', (playerID) => {
 
-            for (let id in room.votes) {
-                if (room.votes[id] > max) {
-                    max = room.votes[id];
-                    result = id;
-                }
-            }
-            console.log(max/alive);
-            if (max/alive > 0.5) {
-                io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
-            }
-            else {
-                io.to(socket.roomCode).emit('meetingResult', null);
-            }
-            rooms[socket.roomCode].meetingCompleted = true;
+        let room = rooms[socket.roomCode];
+        if(room.players[socket.id].playerState != PLAYER_STATE.ghost) {
+            room.votes[playerID]++;
         }
+
+
+        let alive = 0;
+        for (let id in room.players) {
+            if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+                room.players[id].playerState === PLAYER_STATE.imposter) {
+                alive++;
+            }
+        }
+        let sum = 0;
+        for (let playerID in room.votes) {
+            sum += room.votes[playerID];
+        }
+        console.log("sum");
+        console.log(sum);
+        console.log("alive");
+        console.log(alive);
+        if (sum >= alive) {
+            if (!rooms[socket.roomCode].meetingCompleted) {
+                clearTimeout(rooms[socket.roomCode].timeoutId);
+                getMeetingResult(socket);
+            }
+        }
+        
     });
 
     socket.on('new_message', (message) => { 
@@ -459,7 +478,9 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         webRTC: roomObj.webRTC,
         votes: votes,
         meetingCompleted: false,
-        gameWinner:roomObj.gameWinner
+        gameWinner:roomObj.gameWinner,
+        meetingCountdownStarted: false,
+        timeoutId: 0 
     }
 
     rooms[roomCode] = newRoom;
@@ -502,4 +523,32 @@ function playerCount(roomObj) {
 
 function roomFull(roomObj) {
     return playerCount(roomObj) >= roomObj.playerLimit;
+}
+
+function getMeetingResult(socket) {
+    let result = null;
+    let max = 0;
+    let room = rooms[socket.roomCode];
+    let alive = 0;
+    for (let id in room.players) {
+        if (room.players[id].playerState === PLAYER_STATE.crewmate || 
+            room.players[id].playerState === PLAYER_STATE.imposter) {
+            alive++;
+        }
+    }
+    for (let id in room.votes) {
+        if (room.votes[id] > max) {
+            max = room.votes[id];
+            result = id;
+        }
+    }
+    console.log(max/alive);
+    if (max/alive > 0.5) {
+        rooms[socket.roomCode].players[result].playerState = PLAYER_STATE.ghost;
+        io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
+    }
+    else {
+        io.to(socket.roomCode).emit('meetingResult', null);
+    }
+    rooms[socket.roomCode].meetingCompleted = true;
 }

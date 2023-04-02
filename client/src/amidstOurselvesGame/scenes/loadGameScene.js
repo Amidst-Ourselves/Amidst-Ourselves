@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import io from 'socket.io-client';
-import { SERVER_ADDRESS, GAME_STATE } from '../constants';
+import { SERVER_ADDRESS, GAME_STATE, PLAYER_STATE } from '../constants';
 import LobbyScene from './lobbyScene';
 import GameScene from './gameScene';
 import gameEndScene from "./gameEndScene";
@@ -63,6 +63,7 @@ export default class LoadGameScene extends Phaser.Scene {
 
     initWebRTC(roomObj) {
         this.webRTC.init(roomObj, this.socket);
+        this.webRTC.updateState({[this.socket.id]: PLAYER_STATE.ghost});
         this.webRTC.create();
         this.webRTC.update();
         this.registry.set('webRTC', this.webRTC);
