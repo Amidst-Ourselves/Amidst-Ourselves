@@ -16,6 +16,7 @@ export default function Game(props) {
             type: Phaser.AUTO,
             width: WIDTH,
             height: HEIGHT,
+            fps: 60,
             parent: gameContainerRef.current,
             pixelArt: true,
             scene: [TitleScene, LoadGameScene, GameSettingsScene]

@@ -72,7 +72,12 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     
         this.socket.on('move', (playerObj) => {
-            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id);
+            this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id, playerObj.velocity);
+            this.startMovingPlayer(playerObj.id);
+        });
+
+        this.socket.on('moveStop', (playerObj) => {
+            this.stopMovingPlayer(playerObj.id);
         });
     
         this.socket.on('join', (playerObj) => {
