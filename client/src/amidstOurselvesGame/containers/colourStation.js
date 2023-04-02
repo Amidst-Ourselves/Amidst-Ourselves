@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { SPRITE_CONFIG } from "../constants";
+import { MAP_SCALE, TASK_CONFIG, TASK_SPRITE_HEIGHT, TASK_SPRITE_WIDTH } from "../constants";
 
 export default class ColourStation extends Phaser.GameObjects.Container {
     constructor(scene, x, y, minDist, keyCode, changeColourFunction) {
@@ -14,11 +14,14 @@ export default class ColourStation extends Phaser.GameObjects.Container {
     }
 
     preload() {
-        this.scene.load.spritesheet('colourStation', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
+        this.scene.load.spritesheet('colourStation', 'amidstOurselvesAssets/map1task.png', TASK_CONFIG);
     }
 
     create(player) {
-        this.colourStationSprite = this.scene.add.sprite(this.x, this.y, 'colourStation', 0).setOrigin(0.5, 1);
+        this.colourStationSprite = this.scene.add.sprite(this.x, this.y, 'colourStation', 0);
+        this.colourStationSprite.displayHeight = TASK_SPRITE_HEIGHT * MAP_SCALE;
+        this.colourStationSprite.displayWidth = TASK_SPRITE_WIDTH * MAP_SCALE;
+
         this.player = player;
 
         this.colourStationKey.on('down', () => {
@@ -32,7 +35,7 @@ export default class ColourStation extends Phaser.GameObjects.Container {
         this.playerInRange = this.inRange(this.player.x, this.player.y);
         
         if (this.playerInRange) {
-            this.colourStationSprite.setFrame(11);
+            this.colourStationSprite.setFrame(1);
         } else {
             this.colourStationSprite.setFrame(0);
         }

@@ -128,6 +128,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
 
     updatePlayerPosition(newX, newY, playerId, velocity) {
+        this.players[playerId].setDepth(newY);
         this.players[playerId].x = newX;
         this.players[playerId].y = newY;
         this.playerNames[playerId].x = newX;
@@ -190,6 +191,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerObj.id].name = playerObj.id;
         this.players[playerObj.id].moving = false;
         this.players[playerObj.id].setAlpha(startingAlpha);
+        this.players[playerObj.id].setDepth(playerObj.y);
 
         this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', startingDeadBodyFrame).setOrigin(0.5, 1);
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;

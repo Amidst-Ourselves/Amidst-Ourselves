@@ -53,9 +53,9 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         });
     }
 
-    addTask(name, x, y) {
-        let miniMapTaskX = Math.floor(x/MAP_SCALE*MAP1_MINIMAP_SCALE);
-        let miniMapTaskY = Math.floor(y/MAP_SCALE*MAP1_MINIMAP_SCALE);
+    addTask(name, mapX, mapY) {
+        let miniMapTaskX = Math.floor(mapX*MAP1_MINIMAP_SCALE);
+        let miniMapTaskY = Math.floor(mapY*MAP1_MINIMAP_SCALE);
 
         let circle = this.scene.add.graphics();
         circle.fillStyle(0xffff00, 1);

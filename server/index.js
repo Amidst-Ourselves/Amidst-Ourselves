@@ -66,7 +66,7 @@ const MAP1_TASKS = [
     'o2',
     'navigation',
     'communications',
-    'cafeteria'
+    //'cafeteria'
 ];
 
 const COLOUR_COUNT = 10;

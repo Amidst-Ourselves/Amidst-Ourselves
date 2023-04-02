@@ -6,8 +6,8 @@ import {
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
     COLOUR_STATION_MIN_DIST,
-    COLOUR_STATION_X,
-    COLOUR_STATION_Y,
+    BUTTON_X,
+    BUTTON_Y,
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
@@ -34,8 +34,8 @@ export default class LobbyScene extends AbstractGameplayScene {
 
         this.colourStation = new ColourStation(
             this,
-            COLOUR_STATION_X,
-            COLOUR_STATION_Y,
+            BUTTON_X * MAP_SCALE,
+            BUTTON_Y * MAP_SCALE,
             COLOUR_STATION_MIN_DIST,
             Phaser.Input.Keyboard.KeyCodes.F,
             () => { this.socket.emit('colour'); },
