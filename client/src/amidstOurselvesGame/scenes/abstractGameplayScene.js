@@ -145,6 +145,8 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             this.createSprite(playerObjs[playerId]);
             this.webRTC.move(playerObjs[playerId]);
         }
+        console.log(playerObjs);
+        this.webRTC.updateState(playerObjs);
 
         for (let playerId in this.players) {
             this.setPlayerImposter(playerId);
@@ -387,8 +389,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 MAP_SCALE,
                 VIEW_DISTANCE,
             );
+            this.webRTC.updateWallBetween(playerId, wallBetween);
             if (wallBetween) {
                 this.hidePlayer(playerId);
+                this.audioIcons[playerId].visible = false;
             } else {
                 this.showPlayer(playerId);
             }
