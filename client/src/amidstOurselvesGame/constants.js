@@ -33,7 +33,8 @@ export const SERVER_ADDRESS = process.env.REACT_APP_HOST_URL;
 
 export const GAME_STATE = {
     lobby: "lobby",
-    action: "action"
+    action: "action",
+    end: "end"
 };
 
 export const PLAYER_STATE = {

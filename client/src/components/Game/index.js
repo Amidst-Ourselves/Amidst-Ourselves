@@ -19,6 +19,7 @@ export default function Game(props) {
             fps: 60,
             parent: gameContainerRef.current,
             pixelArt: true,
+            username: storedName,
             scene: [TitleScene, LoadGameScene, GameSettingsScene]
         };
   
