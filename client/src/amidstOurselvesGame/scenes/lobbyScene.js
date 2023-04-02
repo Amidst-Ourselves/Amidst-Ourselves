@@ -136,6 +136,7 @@ export default class LobbyScene extends AbstractGameplayScene {
     cleanupSocketio() {
         this.socket.off('colour');
         this.socket.off('move');
+        this.socket.off('moveStop');
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToGame');

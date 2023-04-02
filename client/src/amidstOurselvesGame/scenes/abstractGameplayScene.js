@@ -22,7 +22,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.playerNames = {};
         this.audioIcons = {};
         this.deadBodies = {};
-        this.localPlayerMoving = false;
     }
 
 
@@ -54,11 +53,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         }
 
         if (!moved) {
-            this.stopMovingPlayer(this.socket.id);
-            this.socket.emit('moveStop');
+            this.stopLocalPlayer();
             return
         } else {
-            this.startMovingPlayer(this.socket.id);
+            this.startLocalPlayer();
         }
 
         if (state === PLAYER_STATE.ghost) {
@@ -101,6 +99,21 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         let startingFrame = this.players[playerId].colour * FRAMES_PER_COLOUR;
         this.players[playerId].anims.stop();
         this.players[playerId].setFrame(startingFrame);
+    }
+
+    startLocalPlayer() {
+        if (this.players[this.socket.id].moving) {
+            return;
+        }
+        this.startMovingPlayer(this.socket.id);
+    }
+
+    stopLocalPlayer() {
+        if (!this.players[this.socket.id].moving) {
+            return;
+        }
+        this.stopMovingPlayer(this.socket.id);
+        this.socket.emit('moveStop');
     }
 
     updateLocalPlayerPosition(newX, newY, newVelocity) {
