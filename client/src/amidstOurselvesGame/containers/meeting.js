@@ -245,6 +245,9 @@ export default class Meeting extends Phaser.GameObjects.Container {
         for (const tab of this.vote_tabs) {
             if (tab.player.playerState != PLAYER_STATE.ghost) {
                 tab.visible = true;
+                if (this.scene.players[this.scene.socket.id].playerState == PLAYER_STATE.ghost) {
+                    tab.disableInteractive();
+                }
             }
         }
         // Countdown timer
@@ -399,10 +402,10 @@ export default class Meeting extends Phaser.GameObjects.Container {
                 // Remove the last character of the input message
                 this.inputMessage = this.inputMessage.slice(0, -1);
             } else if (event.key === 'Enter') {
-                this.scene.socket.emit("new_message", this.inputMessage);
 
-                if (!this.filter.isProfane(this.inputMessage)) {
+                if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
                     // Display the input message in the messageDisplay area
+                    this.scene.socket.emit("new_message", this.inputMessage);
                     this.addMessage(this.scene.socket.id, this.inputMessage);
                 } 
 

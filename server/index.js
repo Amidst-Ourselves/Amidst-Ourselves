@@ -250,9 +250,11 @@ io.on('connection', (socket) => {
                 rooms[socket.roomCode].meetingCountdownStarted = true;
                 setTimeout(() => {
                     console.log("vote end");
-                    if (!rooms[socket.roomCode].meetingCompleted) {
+                    if(rooms[socket.roomCode]) {
+                        if (!rooms[socket.roomCode].meetingCompleted) {
 
-                        getMeetingResult(socket);
+                            getMeetingResult(socket);
+                        }
                     }
                 }, 30000);
             }
@@ -279,24 +281,8 @@ io.on('connection', (socket) => {
         }
 
         if (sum >= alive) {
-            let result = null;
-            let max = 0;
-            let room = rooms[socket.roomCode];
             if (!rooms[socket.roomCode].meetingCompleted) {
-                for (let id in room.votes) {
-                    if (room.votes[id] > max) {
-                        max = room.votes[id];
-                        result = id;
-                    }
-                }
-                console.log(max/alive);
-                if (max/alive > 0.5) {
-                    io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
-                }
-                else {
-                    io.to(socket.roomCode).emit('meetingResult', null);
-                }
-                rooms[socket.roomCode].meetingCompleted = true;
+                getMeetingResult(socket);
             }
         }
         
