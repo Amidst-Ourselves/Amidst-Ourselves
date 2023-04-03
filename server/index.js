@@ -1,6 +1,11 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const dbo = require("./connect");
+const cors = require("cors");
+require("dotenv").config();
+
+const port = process.env.PORT || 3000;
 const GAME_STATE = {
     lobby: "lobby",
     action: "action"
@@ -11,32 +16,21 @@ const PLAYER_STATE = {
     ghost: "ghost"
 };
 
-const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(require("./API/user"));
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
     cors: {
-        origins: ["http://127.0.0.1:5500"],
-        methods: ["GET", "POST"]
+        origins: '*',
+        methods: ["GET", "POST"],
     }
 });
 
-
-//const express = require("express");
-//const app = express();
-//const cors = require("cors");
-require("dotenv").config({ path: "./config.env" });
-const port = 3000;
-// app.use(cors());
-// app.use(express.json());
-// app.use(require("./API/user"));
-
-const dbo = require("./connect");
-httpServer.listen(3000, () => {
-    console.log('listening on localhost:3000');
+httpServer.listen(port, () => {
+    console.log('listening on localhost:' + port);
     dbo.connectToServer(function (err) {
         if (err) console.error(err);
      
