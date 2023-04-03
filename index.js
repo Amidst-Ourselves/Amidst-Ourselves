@@ -2,6 +2,7 @@ const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const dbo = require("./connect");
+const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -20,6 +21,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(require("./API/user"));
+
+app.use(express.static(path.join(__dirname, 'client/build')));
+
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
