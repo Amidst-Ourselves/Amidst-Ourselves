@@ -29,7 +29,7 @@ export const PLAYER_WIDTH = SPRITE_WIDTH * MAP_SCALE;
 export const PLAYER_HEIGHT = SPRITE_HEIGHT * MAP_SCALE;
 export const HEIGHT = 600;
 export const WIDTH = 800;
-export const SERVER_ADDRESS = 'http://localhost:3000';
+export const SERVER_ADDRESS = process.env.REACT_APP_HOST_URL;
 
 export const GAME_STATE = {
     lobby: "lobby",
