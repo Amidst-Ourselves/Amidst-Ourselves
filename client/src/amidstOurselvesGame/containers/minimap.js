@@ -23,6 +23,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.overlay.fillStyle(0x000000, 1);
         this.overlay.fillRect(0, 0, WIDTH, HEIGHT);
         this.overlay.setAlpha(0.7);
+        this.overlay.setDepth(HEIGHT * MAP_SCALE);
         this.overlay.setScrollFactor(0);
         this.overlay.visible = false;
 
@@ -30,6 +31,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMap.setOrigin(0,0);
         this.miniMap.setScale(MAP1_MINIMAP_SCALE);
         this.miniMap.setAlpha(0.7);
+        this.miniMap.setDepth(HEIGHT * MAP_SCALE + 1);
         this.miniMap.setScrollFactor(0);
         this.miniMap.visible = false;
 
@@ -37,6 +39,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         this.miniMapPlayer.setOrigin(0.5, 1);
         this.miniMapPlayer.displayHeight = MAP1_MINIMAP_PLAYER_HEIGHT;
         this.miniMapPlayer.displayWidth = MAP1_MINIMAP_PLAYER_WIDTH;
+        this.miniMapPlayer.setDepth(HEIGHT * MAP_SCALE + 2);
         this.miniMapPlayer.setScrollFactor(0);
         this.miniMapPlayer.visible = false;
 
@@ -62,6 +65,7 @@ export default class MiniMap extends Phaser.GameObjects.Container {
         circle.fillCircle(miniMapTaskX, miniMapTaskY, 5);
         circle.setScrollFactor(0);
         circle.visible = false;
+        circle.setDepth(HEIGHT * MAP_SCALE + 2);
 
         this.miniMapTasks[name] = circle;
     }
