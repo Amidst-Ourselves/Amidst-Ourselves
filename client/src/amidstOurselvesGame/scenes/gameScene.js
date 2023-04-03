@@ -34,6 +34,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.eButtonPressed = false;
+        this.inMeeting = false;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -89,7 +90,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.createMuteButton();
 
         this.killButton.on('down', () => {
-            if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter) {
+            if (this.players[this.socket.id].playerState === PLAYER_STATE.imposter && !this.inMeeting) {
                 this.imposter.attemptKill(this.players, this.deadBodies);
             }
         });

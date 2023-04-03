@@ -236,6 +236,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = true;
         this.textButton.visible = true;
         this.countdownText.visible = true;
+        this.scene.inMeeting = true;
 
         for (const button of this.votingButtons) {
             if (button.player.playerState != PLAYER_STATE.ghost) {
@@ -292,6 +293,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = false;
         this.textButton.visible = false;
         this.ghostReminder.visible = false;
+        this.scene.inMeeting = false;
 
         for (const button of this.votingButtons) {
             button.visible = false;
