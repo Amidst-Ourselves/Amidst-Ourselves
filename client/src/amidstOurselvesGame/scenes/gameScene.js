@@ -6,9 +6,12 @@ import {
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
     PLAYER_STATE,
-    FRAMES_PER_COLOUR,
-    GHOST_FRAME_OFFSET,
-    VIEW_DISTANCE
+    TASK_CONFIG,
+    BUTTON_X,
+    BUTTON_Y,
+    BUTTON_CONFIG,
+    BUTTON_SPRITE_HEIGHT,
+    BUTTON_SPRITE_WIDTH,
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
@@ -61,19 +64,21 @@ export default class GameScene extends AbstractGameplayScene {
         this.load.spritesheet('tab', 'amidstOurselvesAssets/tab.png', {frameWidth: 1000, frameHeight: 200});
         this.load.spritesheet('yes', 'amidstOurselvesAssets/yes.png', {frameWidth: 100, frameHeight: 100});
         this.load.spritesheet('no', 'amidstOurselvesAssets/no.png', {frameWidth: 100, frameHeight: 100});
-        this.load.spritesheet('ebutton', 'amidstOurselvesAssets/Ebutton.png', {frameWidth: 100, frameHeight: 100});
+        this.load.spritesheet('task', 'amidstOurselvesAssets/map1task.png', TASK_CONFIG);
+        this.load.spritesheet('ebutton', 'amidstOurselvesAssets/map1button.png', BUTTON_CONFIG);
     }
     
     create() {
         this.add.image(0, 0, 'map1').setOrigin(0, 0).setScale(MAP_SCALE);
         this.cameras.main.centerOn(MAP1_SPAWN_X, MAP1_SPAWN_Y);
 
-        this.eButton = this.add.sprite(1400, 700, 'ebutton');
-        this.eButton.setOrigin(0.5, 1);
+        this.eButton = this.add.sprite(BUTTON_X * MAP_SCALE, BUTTON_Y * MAP_SCALE, 'ebutton');
+        this.eButton.displayHeight = BUTTON_SPRITE_HEIGHT * MAP_SCALE;
+        this.eButton.displayWidth = BUTTON_SPRITE_WIDTH * MAP_SCALE;
 
         this.createPlayers(this.tempPlayers);
 
-        this.taskManager.create(this.players[this.socket.id]);
+        this.taskManager.create(this.players[this.socket.id], 'task');
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
         this.imposter = new Imposter(this, this.socket);
         this.meetingManager = new Meeting(this);
