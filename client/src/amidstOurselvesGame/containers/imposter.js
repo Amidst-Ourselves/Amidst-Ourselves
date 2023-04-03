@@ -40,6 +40,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
                 this.scene.updateLocalPlayerPosition(players[player].x, players[player].y);
 
                 this.startCooldown();
+                
                 return true;
             } 
         }

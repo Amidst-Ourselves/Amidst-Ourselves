@@ -243,6 +243,7 @@ export default class GameScene extends AbstractGameplayScene {
         );
         this.taskManager.update();
         this.miniMap.update();
+
         this.webRTC.updateState(this.players);
     }
 
