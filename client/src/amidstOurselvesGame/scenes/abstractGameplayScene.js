@@ -174,7 +174,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             startingAlpha = 1;
         }
 
-        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.id, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
+
+
+        this.playerNames[playerObj.id] = this.add.text(playerObj.x, playerObj.y, playerObj.name, { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5, 0);
 
         this.players[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'player', startingPlayerFrame).setOrigin(0.5, 1);
         this.players[playerObj.id].displayHeight = PLAYER_HEIGHT;

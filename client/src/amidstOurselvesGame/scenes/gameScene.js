@@ -239,43 +239,6 @@ export default class GameScene extends AbstractGameplayScene {
         this.taskManager.update();
         this.miniMap.update();
 
-        // console.log(this.taskManager.totalTasks);
-        // console.log(this.taskManager.tasksComplete);
-
-        // if (this.taskManager.totalTasks === this.taskManager.tasksComplete) {
-        //     console.log("Crewmates won task")
-        //     this.gameWinner = "Crewmates";
-        //     this.socket.emit('endGame');
-        // }
-
-        // let nCrewmate=0;
-        // let nImposter=0;
-        // let nGhost=0;
-        // for(let player in this.tempPlayers){
-
-        //     if(this.tempPlayers[player].playerState === PLAYER_STATE.crewmate){
-        //         nCrewmate+=1;
-        //     }else if(this.tempPlayers[player].playerState === PLAYER_STATE.imposter){
-        //         nImposter+=1;
-        //     }else{
-        //         nGhost+=1;
-        //     }
-        // }
-        // // console.log(nCrewmate);
-        // // console.log(nImposter);
-        // // console.log(nGhost);
-        // if(nImposter-nCrewmate >0){
-        //     console.log("imposter won")
-        //     this.gameWinner = "Imposters";
-        //     this.socket.emit('endGame');
-        // }else if (nImposter = 0){
-        //     console.log("Crewmates won")
-        //     this.gameWinner = "Crewmates";
-        //     this.socket.emit('endGame');
-        // }
-
-
-
         this.webRTC.updateState(this.players);
     }
 

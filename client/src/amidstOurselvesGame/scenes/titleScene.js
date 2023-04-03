@@ -15,6 +15,15 @@ export default class TitleScene extends Phaser.Scene {
         const initialText = 'Type room code...';
         let inputText = '';
 
+        let storedName = localStorage.getItem('name');
+        let storedEmail = localStorage.getItem('email');
+        if(!storedName){
+            storedName = "anonymous";
+        }
+        if(!storedEmail){
+            storedEmail = "anonymous";
+        }
+
         let startGameText = this.add.text(100, 100, 'Click here to create a new game room!', { font: '32px Arial', fill: '#FFFFFF' });
         startGameText.setInteractive();
         startGameText.on('pointerover', () => {
@@ -36,7 +45,7 @@ export default class TitleScene extends Phaser.Scene {
             joinGameText.setTint(0xFFFFFF);
         });
         joinGameText.on('pointerdown', () => {
-            this.scene.start("loadGameScene", {roomCode: inputText});
+            this.scene.start("loadGameScene", {roomCode: inputText, playerName:storedName, playerEmail:storedEmail});
         });
 
         let roomCodeText = this.add.text(150, 250, initialText, { font: '32px Arial', fill: '#FFFFFF' });

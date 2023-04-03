@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { HEIGHT } from "../constants";
 import MiniMap from "../containers/minimap";
 import TaskManager from "../containers/taskManager";
-import LobbyScene from "./lobbyScene";
+import TitleScene from "./titleScene";
 
 
 export default class gameEndScene extends Phaser.Scene {
@@ -68,10 +68,8 @@ export default class gameEndScene extends Phaser.Scene {
         console.log(this.playersAtEnd);
         
         setTimeout(() => {
-            this.cleanupSocketio();
-            this.scene.add("lobbyScene", LobbyScene, true, this.roomObj);
-            this.scene.remove("gameScene");
-        }, 10000);
+            window.location.reload();
+        }, 20000);
 
 
     }

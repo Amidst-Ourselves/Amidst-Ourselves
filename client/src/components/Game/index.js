@@ -8,8 +8,8 @@ import React, { useRef, useLayoutEffect } from 'react';
 
 export default function Game(props) {
     const gameContainerRef = useRef(null);
-    let storedName = localStorage.getItem('name');
-    console.log(storedName); // Logan this is the player name. 
+    // let storedName = localStorage.getItem('name');
+    // console.log(storedName); // Logan this is the player name. 
   
     useLayoutEffect(() => {
         const config = {
@@ -19,7 +19,6 @@ export default function Game(props) {
             fps: 60,
             parent: gameContainerRef.current,
             pixelArt: true,
-            username: storedName,
             scene: [TitleScene, LoadGameScene, GameSettingsScene]
         };
   
