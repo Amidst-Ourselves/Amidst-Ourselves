@@ -1,12 +1,14 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
     PLAYER_STATE,
   } from "../constants";
 
-export default class Imposter extends Phaser.GameObjects.Container {
+export default class Imposter extends GameObjects.Container {
 
     constructor(scene, socket) {
         super(scene);
+        this.scene = scene;
 
         this.killCooldown = 10000; // in sec
         this.socket = socket;
