@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import {
   WIDTH,
   HEIGHT,
+  MAP_SCALE,
   FRAMES_PER_COLOUR,
   PLAYER_HEIGHT,
   PLAYER_STATE,
@@ -17,7 +18,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.overlay.setAlpha(0.7);
         this.overlay.setScrollFactor(0);
         this.overlay.visible = false;
-        this.overlay.setDepth(2);
+        this.overlay.setDepth(HEIGHT * MAP_SCALE);
 
         const boardWidth = 780;
         const boardHeight = 580;
@@ -26,7 +27,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         const boardStrokeColor = 0x808080;
         const boardStrokeWidth = 4;
     
-        this.voting_board = this.scene.add.graphics().setScrollFactor(0).setDepth(3);
+        this.voting_board = this.scene.add.graphics().setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+1);
         this.voting_board.fillStyle(boardFillColor);
         this.voting_board.lineStyle(boardStrokeWidth, boardStrokeColor);
         this.voting_board.fillRoundedRect(0, 0, boardWidth, boardHeight, boardRadius);
@@ -41,7 +42,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.textButton.setScrollFactor(0);
         this.textButton.setScale(0.5);
         this.textButton.visible = false;
-        this.textButton.setDepth(5);
+        this.textButton.setDepth(HEIGHT * MAP_SCALE+3);
         this.textButton.setPadding(10)
         this.textButton.setStyle({ backgroundColor: '#111' })
         this.textButton.setInteractive({ useHandCursor: true })
@@ -69,12 +70,12 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.ghostReminder.setScrollFactor(0);
         this.ghostReminder.setScale(0.5);
         this.ghostReminder.visible = false;
-        this.ghostReminder.setDepth(5);
+        this.ghostReminder.setDepth(HEIGHT * MAP_SCALE+3);
         this.ghostReminder.setPadding(10)
         this.ghostReminder.setStyle({ backgroundColor: '#111' })
 
         //////////////////////////////
-        this.text_board = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
+        this.text_board = this.scene.add.graphics().setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+4);
         this.text_board.fillStyle(boardFillColor);
         this.text_board.lineStyle(boardStrokeWidth+4, boardStrokeColor);
         this.text_board.fillRoundedRect(250, 200, boardWidth, boardHeight, boardRadius);
@@ -89,7 +90,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         const messageDisplayY = this.text_board.y - 60;
         // const messageDisplayWidth = boardWidth * 0.6 - 40;
         const messageDisplayHeight = boardHeight * 0.6 - 40 - boardHeight * 0.2;
-        this.messageDisplay = this.scene.add.container(messageDisplayX, messageDisplayY).setScrollFactor(0).setDepth(7);
+        this.messageDisplay = this.scene.add.container(messageDisplayX, messageDisplayY).setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+5);
         this.messageDisplay.visible = false;
         // Create a smaller rectangle for inputting messages
         const messageInputX = this.text_board.x + 150;
@@ -98,7 +99,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         const messageInputHeight = boardHeight * 0.1;
         // this.messageInput = this.scene.add.zone(messageInputX, messageInputY, messageInputWidth, messageInputHeight).setOrigin(0.5).setScrollFactor(0).setDepth(7);
 
-        this.messageInput = this.scene.add.graphics().setScrollFactor(0).setDepth(6);
+        this.messageInput = this.scene.add.graphics().setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+4);
         this.messageInput.fillStyle(0xFFFFFF);
         this.messageInput.lineStyle(boardStrokeWidth, boardStrokeColor);
         this.messageInput.fillRoundedRect(messageInputX, messageInputY, messageInputWidth, messageInputHeight, boardRadius);
@@ -109,7 +110,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
 
         const inputMessageX = messageInputX + 10;
         const inputMessageY = messageInputY + 20;
-        this.inputMessageText = this.scene.add.text(inputMessageX, inputMessageY, '').setScrollFactor(0).setDepth(7);
+        this.inputMessageText = this.scene.add.text(inputMessageX, inputMessageY, '').setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+5);
         this.inputMessageText.setColor('0x000000')
         this.inputMessageText.visible = false;
         this.inputMessage = '';
@@ -118,7 +119,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.countdownText = this.scene.add.text(10, 10, `Time left: ${countdown}s`, {
             fontSize: '32px',
             color: '#ffffff'
-        }).setScrollFactor(0).setDepth(5);
+        }).setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+3);
         this.countdownText.visible = false;
 
         ///////////////////////////
@@ -135,7 +136,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             // console.log(player)
 
             // const vote_tab = this.scene.add.graphics().setScrollFactor(0).setDepth(4);
-            const vote_tab = this.scene.add.sprite(WIDTH / 2 - 500/2, 100 + (i * 70) - 50, 'tab').setScrollFactor(0).setDepth(4);
+            const vote_tab = this.scene.add.sprite(WIDTH / 2 - 500/2, 100 + (i * 70) - 50, 'tab').setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+2);
             vote_tab.setOrigin(0,0);
             vote_tab.setScale(0.5);
             vote_tab.setInteractive();
@@ -156,7 +157,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             vote_tab.visible = false;
             this.vote_tabs.push(vote_tab);
 
-            const confirm_button = this.scene.add.sprite(WIDTH / 2 + 150, 100 + (i * 70) - 37, 'yes').setScrollFactor(0).setDepth(5);
+            const confirm_button = this.scene.add.sprite(WIDTH / 2 + 150, 100 + (i * 70) - 37, 'yes').setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+3);
             confirm_button.setOrigin(0,0);
             confirm_button.setScale(0.4);
             confirm_button.setInteractive();
@@ -178,7 +179,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             this.confirm_buttons.push(confirm_button);
 
 
-            const cancel_button = this.scene.add.sprite(WIDTH / 2 + 200, 100 + (i * 70) - 35, 'no').setScrollFactor(0).setDepth(5);
+            const cancel_button = this.scene.add.sprite(WIDTH / 2 + 200, 100 + (i * 70) - 35, 'no').setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+3);
             cancel_button.setOrigin(0,0);
             cancel_button.setScale(0.3);
             cancel_button.setInteractive();
@@ -207,13 +208,13 @@ export default class Meeting extends Phaser.GameObjects.Container {
             button.setScale(0.5);
             button.visible = false;
             button.player = player;
-            button.setDepth(5);
+            button.setDepth(HEIGHT * MAP_SCALE+3);
             this.votingButtons.push(button);
 
 
             const playerSprite = this.scene.add.sprite(WIDTH / 2 - 400/2, 100 + (i * 70) - 50 + PLAYER_HEIGHT/2, 'player', player.colour * FRAMES_PER_COLOUR).setOrigin(0.5, 1);
             playerSprite.setScrollFactor(0);
-            playerSprite.setDepth(5);
+            playerSprite.setDepth(HEIGHT * MAP_SCALE+3);
             playerSprite.setScale(2);
             playerSprite.visible = false;
             playerSprite.player = player;
@@ -468,7 +469,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
           const yPosition = 200 + i * 30; // Adjust this value to control the spacing between messages
       
           // Create a text object for the message
-          const messageText = this.scene.add.text(xPosition, yPosition, `${messageObject.user}: ${messageObject.message}`).setScrollFactor(0).setDepth(7).setBackgroundColor('#FFF9E6').setColor('#000000');
+          const messageText = this.scene.add.text(xPosition, yPosition, `${messageObject.user}: ${messageObject.message}`).setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+5).setBackgroundColor('#FFF9E6').setColor('#000000');
           messageText.setOrigin(isCurrentUser ? 1 : 0, 0);
       
           // Add the message text to the message display
