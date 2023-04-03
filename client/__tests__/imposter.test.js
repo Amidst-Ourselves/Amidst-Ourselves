@@ -1,5 +1,6 @@
 import Imposter from '../src/amidstOurselvesGame/containers/imposter';
-import { PLAYER_STATE } from '../src/amidstOurselvesGame/constants';
+import { PLAYER_STATE } from './src/amidstOurselvesGame/constants';
+
 
 describe('Imposter', () => {
   let imposter;
