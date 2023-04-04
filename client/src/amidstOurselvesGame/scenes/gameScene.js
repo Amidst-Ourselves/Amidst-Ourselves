@@ -169,7 +169,7 @@ export default class GameScene extends AbstractGameplayScene {
                 this.changePlayerToGhost(playerObj.id);
             }
 
-            this.showDeadBoby(playerObj.id, playerObj.x, playerObj.y);
+            this.spawnDeadBody(playerObj.id, playerObj.x, playerObj.y);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -194,7 +194,7 @@ export default class GameScene extends AbstractGameplayScene {
                 this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId, 1);
 
                 if (this.deadBodies[playerId].visible) {
-                    this.hideDeadBody(playerId);
+                    this.cleanDeadBody(playerId);
                     newDeadBodies.push(playerId);
                 }
             }
