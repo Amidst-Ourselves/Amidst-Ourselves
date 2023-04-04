@@ -12,13 +12,18 @@ import {
     BUTTON_CONFIG,
     BUTTON_SPRITE_HEIGHT,
     BUTTON_SPRITE_WIDTH,
+    NOTIFICATION_X,
+    NOTIFICATION_Y,
+    NOTIFICATION_INCREMENT_Y,
 } from "../constants";
 import LobbyScene from "./lobbyScene";
+import gameEndScene from "./gameEndScene";
 import AbstractGameplayScene from "./abstractGameplayScene";
 import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
 import TaskManager from "../containers/taskManager";
 import Meeting from "../containers/meeting";
+import NotificationManager from "../containers/notificationManager";
 
 
 export default class GameScene extends AbstractGameplayScene {
@@ -35,6 +40,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.speed = roomObj.playerSpeed;
         this.eButtonPressed = false;
         this.inMeeting = false;
+        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -43,10 +49,18 @@ export default class GameScene extends AbstractGameplayScene {
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
+        this.notificationManager = new NotificationManager(
+            this,
+            NOTIFICATION_X,
+            NOTIFICATION_Y,
+            NOTIFICATION_INCREMENT_Y,
+        );
+
         this.miniMap = new MiniMap(
             this,
             Phaser.Input.Keyboard.KeyCodes.M,
         );
+        
         this.taskManager = new TaskManager(
             this,
             Phaser.Input.Keyboard.KeyCodes.F,
@@ -121,20 +135,30 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('join', (playerObj) => {
+            this.notificationManager.addNotification('player joined ' + playerObj.name);
             this.createPlayer(playerObj);
             this.changePlayerToGhost(playerObj.id);
-            console.log('player joined ' + playerObj.id);
         });
         
         this.socket.on('leave', (playerObj) => {
+            this.notificationManager.addNotification('player left ' + playerObj.name);
             this.destroySprite(playerObj.id);
-            console.log('player left ' + playerObj.id);
         });
 
         this.socket.on('teleportToLobby', (roomObj) => {
             this.cleanupSocketio();
             this.scene.add("lobbyScene", LobbyScene, true, roomObj);
             this.scene.remove("gameScene");
+        });
+
+        this.socket.on('gameEndScene', (roomObj) => {
+            this.cleanupSocketio();
+            this.scene.add("gameEndScene", gameEndScene, true, roomObj);
+            this.scene.remove("gameScene");
+        });
+
+        this.socket.on('endGameInitiate', (roomObj) => {
+            this.socket.emit('endGame',roomObj);
         });
 
         this.socket.on('kill', (playerObj) => {
@@ -215,6 +239,7 @@ export default class GameScene extends AbstractGameplayScene {
         );
         this.taskManager.update();
         this.miniMap.update();
+
         this.webRTC.updateState(this.players);
     }
 
@@ -242,6 +267,7 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
+        this.socket.off('gameEndScene');
         this.socket.off('kill');
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');

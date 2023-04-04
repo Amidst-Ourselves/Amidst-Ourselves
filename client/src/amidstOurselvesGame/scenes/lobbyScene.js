@@ -8,10 +8,14 @@ import {
     COLOUR_STATION_MIN_DIST,
     BUTTON_X,
     BUTTON_Y,
+    NOTIFICATION_X,
+    NOTIFICATION_Y,
+    NOTIFICATION_INCREMENT_Y,
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
 import ColourStation from "../containers/colourStation";
+import NotificationManager from "../containers/notificationManager";
 
 
 export default class LobbyScene extends AbstractGameplayScene {
@@ -26,11 +30,19 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
+        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+        this.notificationManager = new NotificationManager(
+            this,
+            NOTIFICATION_X,
+            NOTIFICATION_Y,
+            NOTIFICATION_INCREMENT_Y,
+        );
 
         this.colourStation = new ColourStation(
             this,
@@ -76,13 +88,13 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     
         this.socket.on('join', (playerObj) => {
+            this.notificationManager.addNotification('player joined ' + playerObj.name);
             this.createPlayer(playerObj);
-            console.log('player joined ' + playerObj.id);
         });
         
         this.socket.on('leave', (playerObj) => {
+            this.notificationManager.addNotification('player left ' + playerObj.name);
             this.destroySprite(playerObj.id);
-            console.log('player left ' + playerObj.id);
         });
 
         this.socket.on('teleportToGame', (roomObj) => {
