@@ -8,6 +8,17 @@ export default class GameSettingsScene extends Phaser.Scene {
     }
 
     create() {
+
+        let storedName = localStorage.getItem('name');
+        let storedEmail = localStorage.getItem('email');
+        if(!storedName){
+            storedName = "anonymous";
+        }
+        if(!storedEmail){
+            storedEmail = "anonymous";
+        }
+
+
         this.add.text(50, 50, "Game Settings:", { font: '32px Arial', fill: '#FFFFFF' });
         let gameCreationText = this.add.text(50, HEIGHT - 100, "Create Game", { font: '32px Arial', fill: '#FFFFFF' });
 
@@ -26,6 +37,8 @@ export default class GameSettingsScene extends Phaser.Scene {
         gameCreationText.on('pointerdown', () => {
             this.scene.start("loadGameScene", {
                 playerLimit: playerLimit.getValue(),
+                playerName:storedName,
+                playerEmail:storedEmail,
                 imposterCount: imposterCount.getValue(),
                 playerSpeed: playerSpeed.getValue(),
                 map: map.getValue(),
