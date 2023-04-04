@@ -29,6 +29,7 @@ import NotificationManager from "../containers/notificationManager";
 export default class GameScene extends AbstractGameplayScene {
     constructor() {
         super("gameScene");
+        this.accumulator = 0;
     }
 
     init(roomObj) {
@@ -213,7 +214,12 @@ export default class GameScene extends AbstractGameplayScene {
         })
     }
 
-    update() {
+    update(time, delta) {
+        // cheap hack that slows the game to ~60fps for fast monitors
+        this.accumulator += delta;
+        if (this.accumulator < 15) return;
+        this.accumulator = 0;
+
         // I disabled player movement in the taskManager class to make sure 
         // players can not move around while pressing the F key.
         if (this.canMove) {

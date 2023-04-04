@@ -21,6 +21,7 @@ import NotificationManager from "../containers/notificationManager";
 export default class LobbyScene extends AbstractGameplayScene {
     constructor() {
         super("lobbyScene");
+        this.accumulator = 0;
     }
 
     init(roomObj) {
@@ -108,7 +109,12 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     }
     
-    update() {
+    update(time, delta) {
+        // cheap hack that slows the game to ~60fps for fast monitors
+        this.accumulator += delta;
+        if (this.accumulator < 15) return;
+        this.accumulator = 0;
+
         this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
