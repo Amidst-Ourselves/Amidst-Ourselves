@@ -199,6 +199,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;
         this.deadBodies[playerObj.id].displayWidth = PLAYER_WIDTH;
         this.deadBodies[playerObj.id].visible = false;
+        this.deadBodies[playerObj.id].available = false;
 
         this.audioIcons[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'audioIcon');
         this.audioIcons[playerObj.id].displayHeight = PLAYER_HEIGHT/2;
@@ -260,15 +261,23 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
 
     hideDeadBody(playerId) {
-        this.deadBodies[playerId].x = 0;
-        this.deadBodies[playerId].y = 0;
         this.deadBodies[playerId].visible = false;
     }
 
-    showDeadBoby(playerId, x, y) {
+    showDeadBody(playerId) {
+        this.deadBodies[playerId].visible = true;
+    }
+
+    cleanDeadBody(playerId) {
+        this.deadBodies[playerId].x = 0;
+        this.deadBodies[playerId].y = 0;
+        this.deadBodies[playerId].available = false;
+    }
+
+    spawnDeadBody(playerId, x, y) {
         this.deadBodies[playerId].x = x;
         this.deadBodies[playerId].y = y;
-        this.deadBodies[playerId].visible = true;
+        this.deadBodies[playerId].available = true;
     }
 
     changeLocalPlayerToGhost() {
@@ -378,6 +387,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             for (let playerId in this.players) {
                 this.showPlayer(playerId);
             }
+            for (let playerId in this.deadBodies) {
+                this.showDeadBody(playerId);
+            }
             return;
         }
 
@@ -389,7 +401,6 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 this.hidePlayer(playerId);
                 continue;
             }
-
             
             const wallBetween = this.wallBetween(
                 localX,
@@ -405,6 +416,26 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 this.audioIcons[playerId].visible = false;
             } else {
                 this.showPlayer(playerId);
+            }
+        }
+
+        for (let playerId in this.deadBodies) {
+            if (!this.deadBodies[playerId].available) {
+                continue;
+            }
+
+            const wallBetween = this.wallBetween(
+                localX,
+                localY,
+                this.deadBodies[playerId].x,
+                this.deadBodies[playerId].y,
+                1,
+                VIEW_DISTANCE,
+            );
+            if (wallBetween) {
+                this.hideDeadBody(playerId);
+            } else {
+                this.showDeadBody(playerId);
             }
         }
     }

@@ -29,6 +29,7 @@ import NotificationManager from "../containers/notificationManager";
 export default class GameScene extends AbstractGameplayScene {
     constructor() {
         super("gameScene");
+        this.accumulator = 0;
     }
 
     init(roomObj) {
@@ -39,7 +40,6 @@ export default class GameScene extends AbstractGameplayScene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.eButtonPressed = false;
-        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -150,14 +150,10 @@ export default class GameScene extends AbstractGameplayScene {
             this.scene.remove("gameScene");
         });
 
-        this.socket.on('gameEndScene', (roomObj) => {
+        this.socket.on('teleportToEnd', (roomObj) => {
             this.cleanupSocketio();
             this.scene.add("gameEndScene", gameEndScene, true, roomObj);
             this.scene.remove("gameScene");
-        });
-
-        this.socket.on('endGameInitiate', (roomObj) => {
-            this.socket.emit('endGame',roomObj);
         });
 
         this.socket.on('kill', (playerObj) => {
@@ -168,7 +164,7 @@ export default class GameScene extends AbstractGameplayScene {
                 this.changePlayerToGhost(playerObj.id);
             }
 
-            this.showDeadBoby(playerObj.id, playerObj.x, playerObj.y);
+            this.spawnDeadBody(playerObj.id, playerObj.x, playerObj.y);
         });
 
         this.socket.on('webRTC_speaking', (config) => {
@@ -193,7 +189,7 @@ export default class GameScene extends AbstractGameplayScene {
                 this.updatePlayerPosition(MAP1_SPAWN_X, MAP1_SPAWN_Y, playerId, 1);
 
                 if (this.deadBodies[playerId].visible) {
-                    this.hideDeadBody(playerId);
+                    this.cleanDeadBody(playerId);
                     newDeadBodies.push(playerId);
                 }
             }
@@ -206,14 +202,24 @@ export default class GameScene extends AbstractGameplayScene {
             this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
-        })
+        });
 
         this.socket.on('new_message', (config) => {
             this.meetingManager.addMessage(config.player, config.message);
-        })
+        });
+
+        this.socket.on('host', (playerObj) => {
+            this.host = playerObj.id;
+            this.createEndButtonForHost();
+        });
     }
 
-    update() {
+    update(time, delta) {
+        // cheap hack that slows the game to ~60fps for fast monitors
+        this.accumulator += delta;
+        if (this.accumulator < 15) return;
+        this.accumulator = 0;
+
         // I disabled player movement in the taskManager class to make sure 
         // players can not move around while pressing the F key.
         if (this.canMove) {
@@ -266,13 +272,12 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
-        this.socket.off('gameEndScene');
+        this.socket.off('teleportToEnd');
         this.socket.off('kill');
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');
         this.socket.off('meetingResult');
-        this.socket.off('meetingCountdown');
-        this.socket.off('voted');
         this.socket.off('new_message');
+        this.socket.off('host');
     }
 }
