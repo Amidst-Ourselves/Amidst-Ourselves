@@ -175,11 +175,13 @@ io.on('connection', (socket) => {
             room.winMessage = "Crewmates win! Impostors were eliminated!"
             updateDB(room, PLAYER_STATE.crewmate);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else if (winners === PLAYER_STATE.imposter) {
             room.winner = PLAYER_STATE.imposter;
             room.winMessage = "Impostors win! Crewmates were eliminated!"
             updateDB(room, PLAYER_STATE.imposter);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else {
             io.to(socket.roomCode).emit('leave', {id: socket.id});
         }
@@ -225,11 +227,13 @@ io.on('connection', (socket) => {
             room.winMessage = "Crewmates win! Impostors were eliminated!"
             updateDB(room, PLAYER_STATE.crewmate);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else if (winners === PLAYER_STATE.imposter) {
             room.winner = PLAYER_STATE.imposter;
             room.winMessage = "Impostors win! Crewmates were eliminated!"
             updateDB(room, PLAYER_STATE.imposter);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else {
             io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
         }
@@ -295,6 +299,7 @@ io.on('connection', (socket) => {
                 room.winMessage = "Crewmates win! Crewmates finished all tasks!"
                 updateDB(room, PLAYER_STATE.crewmate);
                 io.to(socket.roomCode).emit('teleportToEnd', room);
+                delayBackToLobby(socket, 5000);
             } else {
                 taskObj.id = socket.id;
                 io.to(socket.roomCode).emit('taskCompleted', taskObj);
@@ -637,11 +642,13 @@ function getMeetingResult(socket) {
             room.winMessage = "Crewmates win! Impostors were eliminated!"
             updateDB(room, PLAYER_STATE.crewmate);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else if (winners === PLAYER_STATE.imposter) {
             room.winner = PLAYER_STATE.imposter;
             room.winMessage = "Imposters win! Crewmates were eliminated!"
             updateDB(room, PLAYER_STATE.imposter);
             io.to(socket.roomCode).emit('teleportToEnd', room);
+            delayBackToLobby(socket, 5000);
         } else {
             io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
         }
@@ -650,4 +657,20 @@ function getMeetingResult(socket) {
         io.to(socket.roomCode).emit('meetingResult', null);
     }
     rooms[socket.roomCode].meetingCompleted = true;
+}
+
+function delayBackToLobby(socket, delay) {
+    setTimeout(() => {
+        let room = rooms[socket.roomCode];
+       
+        room.gameState = GAME_STATE.lobby;
+        for (let playerId in room.players) {
+            room.players[playerId].playerState = PLAYER_STATE.ghost;
+            room.players[playerId].x = MAP1_SPAWN_X;
+            room.players[playerId].y = MAP1_SPAWN_Y;
+            room.players[playerId].tasks = [];
+        }
+
+        io.to(socket.roomCode).emit('teleportToLobby', room);
+    }, delay);
 }

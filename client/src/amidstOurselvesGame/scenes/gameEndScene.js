@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { FRAMES_PER_COLOUR, HEIGHT, PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, SPRITE_CONFIG, WIDTH } from '../constants';
+import LobbyScene from './lobbyScene';
 
 
 export default class gameEndScene extends Phaser.Scene {
@@ -68,9 +69,15 @@ export default class gameEndScene extends Phaser.Scene {
             this.add.text(this.currentX, this.y, this.initialPlayers[playerId].name, { font: '16px Arial', fill: this.textColour }).setOrigin(0.5, 0);
             this.currentX += this.incrementX;
         }
-        
-        setTimeout(() => {
-            window.location.reload();
-        }, 5000);
+
+        this.socket.on('teleportToLobby', (roomObj) => {
+            this.cleanupSocketio();
+            this.scene.add("lobbyScene", LobbyScene, true, roomObj);
+            this.scene.remove("gameEndScene");
+        });
+    }
+
+    cleanupSocketio() {
+        this.socket.off('teleportToLobby');
     }
 }
