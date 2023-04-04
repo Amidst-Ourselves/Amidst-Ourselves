@@ -74,6 +74,10 @@ export const MAP1_MINIMAP_PLAYER_HEIGHT = SPRITE_HEIGHT * MAP1_MINIMAP_SCALE;
 
 export const MAP1_TASK_MIN_DIST = 10 * MAP_SCALE;
 
+export const NOTIFICATION_INCREMENT_Y = 15;
+export const NOTIFICATION_X = 400;
+export const NOTIFICATION_Y = 0;
+
 export const BUTTON_X = 232;
 export const BUTTON_Y = 110;
 

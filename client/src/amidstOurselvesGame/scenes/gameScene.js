@@ -12,6 +12,9 @@ import {
     BUTTON_CONFIG,
     BUTTON_SPRITE_HEIGHT,
     BUTTON_SPRITE_WIDTH,
+    NOTIFICATION_X,
+    NOTIFICATION_Y,
+    NOTIFICATION_INCREMENT_Y,
 } from "../constants";
 import LobbyScene from "./lobbyScene";
 import gameEndScene from "./gameEndScene";
@@ -20,6 +23,7 @@ import Imposter from "../containers/imposter";
 import MiniMap from "../containers/minimap";
 import TaskManager from "../containers/taskManager";
 import Meeting from "../containers/meeting";
+import NotificationManager from "../containers/notificationManager";
 
 
 export default class GameScene extends AbstractGameplayScene {
@@ -44,10 +48,18 @@ export default class GameScene extends AbstractGameplayScene {
         this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
         this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
+        this.notificationManager = new NotificationManager(
+            this,
+            NOTIFICATION_X,
+            NOTIFICATION_Y,
+            NOTIFICATION_INCREMENT_Y,
+        );
+
         this.miniMap = new MiniMap(
             this,
             Phaser.Input.Keyboard.KeyCodes.M,
         );
+        
         this.taskManager = new TaskManager(
             this,
             Phaser.Input.Keyboard.KeyCodes.F,
@@ -122,31 +134,14 @@ export default class GameScene extends AbstractGameplayScene {
         });
 
         this.socket.on('join', (playerObj) => {
+            this.notificationManager.addNotification('player joined ' + playerObj.name);
             this.createPlayer(playerObj);
             this.changePlayerToGhost(playerObj.id);
-            console.log('player joined ' + playerObj.id);
-
-            const message = 'Player joined ' + playerObj.id;
-            const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
-            const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
-            announcement.setX(announcementX)
-            this.time.delayedCall(5000, function() {
-            announcement.destroy();
-            });
         });
         
         this.socket.on('leave', (playerObj) => {
+            this.notificationManager.addNotification('player left ' + playerObj.name);
             this.destroySprite(playerObj.id);
-
-            const message = 'Player left ' + playerObj.id;
-            const announcement = this.add.text(100, 25, message, { font: '15px Arial', fill: '#FF0000' }).setScrollFactor(0);
-            const announcementX = this.cameras.main.centerX - announcement.displayWidth / 2; 
-            announcement.setX(announcementX)
-            this.time.delayedCall(5000, function() {
-            announcement.destroy();
-            });
-
-            console.log('player left ' + playerObj.id);
         });
 
         this.socket.on('teleportToLobby', (roomObj) => {
