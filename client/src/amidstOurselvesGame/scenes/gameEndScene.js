@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WIDTH } from '../constants';
+import { FRAMES_PER_COLOUR, HEIGHT, PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, SPRITE_CONFIG, WIDTH } from '../constants';
 
 
 export default class gameEndScene extends Phaser.Scene {
@@ -13,7 +13,6 @@ export default class gameEndScene extends Phaser.Scene {
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
-        this.playersAtEnd = roomObj.playersAtEnd;
 
         if (roomObj.winner) {
             this.winner = roomObj.winner;
@@ -30,13 +29,45 @@ export default class gameEndScene extends Phaser.Scene {
         } else {
             this.initialPlayers = {};
         }
+
+        if (this.winner === PLAYER_STATE.imposter) {
+            this.textColour = "#FF0000";
+        } else {
+            this.textColour = "#FFFFFF";
+        }
+
+        this.incrementX = 100;
+        this.currentX = 100;
+        this.y = HEIGHT/2;
+    }
+
+    preload() {
+        this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
     }
 
     create() {
-        const gameEndText = this.add.text(0, 50, "Game Ended!", { font: '32px Arial', fill: '#FFFFFF' });
-        const winnerText = this.add.text(0, 100, this.winMessage, { font: '32px Arial', fill: '#FFFFFF', align: 'center' });
-        winnerText.setX(WIDTH/2 - winnerText.displayWidth / 2);
-        gameEndText.setX(WIDTH/2 - gameEndText.displayWidth / 2);
+        this.add.text(WIDTH/2, 50, "Game Ended!", { font: '32px Arial', fill: '#FFFFFF' }).setOrigin(0.5);
+        this.add.text(WIDTH/2, 100, this.winMessage, { font: '32px Arial', fill: '#FFFFFF', align: 'center' }).setOrigin(0.5);
+
+        for (let playerId in this.initialPlayers) {
+            console.log('iteration counter');
+
+            if (this.initialPlayers[playerId].playerState !== this.winner) {
+                console.log('playerState' + this.initialPlayers[playerId].playerState);
+                console.log('winner' + this.winner);
+                continue;
+            }
+
+            console.log('success');
+
+            const colour = this.initialPlayers[playerId].colour * FRAMES_PER_COLOUR;
+            const player = this.add.sprite(this.currentX, this.y, 'player', colour).setOrigin(0.5, 1);
+            player.displayHeight = PLAYER_HEIGHT;
+            player.displayWidth = PLAYER_WIDTH;
+
+            this.add.text(this.currentX, this.y, this.initialPlayers[playerId].name, { font: '16px Arial', fill: this.textColour }).setOrigin(0.5, 0);
+            this.currentX += this.incrementX;
+        }
         
         setTimeout(() => {
             window.location.reload();
