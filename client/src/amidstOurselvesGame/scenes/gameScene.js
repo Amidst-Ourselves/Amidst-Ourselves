@@ -40,11 +40,8 @@ export default class GameScene extends AbstractGameplayScene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.eButtonPressed = false;
-<<<<<<< HEAD
         this.inMeeting = false;
         this.gameWinner = roomObj.gameWinner;
-=======
->>>>>>> main
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -208,13 +205,9 @@ export default class GameScene extends AbstractGameplayScene {
             this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
-<<<<<<< HEAD
             this.imposter.killReady = true;
             this.imposter.startCooldown();
         })
-=======
-        });
->>>>>>> main
 
         this.socket.on('new_message', (config) => {
             this.meetingManager.addMessage(config.player, config.message);
