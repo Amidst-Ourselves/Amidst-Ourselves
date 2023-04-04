@@ -102,7 +102,6 @@ export default class Imposter extends GameObjects.Container {
         this.update(this.scene.players[this.socket.id]);
         this.countdown.setStyle({ fill: '#ffffff' });
         for (let player in this.scene.players) {
-
             if((Math.abs(this.scene.players[player].x - this.player.x) + Math.abs(this.scene.players[player].y - this.player.y)) < 100 && player !== this.socket.id && this.scene.players[player].playerState != PLAYER_STATE.ghost) {
                 this.countdown.setStyle({ fill: '#ff0000' });
             }

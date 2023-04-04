@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
   WIDTH,
   HEIGHT,
@@ -8,9 +9,10 @@ import {
   PLAYER_STATE,
 } from "../constants";
 
-export default class Meeting extends Phaser.GameObjects.Container {
+export default class Meeting extends GameObjects.Container {
     constructor(scene) {
         super(scene);
+        this.scene = scene;
         // Create and configure the overlay graphics object
         this.overlay = this.scene.add.graphics();
         this.overlay.fillStyle(0x000000, 1);
