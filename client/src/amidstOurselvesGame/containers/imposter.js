@@ -50,7 +50,7 @@ export default class Imposter extends GameObjects.Container {
     }
 
     killWrapper(time, lastActionTime, players, id, deadBodies) {
-        if (time - lastActionTime >= this.killCooldown) {
+        if (time - lastActionTime >= this.killCooldown && this.killReady) {
             this.update(players[id]);
             let kill_flag = this.kill(players, deadBodies);
             if (kill_flag) {
@@ -81,6 +81,7 @@ export default class Imposter extends GameObjects.Container {
         // start cooldown timer only if "Kill Ready"
         if (this.killReady) {
           this.countdown.setText('10');
+          this.killReady = false;
           this.cooldownTimer =  this.scene.time.addEvent({
             delay: 1000,
             repeat: 9,
@@ -88,7 +89,6 @@ export default class Imposter extends GameObjects.Container {
               this.countdown.setText(this.cooldownTimer.repeatCount);
             }
           });
-          this.killReady = false;
         }
     }
   
