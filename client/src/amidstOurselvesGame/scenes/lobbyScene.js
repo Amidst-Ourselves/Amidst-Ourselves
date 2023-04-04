@@ -21,6 +21,7 @@ import NotificationManager from "../containers/notificationManager";
 export default class LobbyScene extends AbstractGameplayScene {
     constructor() {
         super("lobbyScene");
+        this.accumulator = 0;
     }
 
     init(roomObj) {
@@ -30,7 +31,6 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
-        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -106,9 +106,19 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
+
+        this.socket.on('host', (playerObj) => {
+            this.host = playerObj.id;
+            this.createStartButtonForHost();
+        });
     }
     
-    update() {
+    update(time, delta) {
+        // cheap hack that slows the game to ~60fps for fast monitors
+        this.accumulator += delta;
+        if (this.accumulator < 15) return;
+        this.accumulator = 0;
+
         this.movePlayer(
             this.speed,
             this.players[this.socket.id].x,
@@ -149,5 +159,6 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.off('leave');
         this.socket.off('teleportToGame');
         this.socket.off('webRTC_speaking');
+        this.socket.off('host');
     }
 }

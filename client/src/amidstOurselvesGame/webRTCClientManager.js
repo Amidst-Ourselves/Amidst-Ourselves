@@ -419,7 +419,7 @@ export default class webRTCClientManager {
                 })
                 .catch(() => {
                     console.log("Access denied for audio/video");
-                    alert("You chose not to provide access to the camera/microphone, demo will not work.");
+                    //alert("You chose not to provide access to the camera/microphone, demo will not work.");
                     console.log(errorback);
                     if (errorback) errorback();
                 })
