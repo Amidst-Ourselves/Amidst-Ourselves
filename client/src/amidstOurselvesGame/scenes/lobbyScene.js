@@ -107,6 +107,11 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.on('webRTC_speaking', (config) => {
             this.audioIcons[config.id].visible = config.bool;
         });
+
+        this.socket.on('host', (playerObj) => {
+            this.host = playerObj.id;
+            this.createStartButtonForHost();
+        });
     }
     
     update(time, delta) {
@@ -155,5 +160,6 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.socket.off('leave');
         this.socket.off('teleportToGame');
         this.socket.off('webRTC_speaking');
+        this.socket.off('host');
     }
 }

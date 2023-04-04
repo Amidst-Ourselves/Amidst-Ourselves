@@ -95,8 +95,6 @@ io.on('connection', (socket) => {
         };
         let roomObj = createRoom(roomCodeObj, hostPlayerObj, hostDeadBodyObj); 
 
-        console.log(socket);
-
         socket.join(roomObj.roomCode);
         socket.emit('roomResponse', roomObj);
         socket.roomCode = roomObj.roomCode;
@@ -146,22 +144,22 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        if (socket.roomCode === undefined) {
-            // do nothing
-        } else {
+        if (socket.roomCode === undefined) return;
 
-            console.log("webRTC deleting1");
-            webRTC_delete(socket.roomCode);
+        webRTC_delete(socket.roomCode);
 
-            delete rooms[socket.roomCode].players[socket.id];
-            delete rooms[socket.roomCode].deadBodies[socket.id];
-            if (playerCount(rooms[socket.roomCode]) === 0) {
-                delete rooms[socket.roomCode];
-            }
-            console.log("I'm trying to disconnect");
-            io.to(socket.roomCode).emit('leave', {id: socket.id});
-            delete sockets[socket.id];
+        delete rooms[socket.roomCode].players[socket.id];
+        delete rooms[socket.roomCode].deadBodies[socket.id];
+
+        if (playerCount(rooms[socket.roomCode]) === 0) {
+            delete rooms[socket.roomCode];
+        } else if (rooms[socket.roomCode].host === socket.id) {
+            rooms[socket.roomCode].host = findNextHost(rooms[socket.roomCode]);
+            io.to(socket.roomCode).emit('host', {id: rooms[socket.roomCode].host});
         }
+
+        io.to(socket.roomCode).emit('leave', {id: socket.id});
+        delete sockets[socket.id];
     });
 
     socket.on('move', (playerObj) => {
@@ -248,17 +246,17 @@ io.on('connection', (socket) => {
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
 
-            playerStartRole[room.players[playerId].email]=room.players[playerId].playerState;
+            //playerStartRole[room.players[playerId].email]=room.players[playerId].playerState;
 
         }
         
         io.to(socket.roomCode).emit('teleportToGame', room);
     });
 
-    socket.on('endGame', (roomObj) => {
+    socket.on('endGame', () => {
         let room = rooms[socket.roomCode];
 
-        roomObj["playersAtEnd"]=room.players;
+        //roomObj["playersAtEnd"]=room.players;
        
         for (let playerId in room.players) {
             room.players[playerId].playerState = PLAYER_STATE.ghost;
@@ -266,9 +264,9 @@ io.on('connection', (socket) => {
             room.players[playerId].y = MAP1_SPAWN_Y;
             room.players[playerId].tasks = [];
         }
-        room.gameState = GAME_STATE.end;
+        room.gameState = GAME_STATE.lobby;
 
-        io.to(socket.roomCode).emit('gameEndScene', roomObj);
+        io.to(socket.roomCode).emit('teleportToLobby', room);
     });
 
     socket.on('taskCompleted', (taskObj) => {
@@ -517,6 +515,13 @@ function findNextAvailableColour(roomObj, currentColour) {
         }
     }
     return -1;
+}
+
+function findNextHost(roomObj) {
+    const players = Object.keys(roomObj.players);
+    if (players.length === 0) return null;
+    const randomPlayer = players[Math.floor(Math.random() * players.length)];
+    return randomPlayer;
 }
 
 function isColourAvailable(players, colour) {

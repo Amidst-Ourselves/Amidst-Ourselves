@@ -207,11 +207,16 @@ export default class GameScene extends AbstractGameplayScene {
             this.meetingManager.endMeeting();
             this.meetingManager.showResult(result);
             this.cameras.main.centerOn(this.players[this.socket.id].x, this.players[this.socket.id].y);
-        })
+        });
 
         this.socket.on('new_message', (config) => {
             this.meetingManager.addMessage(config.player, config.message);
-        })
+        });
+
+        this.socket.on('host', (playerObj) => {
+            this.host = playerObj.id;
+            this.createEndButtonForHost();
+        });
     }
 
     update(time, delta) {
@@ -280,5 +285,6 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('meetingCountdown');
         this.socket.off('voted');
         this.socket.off('new_message');
+        this.socket.off('host');
     }
 }
