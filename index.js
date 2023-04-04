@@ -98,8 +98,6 @@ io.on('connection', (socket) => {
         socket.join(roomObj.roomCode);
         socket.emit('roomResponse', roomObj);
         socket.roomCode = roomObj.roomCode;
-
-        console.log(rooms);
     });
 
     socket.on('roomJoin', (roomCodeObj) => {
@@ -139,12 +137,18 @@ io.on('connection', (socket) => {
         socket.join(roomCodeObj.roomCode);
         socket.emit('roomResponse', rooms[roomCodeObj.roomCode]);
         socket.roomCode = roomCodeObj.roomCode;
-
-        console.log(rooms);
     });
 
     socket.on('disconnect', () => {
         if (socket.roomCode === undefined) return;
+
+        if (
+            rooms[socket.roomCode].players[socket.id] !== undefined &&
+            rooms[socket.roomCode].players[socket.id].playerState !== PLAYER_STATE.ghost &&
+            rooms[socket.roomCode].initialPlayers[socket.id] !== undefined
+        ) {
+            rooms[socket.roomCode].initialPlayers[socket.id].leftEarly = true;
+        }
 
         webRTC_delete(socket.roomCode);
 
@@ -153,12 +157,33 @@ io.on('connection', (socket) => {
 
         if (playerCount(rooms[socket.roomCode]) === 0) {
             delete rooms[socket.roomCode];
-        } else if (rooms[socket.roomCode].host === socket.id) {
+            io.to(socket.roomCode).emit('leave', {id: socket.id});
+            delete sockets[socket.id];
+            return;
+        }
+        
+        if (rooms[socket.roomCode].host === socket.id) {
             rooms[socket.roomCode].host = findNextHost(rooms[socket.roomCode]);
             io.to(socket.roomCode).emit('host', {id: rooms[socket.roomCode].host});
         }
+        
+        let winners = findWinners(rooms[socket.roomCode]);
+        let room = rooms[socket.roomCode];
 
-        io.to(socket.roomCode).emit('leave', {id: socket.id});
+        if (winners === PLAYER_STATE.crewmate) {
+            room.winner = PLAYER_STATE.crewmate;
+            room.winMessage = "Crewmates win! Impostors were eliminated!"
+            updateDB(room, PLAYER_STATE.crewmate);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else if (winners === PLAYER_STATE.imposter) {
+            room.winner = PLAYER_STATE.imposter;
+            room.winMessage = "Impostors win! Crewmates were eliminated!"
+            updateDB(room, PLAYER_STATE.imposter);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else {
+            io.to(socket.roomCode).emit('leave', {id: socket.id});
+        }
+
         delete sockets[socket.id];
     });
 
@@ -192,46 +217,29 @@ io.on('connection', (socket) => {
 
         rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
 
+        let winners = findWinners(rooms[socket.roomCode]);
         let room = rooms[socket.roomCode];
 
-        let nCrewmate=0;
-        let nImposter=0;
-        let nGhost=0;
-        for(let player in rooms[socket.roomCode].players){
-            if(rooms[socket.roomCode].players[player].playerState === PLAYER_STATE.crewmate){
-                nCrewmate+=1;
-            }else if(rooms[socket.roomCode].players[player].playerState === PLAYER_STATE.imposter){
-                nImposter+=1;
-            }else{
-                nGhost+=1;
-            }
-        }
-        console.log("From Kill Side");
-        console.log(nCrewmate);
-        console.log(nImposter);
-        console.log(nGhost);
-
-        if(nImposter-nCrewmate >=0){
-            console.log("imposter won")
-            room["winner"] = "imposters";
-            updateDB(room,PLAYER_STATE.imposter);
-            io.to(socket.roomCode).emit('endGameInitiate',room);
-        }else if (nImposter = 0){
-            console.log("Crewmates won")
-            room["winner"] = "crewmates";
-            updateDB(room,PLAYER_STATE.crewmate);
-            io.to(socket.roomCode).emit('endGameInitiate',room);
-        }else{
+        if (winners === PLAYER_STATE.crewmate) {
+            room.winner = PLAYER_STATE.crewmate;
+            room.winMessage = "Crewmates win! Impostors were eliminated!"
+            updateDB(room, PLAYER_STATE.crewmate);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else if (winners === PLAYER_STATE.imposter) {
+            room.winner = PLAYER_STATE.imposter;
+            room.winMessage = "Impostors win! Crewmates were eliminated!"
+            updateDB(room, PLAYER_STATE.imposter);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else {
             io.to(socket.roomCode).emit('kill', {id: playerObj.id, x: playerObj.x, y: playerObj.y});
         }
-
-        
     });
     
     socket.on('startGame', () => {
         let room = rooms[socket.roomCode];
         let imposters = chooseRandomItemsFromList(Object.keys(room.players), room.imposterCount);
 
+        room.initialPlayers = {};
         room.gameState = GAME_STATE.action;
         room.totalTasks = (playerCount(room) - room.imposterCount) * room.taskCount;
         room.tasksComplete = 0;
@@ -246,27 +254,32 @@ io.on('connection', (socket) => {
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
 
-            //playerStartRole[room.players[playerId].email]=room.players[playerId].playerState;
-
+            room.initialPlayers[playerId] = {
+                id: playerId,
+                name: room.players[playerId].name,
+                playerState: room.players[playerId].playerState,
+                colour: room.players[playerId].colour,
+                leftEarly: false,
+            };
         }
         
         io.to(socket.roomCode).emit('teleportToGame', room);
+        console.log(room);
     });
 
     socket.on('endGame', () => {
         let room = rooms[socket.roomCode];
-
-        //roomObj["playersAtEnd"]=room.players;
        
+        room.gameState = GAME_STATE.lobby;
         for (let playerId in room.players) {
             room.players[playerId].playerState = PLAYER_STATE.ghost;
             room.players[playerId].x = MAP1_SPAWN_X;
             room.players[playerId].y = MAP1_SPAWN_Y;
             room.players[playerId].tasks = [];
         }
-        room.gameState = GAME_STATE.lobby;
 
         io.to(socket.roomCode).emit('teleportToLobby', room);
+        console.log(room);
     });
 
     socket.on('taskCompleted', (taskObj) => {
@@ -277,20 +290,15 @@ io.on('connection', (socket) => {
             player.tasks = player.tasks.filter(x => x !== taskObj.name);
             room.tasksComplete += 1;
 
-
-            console.log(room.totalTasks);
-            console.log(room.tasksComplete);
-
             if (room.totalTasks === room.tasksComplete) {
-                console.log("Crewmates won all tasks completed")
-                room["winner"] = "crewmateTask";
-                io.to(socket.roomCode).emit('endGameInitiate',room);
-            }else{
+                room.winner = PLAYER_STATE.crewmate;
+                room.winMessage = "Crewmates win! Crewmates finished all tasks!"
+                updateDB(room, PLAYER_STATE.crewmate);
+                io.to(socket.roomCode).emit('teleportToEnd', room);
+            } else {
                 taskObj.id = socket.id;
                 io.to(socket.roomCode).emit('taskCompleted', taskObj);
             }
-
-            
         }
     });
 
@@ -489,7 +497,8 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         meetingCompleted: false,
         meetingCountdownStarted: false,
         timeoutId: 0,
-        gameWinner:roomObj.gameWinner
+        winner: undefined,
+        winMessage: undefined,
     }
 
     rooms[roomCode] = newRoom;
@@ -522,6 +531,27 @@ function findNextHost(roomObj) {
     if (players.length === 0) return null;
     const randomPlayer = players[Math.floor(Math.random() * players.length)];
     return randomPlayer;
+}
+
+function findWinners(roomObj) {
+    let crewmates = 0;
+    let imposters = 0;
+
+    for(let playerId in roomObj.players){
+        if (roomObj.players[playerId].playerState === PLAYER_STATE.crewmate) {
+            crewmates++;
+        } else if (roomObj.players[playerId].playerState === PLAYER_STATE.imposter) {
+            imposters++;
+        }
+    }
+
+    if (imposters === 0) {
+        return PLAYER_STATE.crewmate;
+    } else if (imposters >= crewmates) {
+        return PLAYER_STATE.imposter;
+    } else {
+        return undefined;
+    }
 }
 
 function isColourAvailable(players, colour) {
@@ -599,45 +629,22 @@ function getMeetingResult(socket) {
     if (max/alive > 0.5) {
         rooms[socket.roomCode].players[result].playerState = PLAYER_STATE.ghost;
 
+        let winners = findWinners(rooms[socket.roomCode]);
+        let room = rooms[socket.roomCode];
 
-        let nCrewmate=0;
-        let nImposter=0;
-        let nGhost=0;
-        for(let player in rooms[socket.roomCode].players){
-
-            console.log(player);
-            console.log(rooms[socket.roomCode].players[player].playerState);
-            if(rooms[socket.roomCode].players[player].playerState === PLAYER_STATE.crewmate){
-                nCrewmate+=1;
-            }else if(rooms[socket.roomCode].players[player].playerState === PLAYER_STATE.imposter){
-                nImposter+=1;
-            }else{
-                nGhost+=1;
-            }
-        }
-
-        console.log("From meeting side");
-        console.log(nCrewmate);
-        console.log(nImposter);
-        console.log(nGhost);
-
-        if(nImposter-nCrewmate >=0){
-            console.log("imposter won")
-            room["winner"] = "imposters";
-            updateDB(room,PLAYER_STATE.imposter);
-            io.to(socket.roomCode).emit('endGameInitiate',room);
-        }else if (nImposter === 0){
-            console.log("Crewmates won")
-            room["winner"] = "crewmates";
-            updateDB(room,PLAYER_STATE.crewmate);
-            io.to(socket.roomCode).emit('endGameInitiate',room);
-        }else{
+        if (winners === PLAYER_STATE.crewmate) {
+            room.winner = PLAYER_STATE.crewmate;
+            room.winMessage = "Crewmates win! Impostors were eliminated!"
+            updateDB(room, PLAYER_STATE.crewmate);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else if (winners === PLAYER_STATE.imposter) {
+            room.winner = PLAYER_STATE.imposter;
+            room.winMessage = "Imposters win! Crewmates were eliminated!"
+            updateDB(room, PLAYER_STATE.imposter);
+            io.to(socket.roomCode).emit('teleportToEnd', room);
+        } else {
             io.to(socket.roomCode).emit('meetingResult', {'result': result, 'max': max});
         }
-
-
-
-        
     }
     else {
         io.to(socket.roomCode).emit('meetingResult', null);

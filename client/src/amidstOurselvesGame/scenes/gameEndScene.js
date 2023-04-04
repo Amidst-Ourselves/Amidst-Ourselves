@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { WIDTH } from '../constants';
 
 
 export default class gameEndScene extends Phaser.Scene {
@@ -12,32 +13,30 @@ export default class gameEndScene extends Phaser.Scene {
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
-        this.winner = roomObj.winner;
         this.playersAtEnd = roomObj.playersAtEnd;
+
+        if (roomObj.winner) {
+            this.winner = roomObj.winner;
+        } else {
+            this.winner = "ERROR: No winner";
+        }
+        if (roomObj.winMessage) {
+            this.winMessage = roomObj.winMessage;
+        } else {
+            this.winMessage = "ERROR: No win message";
+        }
+        if (roomObj.initialPlayers) {
+            this.initialPlayers = roomObj.initialPlayers;
+        } else {
+            this.initialPlayers = {};
+        }
     }
 
     create() {
-        const winner = ["Crewmates won the game! All imposters killed!", "Imposters won the game! ", "Crewmates won the game! All task completed!"];
-        console.log("through game end scene")
-        console.log(this.winner)
-        let endGameMessage="";
-
-        if(this.winner === "imposters"){
-            endGameMessage = winner[1];
-        }else if(this.winner === "crewmates"){
-            endGameMessage = winner[0];
-        }else if(this.winner === "crewmateTask"){
-            endGameMessage = winner[2];
-        }
-
         const gameEndText = this.add.text(0, 50, "Game Ended!", { font: '32px Arial', fill: '#FFFFFF' });
-        const winnerText = this.add.text(0, 100, endGameMessage, { font: '32px Arial', fill: '#FFFFFF', align: 'center' });
-        const winnerTextX = this.cameras.main.centerX - winnerText.displayWidth / 2; 
-        const gameEndTextX = this.cameras.main.centerX - gameEndText.displayWidth / 2; 
-        winnerText.setX(winnerTextX);
-        gameEndText.setX(gameEndTextX)
-
-        console.log(this.playersAtEnd);
+        const winnerText = this.add.text(0, 100, this.winMessage, { font: '32px Arial', fill: '#FFFFFF', align: 'center' });
+        winnerText.setX(WIDTH/2 - winnerText.displayWidth / 2);
+        gameEndText.setX(WIDTH/2 - gameEndText.displayWidth / 2);
         
         setTimeout(() => {
             window.location.reload();

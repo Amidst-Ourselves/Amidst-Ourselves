@@ -40,7 +40,6 @@ export default class GameScene extends AbstractGameplayScene {
         this.tempPlayers = roomObj.players;
         this.speed = roomObj.playerSpeed;
         this.eButtonPressed = false;
-        this.gameWinner = roomObj.gameWinner;
 
         this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -151,14 +150,10 @@ export default class GameScene extends AbstractGameplayScene {
             this.scene.remove("gameScene");
         });
 
-        this.socket.on('gameEndScene', (roomObj) => {
+        this.socket.on('teleportToEnd', (roomObj) => {
             this.cleanupSocketio();
             this.scene.add("gameEndScene", gameEndScene, true, roomObj);
             this.scene.remove("gameScene");
-        });
-
-        this.socket.on('endGameInitiate', (roomObj) => {
-            this.socket.emit('endGame',roomObj);
         });
 
         this.socket.on('kill', (playerObj) => {
@@ -277,13 +272,11 @@ export default class GameScene extends AbstractGameplayScene {
         this.socket.off('join');
         this.socket.off('leave');
         this.socket.off('teleportToLobby');
-        this.socket.off('gameEndScene');
+        this.socket.off('teleportToEnd');
         this.socket.off('kill');
         this.socket.off('webRTC_speaking');
         this.socket.off('meeting');
         this.socket.off('meetingResult');
-        this.socket.off('meetingCountdown');
-        this.socket.off('voted');
         this.socket.off('new_message');
         this.socket.off('host');
     }
