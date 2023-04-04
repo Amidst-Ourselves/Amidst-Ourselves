@@ -53,7 +53,7 @@ export default function App() {
   const LogoutUserAPI = async () =>{
     const storedEmail = localStorage.getItem('email');
     try{
-      const response = await fetch("http://localhost:3000/user/logout", {
+      const response = await fetch(process.env.REACT_APP_HOST_URL + "/user/logout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

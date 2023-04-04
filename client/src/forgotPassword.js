@@ -19,7 +19,7 @@ export const ForgotPassword = (props) => {
     };
 
     try{
-        const response = await fetch("http://localhost:3000/user/forgotpassword", {
+        const response = await fetch(process.env.REACT_APP_HOST_URL + "/user/forgotpassword", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(user),

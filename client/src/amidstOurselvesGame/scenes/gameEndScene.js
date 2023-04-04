@@ -1,9 +1,4 @@
-import e from 'cors';
 import Phaser from 'phaser';
-import { HEIGHT } from "../constants";
-import MiniMap from "../containers/minimap";
-import TaskManager from "../containers/taskManager";
-import TitleScene from "./titleScene";
 
 
 export default class gameEndScene extends Phaser.Scene {
@@ -17,32 +12,9 @@ export default class gameEndScene extends Phaser.Scene {
         this.roomCode = roomObj.roomCode;
         this.host = roomObj.host;
         this.tempPlayers = roomObj.players;
-        this.speed = roomObj.playerSpeed;
         this.winner = roomObj.winner;
         this.playersAtEnd = roomObj.playersAtEnd;
-
-        this.keyUp = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyDown = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.killButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
-        this.callButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-
-        this.miniMap = new MiniMap(
-            this,
-            Phaser.Input.Keyboard.KeyCodes.M,
-        );
-        this.taskManager = new TaskManager(
-            this,
-            Phaser.Input.Keyboard.KeyCodes.F,
-            roomObj.totalTasks,
-            roomObj.tasksComplete,
-            (taskName) => { this.socket.emit('taskCompleted', {'name': taskName}); },
-        );
-
-        this.canMove = true;
     }
-
 
     create() {
         const winner = ["Crewmates won the game! All imposters killed!", "Imposters won the game! ", "Crewmates won the game! All task completed!"];
@@ -69,8 +41,6 @@ export default class gameEndScene extends Phaser.Scene {
         
         setTimeout(() => {
             window.location.reload();
-        }, 20000);
-
-
+        }, 5000);
     }
 }

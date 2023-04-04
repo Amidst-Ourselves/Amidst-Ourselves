@@ -4,7 +4,7 @@ export const LeaderboardPage = ({ onClose }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/user/leaderboard')
+    fetch(process.env.REACT_APP_HOST_URL + '/user/leaderboard')
       .then((response) => response.json())
       .then((data) => {
         console.log(data)

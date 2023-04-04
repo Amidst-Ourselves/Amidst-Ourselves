@@ -4,13 +4,18 @@ import {
     PLAYER_STATE,
     PLAYER_WIDTH,
     MAP_SCALE,
-    MAP1_WALLS,
     FRAMES_PER_COLOUR,
     GHOST_FRAME_OFFSET,
     DEAD_BODY_FRAME_OFFSET,
     VIEW_DISTANCE,
     COLOUR_NAMES,
 } from "../constants"
+import {
+    MAP1_COLLISION_WALLS,
+} from "../wallData/col"
+import {
+    MAP1_VISUAL_WALLS,
+} from "../wallData/vis"
 
 
 
@@ -69,11 +74,11 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         let walloldX = Math.floor(oldX/MAP_SCALE);
         let walloldY = Math.floor(oldY/MAP_SCALE);
 
-        if (!MAP1_WALLS.has(`${wallnewX}-${wallnewY}`)) {
+        if (!MAP1_COLLISION_WALLS.has(`${wallnewX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(newX, newY, newVelocity);
-        } else if (!MAP1_WALLS.has(`${walloldX}-${wallnewY}`)) {
+        } else if (!MAP1_COLLISION_WALLS.has(`${walloldX}-${wallnewY}`)) {
             this.updateLocalPlayerPosition(oldX, newY, newVelocity);
-        } else if (!MAP1_WALLS.has(`${wallnewX}-${walloldY}`)) {
+        } else if (!MAP1_COLLISION_WALLS.has(`${wallnewX}-${walloldY}`)) {
             this.updateLocalPlayerPosition(newX, oldY, newVelocity);
         }
         return true;
@@ -123,6 +128,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
     }
 
     updatePlayerPosition(newX, newY, playerId, velocity) {
+        this.players[playerId].setDepth(newY);
         this.players[playerId].x = newX;
         this.players[playerId].y = newY;
         this.playerNames[playerId].x = newX;
@@ -184,10 +190,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerObj.id].colour = playerObj.colour;
         this.players[playerObj.id].playerState = playerObj.playerState;
         this.players[playerObj.id].tasks = playerObj.tasks;
-        //this.players[playerObj.id].name = playerObj.id;
-        this.players[playerObj.id].name = playerObj.id;
+        this.players[playerObj.id].name = playerObj.name;
         this.players[playerObj.id].moving = false;
         this.players[playerObj.id].setAlpha(startingAlpha);
+        this.players[playerObj.id].setDepth(playerObj.y);
 
         this.deadBodies[playerObj.id] = this.add.sprite(0 , 0, 'player', startingDeadBodyFrame).setOrigin(0.5, 1);
         this.deadBodies[playerObj.id].displayHeight = PLAYER_HEIGHT;
@@ -351,7 +357,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
 
             let wallX = Math.floor(x0/MAP_SCALE);
             let wallY = Math.floor(y0/MAP_SCALE);
-            if (MAP1_WALLS.has(`${wallX}-${wallY}`)) return true;
+            if (MAP1_VISUAL_WALLS.has(`${wallX}-${wallY}`)) return true;
 
             let e2 = 2*err;
             if (e2 > -dy) {
@@ -384,12 +390,13 @@ export default class AbstractGameplayScene extends Phaser.Scene {
                 continue;
             }
 
+            
             const wallBetween = this.wallBetween(
                 localX,
                 localY,
                 this.players[playerId].x,
                 this.players[playerId].y,
-                MAP_SCALE,
+                1,
                 VIEW_DISTANCE,
             );
             this.webRTC.updateWallBetween(playerId, wallBetween);

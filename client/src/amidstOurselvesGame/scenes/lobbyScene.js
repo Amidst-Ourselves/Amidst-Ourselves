@@ -5,18 +5,17 @@ import {
     MAP1_SPAWN_X,
     MAP1_SPAWN_Y,
     SPRITE_CONFIG,
-    FRAMES_PER_COLOUR,
     COLOUR_STATION_MIN_DIST,
-    COLOUR_STATION_X,
-    COLOUR_STATION_Y,
-    MAP1_WALLS,
-    WIDTH,
-    HEIGHT,
-    VIEW_DISTANCE
+    BUTTON_X,
+    BUTTON_Y,
+    NOTIFICATION_X,
+    NOTIFICATION_Y,
+    NOTIFICATION_INCREMENT_Y,
 } from "../constants"
 import GameScene from "./gameScene";
 import AbstractGameplayScene from './abstractGameplayScene';
 import ColourStation from "../containers/colourStation";
+import NotificationManager from "../containers/notificationManager";
 
 
 export default class LobbyScene extends AbstractGameplayScene {
@@ -38,10 +37,17 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.keyLeft = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyRight = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
+        this.notificationManager = new NotificationManager(
+            this,
+            NOTIFICATION_X,
+            NOTIFICATION_Y,
+            NOTIFICATION_INCREMENT_Y,
+        );
+
         this.colourStation = new ColourStation(
             this,
-            COLOUR_STATION_X,
-            COLOUR_STATION_Y,
+            BUTTON_X * MAP_SCALE,
+            BUTTON_Y * MAP_SCALE,
             COLOUR_STATION_MIN_DIST,
             Phaser.Input.Keyboard.KeyCodes.F,
             () => { this.socket.emit('colour'); },
@@ -82,13 +88,13 @@ export default class LobbyScene extends AbstractGameplayScene {
         });
     
         this.socket.on('join', (playerObj) => {
+            this.notificationManager.addNotification('player joined ' + playerObj.name);
             this.createPlayer(playerObj);
-            console.log('player joined ' + playerObj.id);
         });
         
         this.socket.on('leave', (playerObj) => {
+            this.notificationManager.addNotification('player left ' + playerObj.name);
             this.destroySprite(playerObj.id);
-            console.log('player left ' + playerObj.id);
         });
 
         this.socket.on('teleportToGame', (roomObj) => {

@@ -1,5 +1,11 @@
 import Phaser from "phaser";
-import { MAP1_TASKS, MAP1_TASK_MIN_DIST } from "../constants";
+import {
+    MAP1_TASKS,
+    MAP1_TASK_MIN_DIST,
+    TASK_SPRITE_HEIGHT,
+    TASK_SPRITE_WIDTH,
+    MAP_SCALE,
+} from "../constants";
 
 export default class TaskManager extends Phaser.GameObjects.Container {
 
@@ -61,8 +67,14 @@ export default class TaskManager extends Phaser.GameObjects.Container {
         });
     }
 
-    addTask(name, x, y) {
+    addTask(name, mapX, mapY) {
+        const x = mapX * MAP_SCALE;
+        const y = mapY * MAP_SCALE;
+        
         this.tasks[name] = this.scene.add.sprite(x, y, 'task');
+        this.tasks[name].displayHeight = TASK_SPRITE_HEIGHT * MAP_SCALE;
+        this.tasks[name].displayWidth = TASK_SPRITE_WIDTH * MAP_SCALE;
+
         this.taskNames[name] = this.scene.add.text(x, y, name, { fontSize: '32px', fill: '#ffffff' });
     }
 

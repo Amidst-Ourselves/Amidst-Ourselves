@@ -1,6 +1,12 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const dbo = require("./connect");
+const path = require("path");
+const cors = require("cors");
+require("dotenv").config();
+
+const port = process.env.PORT || 3000;
 const GAME_STATE = {
     lobby: "lobby",
     action: "action",
@@ -12,32 +18,24 @@ const PLAYER_STATE = {
     ghost: "ghost"
 };
 
-const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(require("./API/user"));
+
+//app.use(express.static(path.join(__dirname, 'client/build')));
+
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
     cors: {
-        origins: ["http://127.0.0.1:5500"],
-        methods: ["GET", "POST"]
+        origins: '*',
+        methods: ["GET", "POST"],
     }
 });
 
-
-//const express = require("express");
-//const app = express();
-//const cors = require("cors");
-require("dotenv").config({ path: "./config.env" });
-const port = 3000;
-// app.use(cors());
-// app.use(express.json());
-// app.use(require("./API/user"));
-
-const dbo = require("./connect");
-httpServer.listen(3000, () => {
-    console.log('listening on localhost:3000');
+httpServer.listen(port, () => {
+    console.log('listening on localhost:' + port);
     dbo.connectToServer(function (err) {
         if (err) console.error(err);
      
@@ -67,7 +65,7 @@ const MAP1_TASKS = [
     'o2',
     'navigation',
     'communications',
-    'cafeteria'
+    //'cafeteria'
 ];
 
 const COLOUR_COUNT = 10;
@@ -493,7 +491,8 @@ function createRoom(roomObj, hostPlayerObj, hostDeadBodyObj) {
         meetingCompleted: false,
         gameWinner:roomObj.gameWinner,
         meetingCountdownStarted: false,
-        timeoutId: 0 
+        timeoutId: 0,
+        gameWinner:roomObj.gameWinner
     }
 
     rooms[roomCode] = newRoom;
