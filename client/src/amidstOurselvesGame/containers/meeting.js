@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
   WIDTH,
   HEIGHT,
@@ -8,9 +9,10 @@ import {
   PLAYER_STATE,
 } from "../constants";
 
-export default class Meeting extends Phaser.GameObjects.Container {
+export default class Meeting extends GameObjects.Container {
     constructor(scene) {
         super(scene);
+        this.scene = scene;
         // Create and configure the overlay graphics object
         this.overlay = this.scene.add.graphics();
         this.overlay.fillStyle(0x000000, 1);
@@ -236,6 +238,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = true;
         this.textButton.visible = true;
         this.countdownText.visible = true;
+        this.scene.inMeeting = true;
 
         for (const button of this.votingButtons) {
             if (button.player.playerState != PLAYER_STATE.ghost) {
@@ -292,6 +295,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.voting_board.visible = false;
         this.textButton.visible = false;
         this.ghostReminder.visible = false;
+        this.scene.inMeeting = false;
 
         for (const button of this.votingButtons) {
             button.visible = false;
@@ -408,35 +412,38 @@ export default class Meeting extends Phaser.GameObjects.Container {
         this.inputMessageText.visible = true;
         this.textOpened = true;
         this.keyboardListener = this.scene.input.keyboard.on('keydown', (event) => {
-            // Handle special keys
-            if (event.key === 'Backspace') {
-                // Remove the last character of the input message
-                this.inputMessage = this.inputMessage.slice(0, -1);
-            } else if (event.key === 'Enter') {
 
-                if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
-                    // Display the input message in the messageDisplay area
-                    this.scene.socket.emit("new_message", this.inputMessage);
-                    this.addMessage(this.scene.socket.id, this.inputMessage);
-                } 
+            if (this.scene.inMeeting) {
+                // Handle special keys
+                if (event.key === 'Backspace') {
+                    // Remove the last character of the input message
+                    this.inputMessage = this.inputMessage.slice(0, -1);
+                } else if (event.key === 'Enter') {
 
-                // Clear the input message
-                this.inputMessage = '';
-            } else {
-                if (this.inputMessage.length < 30) {
-                    const keyCode = event.keyCode;
-                    const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
-                    const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
-                
-                    if (isAlphanumeric || isCommonPunctuation) {
-                    // Update the input message with the new character
-                        this.inputMessage += event.key;
+                    if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
+                        // Display the input message in the messageDisplay area
+                        this.scene.socket.emit("new_message", this.inputMessage);
+                        this.addMessage(this.scene.socket.id, this.inputMessage);
+                    } 
+
+                    // Clear the input message
+                    this.inputMessage = '';
+                } else {
+                    if (this.inputMessage.length < 30) {
+                        const keyCode = event.keyCode;
+                        const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
+                        const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
+                    
+                        if (isAlphanumeric || isCommonPunctuation) {
+                        // Update the input message with the new character
+                            this.inputMessage += event.key;
+                        }
                     }
                 }
-            }
 
-            // Update the inputMessageText object
-            this.inputMessageText.setText(this.inputMessage);
+                // Update the inputMessageText object
+                this.inputMessageText.setText(this.inputMessage);
+            }
         });
         // this.keyboardListener = this.scene.input.keyboard.on('keydown', this.keyboardListener);
     }
@@ -450,7 +457,7 @@ export default class Meeting extends Phaser.GameObjects.Container {
             this.keyboardListener.visible = false;
         }
         this.textOpened = false;
-        this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
+        // this.scene.input.keyboard.removeListener('keydown', this.keyboardListener);
     }
     updateMessageDisplay() {
         // Clear the current message display

@@ -1,12 +1,14 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
     PLAYER_STATE,
   } from "../constants";
 
-export default class Imposter extends Phaser.GameObjects.Container {
+export default class Imposter extends GameObjects.Container {
 
     constructor(scene, socket) {
         super(scene);
+        this.scene = scene;
 
         this.killCooldown = 10000; // in sec
         this.socket = socket;
@@ -48,7 +50,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
     }
 
     killWrapper(time, lastActionTime, players, id, deadBodies) {
-        if (time - lastActionTime >= this.killCooldown) {
+        if (time - lastActionTime >= this.killCooldown && this.killReady) {
             this.update(players[id]);
             let kill_flag = this.kill(players, deadBodies);
             if (kill_flag) {
@@ -79,6 +81,7 @@ export default class Imposter extends Phaser.GameObjects.Container {
         // start cooldown timer only if "Kill Ready"
         if (this.killReady) {
           this.countdown.setText('10');
+          this.killReady = false;
           this.cooldownTimer =  this.scene.time.addEvent({
             delay: 1000,
             repeat: 9,
@@ -86,7 +89,6 @@ export default class Imposter extends Phaser.GameObjects.Container {
               this.countdown.setText(this.cooldownTimer.repeatCount);
             }
           });
-          this.killReady = false;
         }
     }
   
@@ -101,7 +103,6 @@ export default class Imposter extends Phaser.GameObjects.Container {
         this.update(this.scene.players[this.socket.id]);
         this.countdown.setStyle({ fill: '#ffffff' });
         for (let player in this.scene.players) {
-
             if((Math.abs(this.scene.players[player].x - this.player.x) + Math.abs(this.scene.players[player].y - this.player.y)) < 100 && player !== this.socket.id && this.scene.players[player].playerState != PLAYER_STATE.ghost) {
                 this.countdown.setStyle({ fill: '#ff0000' });
             }
