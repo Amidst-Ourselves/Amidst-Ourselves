@@ -423,7 +423,7 @@ export default class Meeting extends GameObjects.Container {
                     if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
                         // Display the input message in the messageDisplay area
                         this.scene.socket.emit("new_message", this.inputMessage);
-                        this.addMessage(this.scene.socket.id, this.inputMessage);
+                        this.addMessage(this.scene.players[this.scene.socket.id].name, this.inputMessage);
                     } 
 
                     // Clear the input message
