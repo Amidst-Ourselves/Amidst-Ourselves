@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
     WIDTH,
     HEIGHT,
@@ -10,10 +11,10 @@ import {
     MAP1_TASKS,
 } from "../constants";
 
-export default class MiniMap extends Phaser.GameObjects.Container {
+export default class MiniMap extends GameObjects.Container {
     constructor(scene, keyCode) {
         super(scene);
-
+        this.scene = scene;
         this.keyMiniMap = this.scene.input.keyboard.addKey(keyCode);
         this.miniMapTasks = {};
     }
