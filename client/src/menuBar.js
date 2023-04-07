@@ -2,12 +2,13 @@ import React from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
 
 
-const MenuBar = ({ onLogout }) => {
+const MenuBar = ({ userData }) => {
   const location = useLocation();
   const history = useHistory();
 
   const LogoutUserAPI = async () =>{
-    const storedEmail = localStorage.getItem('email');
+    //const storedEmail = localStorage.getItem('email');
+    const storedEmail = userData.email;
     if(storedEmail){
       try{
         const response = await fetch(process.env.REACT_APP_HOST_URL + "/user/logout", {
@@ -48,11 +49,12 @@ const MenuBar = ({ onLogout }) => {
     }else{
       console.log("Could not logout!")
     }
+    window.location.reload();
   };
 
   const reloadHandle = async () => {
-    history.push('/leaderboard');
-    window.location.reload();
+    // history.push('/leaderboard');
+    // window.location.reload();
   };
 
   

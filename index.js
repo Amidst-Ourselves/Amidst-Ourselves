@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use(require("./API/user"));
 
-//app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 const httpServer = createServer(app);
 
@@ -265,6 +265,8 @@ io.on('connection', (socket) => {
                 colour: room.players[playerId].colour,
                 leftEarly: false,
             };
+
+            playerStartRole[room.players[playerId].email]=room.players[playerId].playerState;
         }
         
         io.to(socket.roomCode).emit('teleportToGame', room);
@@ -570,6 +572,7 @@ function isColourAvailable(players, colour) {
 
 function updateDB(room,winner) {
 
+    console.log("playerStartRole printing");
     console.log(playerStartRole);
 
     let db_connect = dbo.getDb();

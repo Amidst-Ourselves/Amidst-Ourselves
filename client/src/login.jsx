@@ -26,6 +26,7 @@ export const Login = (props) => {
                 console.log(data.message);
                 props.onLogin(data.name, data.email);
                 localStorage.setItem('email', data.email);
+                localStorage.setItem('emailStart', data.email);
                 history.push('/game');
             } else {
                 console.log(data.message);

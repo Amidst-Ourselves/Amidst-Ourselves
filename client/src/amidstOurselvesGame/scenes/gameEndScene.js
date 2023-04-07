@@ -44,11 +44,19 @@ export default class gameEndScene extends Phaser.Scene {
 
     preload() {
         this.load.spritesheet('player', 'amidstOurselvesAssets/player.png', SPRITE_CONFIG);
+        this.load.image('background', 'amidstOurselvesAssets/tech.png');
     }
 
     create() {
         this.add.text(WIDTH/2, 50, "Game Ended!", { font: '32px Arial', fill: '#FFFFFF' }).setOrigin(0.5);
         this.add.text(WIDTH/2, 100, this.winMessage, { font: '32px Arial', fill: '#FFFFFF', align: 'center' }).setOrigin(0.5);
+
+        this.add.text(WIDTH/2, 450, "Game Developed by Logan Vaughan, Yongquan Zhang, and Chanpreet Singh.", { font: '16px Arial', fill: '#FFFFFF' }).setOrigin(0.5);
+
+        //const image = this.add.image(WIDTH/2, 500, 'imageKey');
+        this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'background')
+        .setDisplaySize(this.scale.width, this.scale.height);
+
 
         for (let playerId in this.initialPlayers) {
             console.log('iteration counter');

@@ -87,7 +87,7 @@ const updateActiveStatusToLogout = async (req) => {
   return new Promise(async (resolve, reject) => {
 
 
-    const filter = { username: req.body.username.toString() };
+    const filter = { username: req.body.username };
     const update = { $set: { activestatus: "false" } };
 
     const result = await db_connect.collection("Users").updateOne(filter, update);
