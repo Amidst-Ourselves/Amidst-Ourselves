@@ -133,8 +133,9 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.players[playerId].y = newY;
         this.playerNames[playerId].x = newX;
         this.playerNames[playerId].y = newY;
+        this.audioIcons[playerId].setDepth(newY);
         this.audioIcons[playerId].x = newX;
-        this.audioIcons[playerId].y = newY - PLAYER_HEIGHT/2;
+        this.audioIcons[playerId].y = newY - PLAYER_HEIGHT - 10;
 
         if (velocity !== undefined && velocity !== 0) {
             this.players[playerId].setFlipX(velocity < 0);
@@ -201,7 +202,7 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         this.deadBodies[playerObj.id].visible = false;
         this.deadBodies[playerObj.id].available = false;
 
-        this.audioIcons[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y, 'audioIcon');
+        this.audioIcons[playerObj.id] = this.add.sprite(playerObj.x, playerObj.y - PLAYER_HEIGHT - 10, 'audioIcon');
         this.audioIcons[playerObj.id].displayHeight = PLAYER_HEIGHT/2;
         this.audioIcons[playerObj.id].displayWidth = PLAYER_WIDTH/2;
         this.audioIcons[playerObj.id].visible = false;
