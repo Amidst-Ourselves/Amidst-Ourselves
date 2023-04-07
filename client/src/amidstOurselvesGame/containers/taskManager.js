@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import {
     MAP1_TASKS,
     MAP1_TASK_MIN_DIST,
@@ -7,10 +8,11 @@ import {
     MAP_SCALE,
 } from "../constants";
 
-export default class TaskManager extends Phaser.GameObjects.Container {
+export default class TaskManager extends GameObjects.Container {
 
     constructor(scene, keyCode, totalTasks, tasksComplete, taskCompleteCallback) {
         super(scene);
+        this.scene = scene;
 
         this.tasks = {};
         this.taskNames = {};

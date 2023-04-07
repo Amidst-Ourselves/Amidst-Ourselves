@@ -1,9 +1,10 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 
-
-export default class ColourStation extends Phaser.GameObjects.Container {
+export default class NotificationManager extends GameObjects.Container {
     constructor(scene, x, y, incrementY) {
         super(scene);
+        this.scene = scene;
         this.x = x;
         this.y = y;
         this.incrementY = incrementY;
