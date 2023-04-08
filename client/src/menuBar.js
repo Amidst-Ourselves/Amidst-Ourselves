@@ -99,14 +99,12 @@ const MenuBar = ({ userData }) => {
           background-color: #333;
           color: #fff;
           display: flex;
-          justify-content: center; /* center items horizontally */
+          justify-content: center;
           align-items: center;
           padding: 10px;
         }
         ul {
           list-style-type: none;
-          margin: 0;
-          padding: 0;
           display: flex;
         }
         li {
@@ -114,7 +112,6 @@ const MenuBar = ({ userData }) => {
         }
         a {
           color: #fff;
-          text-decoration: none;
           font-size: 18px;
         }
         a:hover {

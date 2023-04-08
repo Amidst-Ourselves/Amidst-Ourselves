@@ -25,6 +25,27 @@ app.use(require("./API/user"));
 
 //app.use(express.static(path.join(__dirname, 'client/build')));
 
+app.get('/register', function (req, res) {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+
+app.get('/forgot-password', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.get('/game', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.get('/leaderboard', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.use(function(req, res, next) {
+res.status(404).sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+
 const httpServer = createServer(app);
 
 
@@ -142,29 +163,37 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        if (socket.roomCode === undefined) return;
+        if (
+            socket.roomCode === undefined ||
+            rooms[socket.roomCode] === undefined ||
+            rooms[socket.roomCode].players[socket.id] === undefined
+        ) {
+            return;
+        }
 
         if (
-            rooms[socket.roomCode].players[socket.id] !== undefined &&
+            rooms[socket.roomCode].gameState === GAME_STATE.action &&
             rooms[socket.roomCode].players[socket.id].playerState !== PLAYER_STATE.ghost &&
             rooms[socket.roomCode].initialPlayers[socket.id] !== undefined
         ) {
             rooms[socket.roomCode].initialPlayers[socket.id].leftEarly = true;
         }
 
-        webRTC_delete(socket.roomCode);
+        const playerId = rooms[socket.roomCode].players[socket.id].id;
+        const playerName = rooms[socket.roomCode].players[socket.id].name;
 
         delete rooms[socket.roomCode].players[socket.id];
         delete rooms[socket.roomCode].deadBodies[socket.id];
 
+        webRTC_delete(socket.roomCode);
+
         if (playerCount(rooms[socket.roomCode]) === 0) {
             delete rooms[socket.roomCode];
-            io.to(socket.roomCode).emit('leave', {id: socket.id});
             delete sockets[socket.id];
             return;
         }
         
-        if (rooms[socket.roomCode].host === socket.id) {
+        if (rooms[socket.roomCode].host === playerId) {
             rooms[socket.roomCode].host = findNextHost(rooms[socket.roomCode]);
             io.to(socket.roomCode).emit('host', {id: rooms[socket.roomCode].host});
         }
@@ -185,7 +214,7 @@ io.on('connection', (socket) => {
             io.to(socket.roomCode).emit('teleportToEnd', room);
             delayBackToLobby(socket, 5000);
         } else {
-            io.to(socket.roomCode).emit('leave', {id: socket.id});
+            io.to(socket.roomCode).emit('leave', {id: playerId, name: playerName});
         }
 
         delete sockets[socket.id];
@@ -543,6 +572,10 @@ function findNextHost(roomObj) {
 }
 
 function findWinners(roomObj) {
+    if (roomObj.gameState !== GAME_STATE.action) {
+        return undefined;
+    }
+
     let crewmates = 0;
     let imposters = 0;
 
