@@ -6,6 +6,7 @@ import { ForgotPassword } from './forgotPassword';
 import Game from './components/Game/index';
 import {LeaderboardPage} from './leaderboard';
 import MenuBar from './menuBar';
+import NotFound from './NotFound';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/game" render={() => <Game userData={userData} />} />
             <Route path="/leaderboard" component={LeaderboardPage} />
+            <Route path="*" component={NotFound} />
           </Switch>
         </div>
     </Router>
