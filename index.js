@@ -25,6 +25,27 @@ app.use(require("./API/user"));
 
 //app.use(express.static(path.join(__dirname, 'client/build')));
 
+app.get('/register', function (req, res) {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+
+app.get('/forgot-password', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.get('/game', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.get('/leaderboard', function (req, res) {
+res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+app.use(function(req, res, next) {
+res.status(404).sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+
 const httpServer = createServer(app);
 
 
