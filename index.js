@@ -27,6 +27,9 @@ app.use(express.static(path.join(__dirname, 'client/build')));
 
 const httpServer = createServer(app);
 
+module.exports = app;
+
+
 const io = new Server(httpServer, {
     cors: {
         origins: '*',

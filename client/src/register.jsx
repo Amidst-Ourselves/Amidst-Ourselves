@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 import badWords from 'bad-words';
 
@@ -40,7 +39,6 @@ export const Register = (props) => {
 
             if (data.message === "added") {
                 console.log(data.message);
-                //props.onFormSwitch('login')
                 history.push('/');
             } else if (data.message === "exist"){
                 console.log(data.message);
@@ -58,7 +56,7 @@ export const Register = (props) => {
         <div className="auth-form-container">
             <h2>Register</h2>
         <form className="register-form" onSubmit={handleSubmit}>
-            <label htmlFor="name">Full name</label>
+            <label htmlFor="name">Full Name</label>
             <input value={name} name="name" onChange={(e) => setName(e.target.value)} id="name" placeholder="Full Name" />
             <br></br> <p></p>
             <label htmlFor="email">Email</label>

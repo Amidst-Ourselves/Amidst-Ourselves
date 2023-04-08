@@ -46,13 +46,13 @@ export const ForgotPassword = (props) => {
     <div className="auth-form-container">
       <form onSubmit={handleSubmit}>
         <h2>Forgot Password</h2>
-        <label htmlFor="email">Email:</label>
+        <label htmlFor="email">Email</label>
         <input value={email} onChange={(e) => setEmail(e.target.value)}type="email" placeholder="youremail@gmail.com" id="email" name="email" required />
         <br></br> <p></p>
         <label htmlFor="question">Name your favourite city?</label>
         <input value={question} onChange={(e) => setQues(e.target.value)}type="question" placeholder="" id="question" name="question" required />
         <br></br> <p></p>
-        <label htmlFor="newpassword">new Password</label>
+        <label htmlFor="newpassword">New Password</label>
         <input value={newpassword} onChange={(e) => setNewPass(e.target.value)}type="newpassword" placeholder="******" id="newpassword" name="newpassword" required />
         <br></br> <p></p>
         <button type="submit">Reset Password</button>
