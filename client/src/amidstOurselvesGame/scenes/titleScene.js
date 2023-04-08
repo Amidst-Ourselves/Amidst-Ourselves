@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 
 export default class TitleScene extends Phaser.Scene {
     constructor() {
-        super("titleScene")
+        super("titleScene");
     }
 
     init(data) {
@@ -18,11 +18,12 @@ export default class TitleScene extends Phaser.Scene {
         let storedName = localStorage.getItem('name');
         let storedEmail = localStorage.getItem('email');
         if(!storedName){
-            storedName = "anonymous";
+            storedName = "Anonymous";
         }
         if(!storedEmail){
-            storedEmail = "anonymous";
+            storedEmail = "Anonymous";
         }
+
 
         let startGameText = this.add.text(100, 100, 'Click here to create a new game room!', { font: '32px Arial', fill: '#FFFFFF' });
         startGameText.setInteractive();
@@ -45,6 +46,9 @@ export default class TitleScene extends Phaser.Scene {
             joinGameText.setTint(0xFFFFFF);
         });
         joinGameText.on('pointerdown', () => {
+            localStorage.removeItem('email'); 
+            localStorage.removeItem('name'); 
+
             this.scene.start("loadGameScene", {roomCode: inputText, playerName:storedName, playerEmail:storedEmail});
         });
 

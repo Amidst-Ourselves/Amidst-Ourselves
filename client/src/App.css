@@ -90,17 +90,17 @@ button {
 }
 
 .link-btn {
-  color: blue;
+  color: rgb(246, 246, 246);
   text-decoration: underline;
   cursor: pointer;
 }
 
 body{
-  background-image: url('./amidstOurselvesGame/assets/mainBG.jpg');
+  /*background-image: url('./amidstOurselvesGame/assets/mainBG.jpg');*/
   background-size: cover;
   background-position: top;
   background-repeat: no-repeat;
-  background-color: rgba(0, 0, 0, 1);
+  background-color: rgb(113, 112, 112);
 }
 
 .auth-form-container{

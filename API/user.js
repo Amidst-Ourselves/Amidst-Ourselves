@@ -1,16 +1,10 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
 
-// recordRoutes is an instance of the express router.
-// We use it to define our routes.
-// The router will be added as a middleware and will take control of requests starting with path /record.
 const userRoutes = express.Router();
 
-// This will help us connect to the database
 const dbo = require("../connect");
 
-// This help convert the id from string to ObjectId for the _id.
-const ObjectId = require("mongodb").ObjectId;
 
 const getAllRecord = async (req) => {
   let db_connect = dbo.getDb();
@@ -87,7 +81,7 @@ const updateActiveStatusToLogout = async (req) => {
   return new Promise(async (resolve, reject) => {
 
 
-    const filter = { username: req.body.username.toString() };
+    const filter = { username: req.body.username };
     const update = { $set: { activestatus: "false" } };
 
     const result = await db_connect.collection("Users").updateOne(filter, update);

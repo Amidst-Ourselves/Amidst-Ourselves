@@ -27,6 +27,8 @@ app.use(require("./API/user"));
 
 const httpServer = createServer(app);
 
+
+
 const io = new Server(httpServer, {
     cors: {
         origins: '*',
@@ -265,6 +267,8 @@ io.on('connection', (socket) => {
                 colour: room.players[playerId].colour,
                 leftEarly: false,
             };
+
+            playerStartRole[room.players[playerId].email]=room.players[playerId].playerState;
         }
         
         io.to(socket.roomCode).emit('teleportToGame', room);
@@ -570,6 +574,7 @@ function isColourAvailable(players, colour) {
 
 function updateDB(room,winner) {
 
+    console.log("playerStartRole printing");
     console.log(playerStartRole);
 
     let db_connect = dbo.getDb();

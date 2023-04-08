@@ -6,10 +6,13 @@ import { WIDTH, HEIGHT } from '../../amidstOurselvesGame/constants';
 import React, { useRef, useLayoutEffect } from 'react';
 
 
-export default function Game(props) {
+export default function Game({ userData }) {
     const gameContainerRef = useRef(null);
     // let storedName = localStorage.getItem('name');
     // console.log(storedName); // Logan this is the player name. 
+    // console.log("from index.js");
+    // console.log(userData.name);
+    // console.log(userData.email);
   
     useLayoutEffect(() => {
         const config = {
@@ -23,6 +26,10 @@ export default function Game(props) {
         };
   
         const game = new Phaser.Game(config);
+
+        //game.scene.getScene('TitleScene').data.set('userData', userData);
+        // game.scene.getScene('GameSettingsScene').data.set('userData', userData);
+
 
         const handleBeforeUnload = () => {
             console.log('beforeunload');

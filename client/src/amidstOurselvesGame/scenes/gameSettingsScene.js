@@ -4,7 +4,7 @@ import { HEIGHT } from "../constants";
 
 export default class GameSettingsScene extends Phaser.Scene {
     constructor() {
-        super("gameSettingsScene")
+        super("gameSettingsScene");
     }
 
     create() {
@@ -12,10 +12,10 @@ export default class GameSettingsScene extends Phaser.Scene {
         let storedName = localStorage.getItem('name');
         let storedEmail = localStorage.getItem('email');
         if(!storedName){
-            storedName = "anonymous";
+            storedName = "Anonymous";
         }
         if(!storedEmail){
-            storedEmail = "anonymous";
+            storedEmail = "Anonymous";
         }
 
 
@@ -35,6 +35,9 @@ export default class GameSettingsScene extends Phaser.Scene {
             gameCreationText.setTint(0xFFFFFF);
         });
         gameCreationText.on('pointerdown', () => {
+            localStorage.removeItem('email'); 
+            localStorage.removeItem('name'); 
+
             this.scene.start("loadGameScene", {
                 playerLimit: playerLimit.getValue(),
                 playerName:storedName,
