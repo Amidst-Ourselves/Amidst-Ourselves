@@ -12,7 +12,7 @@ const ICE_SERVERS = [
     {urls:"stun:stun.l.google.com:19302"}
 ];
 
-// Please note: the webRTC implementation borrowed a lot ideas code from:
+// Please note: the webRTC implementation borrowed a lot ideas and codes from:
 // https://github.com/anoek/webrtc-group-chat-example
 export default class webRTCClientManager {
     
@@ -114,38 +114,19 @@ export default class webRTCClientManager {
 
     // add remote audio and 
     update() {
-        // this.my_pos = players;
-
-        // let remote_media = document.createElement('audio');
         let global_signaling_socket = this.signaling_socket;
 
 
         this.signaling_socket.on('disconnect', () => {
             console.log("received leave");
-            // this.signaling_socket.emit('webRTC_disconnect');
             this.reset();
         });
-
-        // this.signaling_socket.on('my_pos2', (playerObj) => {
-
-        //     if (!this.my_pos[playerObj.id]) {
-        //         this.my_pos[playerObj.id] = {};
-        //     }
-
-        //     this.my_pos[playerObj.id].x = playerObj.x;
-        //     this.my_pos[playerObj.id].y = playerObj.y;
-        // });
         
         try{
             // Create peer-2-peer connection if a new user enter the room
             this.signaling_socket.on('addPeer', (config) => {
-                // console.log('Signaling server said to add peer:', config);
                 let peer_id = config.peer_id;
-                // if (config.should_create_offer){
-                //     global_peer_id = peer_id;
-                // }
                 if (peer_id in this.peers) {
-                    //console.log("Already connected to peer ", peer_id);
                     return;
                 }
                 var peer_connection = new RTCPeerConnection(
@@ -153,7 +134,6 @@ export default class webRTCClientManager {
                     {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
                 this.peers[peer_id] = peer_connection;
-                //console.log("new peer")
 
                 peer_connection.onicecandidate = (event) => {
                     if (event.candidate) {
@@ -172,16 +152,13 @@ export default class webRTCClientManager {
 
                 peer_connection.ontrack = (event) => {
 
-                    //console.log("ontrack", event);
 
                     try {
                         var remote_media = document.createElement('audio');
 
                         remote_media.setAttribute("autoplay", "autoplay");
-                        // remote_media.autoplay = true;
-                        // remote_media.muted = true;
+
                         if (MUTE_AUDIO_BY_DEFAULT) {
-                            // remote_media.setAttribute("muted", "true");
                             remote_media.muted = true;
                         }
                         remote_media.setAttribute("controls", "");
@@ -202,9 +179,6 @@ export default class webRTCClientManager {
                 // peer_connection.addStream(this.local_media_stream);
                 const track = this.local_media_stream.getTracks();
                 peer_connection.addTrack(track[0], this.local_media_stream);
-                // for (const track of this.local_media_stream.getTracks()) {
-                //     peer_connection.addTrack(track, this.local_media_stream);
-                // }
 
 
                 if (config.should_create_offer) {
@@ -357,10 +331,6 @@ export default class webRTCClientManager {
                             function updateStateTrack(ele) {
                                 // console.log(my_states);
                                 if (my_state != PLAYER_STATE.ghost && my_states[ele].playerState == PLAYER_STATE.ghost) {
-                                    // console.log(ele);
-                                    // console.log(my_peers[ele]);
-                                    // console.log(my_state);
-                                    // console.log(my_states[ele].playerState);
                                     let senderList = my_peers[ele].getReceivers();
                                     // console.log("ghost muted");
                                     senderList[0].track.enabled = false;

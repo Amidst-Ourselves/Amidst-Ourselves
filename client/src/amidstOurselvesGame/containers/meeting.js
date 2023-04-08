@@ -423,7 +423,7 @@ export default class Meeting extends GameObjects.Container {
                     if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
                         // Display the input message in the messageDisplay area
                         this.scene.socket.emit("new_message", this.inputMessage);
-                        this.addMessage(this.scene.socket.id, this.inputMessage);
+                        this.addMessage(this.scene.players[this.scene.socket.id].name, this.inputMessage);
                     } 
 
                     // Clear the input message
@@ -476,13 +476,13 @@ export default class Meeting extends GameObjects.Container {
           const yPosition = 200 + i * 30; // Adjust this value to control the spacing between messages
       
           // Create a text object for the message
-          const messageText = this.scene.add.text(xPosition, yPosition, `${messageObject.user}: ${messageObject.message}`).setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+5).setBackgroundColor('#FFF9E6').setColor('#000000');
-          messageText.setOrigin(isCurrentUser ? 1 : 0, 0);
+          const messageText = this.scene.add.text(xPosition, yPosition, `${messageObject.user}: ${messageObject.message}`).setScrollFactor(0).setDepth(HEIGHT * MAP_SCALE+5).setBackgroundColor('#FFF9E6').setColor('#000000').setOrigin(isCurrentUser ? 1 : 0, 0);
+        //   messageText.setOrigin(isCurrentUser ? 1 : 0, 0);
       
           // Add the message text to the message display
           this.messageDisplay.add(messageText);
         }
-      }
+    }
     // Create a function to handle adding and displaying messages
     addMessage(user, message) {
 

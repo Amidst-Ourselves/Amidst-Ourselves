@@ -1,9 +1,11 @@
 import Phaser from "phaser";
+import { GameObjects, Scene } from 'phaser';
 import { MAP_SCALE, TASK_CONFIG, TASK_SPRITE_HEIGHT, TASK_SPRITE_WIDTH } from "../constants";
 
-export default class ColourStation extends Phaser.GameObjects.Container {
+export default class ColourStation extends GameObjects.Container {
     constructor(scene, x, y, minDist, keyCode, changeColourFunction) {
         super(scene);
+        this.scene = scene;
         this.x = x;
         this.y = y;
         this.minDist = minDist;
