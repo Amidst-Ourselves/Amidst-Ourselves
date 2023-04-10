@@ -11,6 +11,10 @@ export default class NotificationManager extends GameObjects.Container {
         this.notifications = {};
     }
 
+    /*
+    FR23 - See.Feed
+    This function is called to add a notification to the screen of the player.
+    */
     addNotification(message) {
         for (const existingNotificationId in this.notifications) {
             const existingNotification = this.notifications[existingNotificationId];

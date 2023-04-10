@@ -52,7 +52,7 @@ export default class GameSettingsScene extends Phaser.Scene {
 }
 
 
-class settingBar {
+export class settingBar {
     /*
         _this: Phaser.Scene -> the scene on which to draw the setting bar
         x: number -> the x coordinate of the setting bar (left justified)

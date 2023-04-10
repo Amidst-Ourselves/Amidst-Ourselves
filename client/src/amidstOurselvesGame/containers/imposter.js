@@ -1,3 +1,9 @@
+/* 
+    FR14 - Imposter.Kill
+    The kill event is triggered when imposter press K key and there is a target player in killing range.
+    It send a socket signal to server then broadcast to all players in the same game room.
+    Dead body would be created after a player get killed.
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {
@@ -6,9 +12,12 @@ import {
 
 export default class Imposter extends GameObjects.Container {
 
-    constructor(scene, socket) {
+    constructor(scene) {
         super(scene);
         this.scene = scene;
+    }
+
+    create(socket) {
 
         this.killCooldown = 10000; // in sec
         this.socket = socket;
@@ -25,6 +34,11 @@ export default class Imposter extends GameObjects.Container {
         this.player = player;
     }
 
+    /*
+    FR14 - Imposter.Kill
+    This function is called when an imposter kills a crewmate.
+    To kill a crewmate as imposter, be in the game scene, be an imposter, be close to a crewmate, and press the 'K' key.
+    */
     kill(players, deadBodies) {
         for (let player in players) {
             if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 100 && player !== this.socket.id && players[player].playerState != PLAYER_STATE.ghost) {

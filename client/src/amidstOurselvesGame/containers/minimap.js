@@ -1,3 +1,9 @@
+/* 
+    FR12 - View.Minimap
+    The minimap overlay on top of the game scene. 
+    Player can open the minimap by pressing M key and task position and player position 
+    will be displayed on the minimap
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {
@@ -76,6 +82,11 @@ export default class MiniMap extends GameObjects.Container {
         delete this.miniMapTasks[taskName];
     }
 
+    /*
+    FR12 - View.Minimap
+    When this function is called, the minimap is toggled on or off.
+    By default the minimap can be toggled on or off by pressing the M key.
+    */
     toggleMiniMap() {
         let complement = !this.miniMap.visible;
         this.miniMap.visible = complement;

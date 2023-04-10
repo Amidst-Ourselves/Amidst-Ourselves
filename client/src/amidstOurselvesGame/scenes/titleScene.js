@@ -8,7 +8,6 @@ export default class TitleScene extends Phaser.Scene {
 
     init(data) {
         this.data = data;
-        console.log(data);
     }
 
     create() {
@@ -25,6 +24,12 @@ export default class TitleScene extends Phaser.Scene {
         }
 
 
+        /*
+        FR5 - Create.Priveate
+        This code creates a button that will create a new game room when the user presses it.
+        The button then takes the user to the game settings scene where they can set the game settings.
+        After the user submits their settings, the game will be created and the user will be taken to the game scene.
+        */
         let startGameText = this.add.text(100, 100, 'Click here to create a new game room!', { font: '32px Arial', fill: '#FFFFFF' });
         startGameText.setInteractive();
         startGameText.on('pointerover', () => {
@@ -37,6 +42,11 @@ export default class TitleScene extends Phaser.Scene {
             this.scene.start("gameSettingsScene");
         });
 
+        /*
+        FR6 - Join.Priveate
+        This code creates a button that will create a new game room when the user presses it.
+        The user must type a room code into the window and then press the button to join the game.
+        */
         let joinGameText = this.add.text(100, 200, 'Click here to join an existing game room!', { font: '32px Arial', fill: '#FFFFFF' });
         joinGameText.setInteractive();
         joinGameText.on('pointerover', () => {
