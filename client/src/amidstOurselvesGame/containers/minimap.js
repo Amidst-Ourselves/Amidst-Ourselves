@@ -76,6 +76,11 @@ export default class MiniMap extends GameObjects.Container {
         delete this.miniMapTasks[taskName];
     }
 
+    /*
+    FR12 - View.Minimap
+    When this function is called, the minimap is toggled on or off.
+    By default the minimap can be toggled on or off by pressing the M key.
+    */
     toggleMiniMap() {
         let complement = !this.miniMap.visible;
         this.miniMap.visible = complement;

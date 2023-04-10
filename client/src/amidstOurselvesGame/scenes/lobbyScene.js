@@ -44,6 +44,11 @@ export default class LobbyScene extends AbstractGameplayScene {
             NOTIFICATION_INCREMENT_Y,
         );
 
+        /*
+        FR8 - Lobby.Appearance
+        This class creates the in-game item that will allow the player to change their colour.
+        Player colours get changed in the socket.on('colour') event handler.
+        */
         this.colourStation = new ColourStation(
             this,
             BUTTON_X * MAP_SCALE,
@@ -78,6 +83,12 @@ export default class LobbyScene extends AbstractGameplayScene {
             this.updatePlayerColour(playerObj.colour, playerObj.id);
         });
     
+        /*
+        FR7 - Lobby.Navigation
+        This socket event is triggered when other players in the same game move.
+        It updates the position of the players in the game.
+        The local player is updated with the movePlayer() function.
+        */
         this.socket.on('move', (playerObj) => {
             this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id, playerObj.velocity);
             this.startMovingPlayer(playerObj.id);
@@ -133,6 +144,11 @@ export default class LobbyScene extends AbstractGameplayScene {
         this.webRTC.updateState(this.players);
     }
 
+    /*
+    FR9 - Lobby.Start
+    This function creates the button that the host can use to start the game.
+    A teleportToGame event is emitted from the server after this button is pressed.
+    */
     createStartButtonForHost() {
         if (this.socket.id !== this.host) {
             return;

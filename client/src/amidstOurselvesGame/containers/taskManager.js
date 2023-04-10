@@ -144,6 +144,12 @@ export default class TaskManager extends GameObjects.Container {
         this.currentTaskName = taskName;
     }
 
+    /*
+    FR13 - Crewmate.Task
+    When this method is called, the task is removed from the map and the taskbar is updated.
+    A task can be completed by walking overtop of it and holding the 'F' key for a few seconds.
+    Tasks only exist in the game scene and for crewmates.
+    */
     finishTask(taskName) {
         this.removeTask(taskName);
         this.incrementTaskbar(taskName);
