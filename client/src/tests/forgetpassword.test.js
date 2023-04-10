@@ -8,7 +8,7 @@ describe('Password Reset', () => {
   test('Password Reset successfully', async () => {
     const setErrorMessageMock = jest.fn();
     
-    jest.spyOn(window, 'fetch').mockImplementation(() =>
+    global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve({ message: 'updated' }),
       })
@@ -27,7 +27,7 @@ describe('Password Reset', () => {
   test('Password Reset Unsuccessfully', async () => {
 
     
-    jest.spyOn(window, 'fetch').mockImplementation(() =>
+    global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve({ message: 'notupdated' }),
       })

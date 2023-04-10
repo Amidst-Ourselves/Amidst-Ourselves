@@ -1,6 +1,8 @@
 
 const randomWords = require('random-words');
 
+console.log("MongoDB.test.js need the server to be running.");
+
 //Testing all API endpoints.
 describe("Endpoints", () => {
     

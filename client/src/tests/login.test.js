@@ -8,7 +8,7 @@ describe('Login', () => {
   it('login successfully', async () => {
     const setErrorMessageMock = jest.fn();
     
-    jest.spyOn(window, 'fetch').mockImplementation(() =>
+    global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve({ message: 'match', name: 'alan', email: 'alan@ualberta.ca' }),
       })

@@ -8,7 +8,7 @@ describe('Register', () => {
   it('Register successfully', async () => {
     const setErrorMessageMock = jest.fn();
     
-    jest.spyOn(window, 'fetch').mockImplementation(() =>
+    global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve({ message: 'added' }),
       })
