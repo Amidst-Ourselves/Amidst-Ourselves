@@ -235,6 +235,7 @@ describe('Meeting', () => {
     };
     // Create a new instance of the Imposter class with the mock scene object
     meeting = new Meeting(mockScene);
+    meeting.create();
   });
 
 

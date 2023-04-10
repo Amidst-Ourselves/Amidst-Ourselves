@@ -57,17 +57,11 @@ export default class gameEndScene extends Phaser.Scene {
         this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'background')
         .setDisplaySize(this.scale.width, this.scale.height);
 
-
         for (let playerId in this.initialPlayers) {
-            console.log('iteration counter');
 
             if (this.initialPlayers[playerId].playerState !== this.winner) {
-                console.log('playerState' + this.initialPlayers[playerId].playerState);
-                console.log('winner' + this.winner);
                 continue;
             }
-
-            console.log('success');
 
             const colour = this.initialPlayers[playerId].colour * FRAMES_PER_COLOUR;
             const player = this.add.sprite(this.currentX, this.y, 'player', colour).setOrigin(0.5, 1);

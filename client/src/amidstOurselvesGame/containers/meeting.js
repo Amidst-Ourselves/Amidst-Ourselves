@@ -13,6 +13,9 @@ export default class Meeting extends GameObjects.Container {
     constructor(scene) {
         super(scene);
         this.scene = scene;
+    }
+
+    create() {
         // Create and configure the overlay graphics object
         this.overlay = this.scene.add.graphics();
         this.overlay.fillStyle(0x000000, 1);

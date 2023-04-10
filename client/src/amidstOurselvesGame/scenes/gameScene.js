@@ -70,6 +70,9 @@ export default class GameScene extends AbstractGameplayScene {
             (taskName) => { this.socket.emit('taskCompleted', {'name': taskName}); },
         );
 
+        this.imposter = new Imposter(this);
+        this.meetingManager = new Meeting(this);
+
         this.canMove = true;
     }
 
@@ -96,8 +99,8 @@ export default class GameScene extends AbstractGameplayScene {
 
         this.taskManager.create(this.players[this.socket.id], 'task');
         this.miniMap.create(this.players[this.socket.id], 'player', 'map1');
-        this.imposter = new Imposter(this, this.socket);
-        this.meetingManager = new Meeting(this);
+        this.imposter.create(this.socket);
+        this.meetingManager.create();
         this.imposter.startCooldown();
 
         this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
@@ -197,7 +200,6 @@ export default class GameScene extends AbstractGameplayScene {
                 }
             }
 
-            console.log('newDeadBodies', newDeadBodies);
             this.meetingManager.show();
         });
 

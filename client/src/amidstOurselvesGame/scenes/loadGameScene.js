@@ -30,8 +30,6 @@ export default class LoadGameScene extends Phaser.Scene {
             }
     
             this.socket.on('roomResponse', (roomObj) => {
-                console.log("roomObj", roomObj)
-
                 if (roomObj.message !== undefined) {
                     this.scene.start("titleScene", {message: roomObj.message});
                     this.socket.disconnect();

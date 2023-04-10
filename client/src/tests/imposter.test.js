@@ -144,7 +144,8 @@ describe('Imposter', () => {
           
       };
     // Create a new instance of the Imposter class with the mock scene object
-    imposter = new Imposter(mockScene, socket);
+    imposter = new Imposter(mockScene);
+    imposter.create(socket);
   });
 
 
