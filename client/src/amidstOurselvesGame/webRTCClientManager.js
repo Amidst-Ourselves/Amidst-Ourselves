@@ -1,4 +1,10 @@
-// FR#29 Proximity Voice Chat
+/*
+    FR29 - Proximity Voice Chat
+    This event is activated when a player joins the game room. Two clients exchange local descriptions 
+    via socket for peer connection and establish the connection upon success.
+    An audio track is attached to the connection for voice chat communication.
+    The proximity filter is implemented using a combination of distance filter and player state filter.
+*/
 import {
     PLAYER_STATE,
     MAP_SCALE,

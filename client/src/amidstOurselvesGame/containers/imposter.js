@@ -1,4 +1,9 @@
-// FR#14 Imposter Kill Skill
+/* 
+    FR14 - Imposter.Kill
+    The kill event is triggered when imposter press K key and there is a target player in killing range.
+    It send a socket signal to server then broadcast to all players in the same game room.
+    Dead body would be created after a player get killed.
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {

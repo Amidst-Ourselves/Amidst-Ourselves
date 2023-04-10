@@ -1,4 +1,9 @@
-// FR#12 MiniMap
+/* 
+    FR12 - View.Minimap
+    The minimap overlay on top of the game scene. 
+    Player can open the minimap by pressing M key and task position and player position 
+    will be displayed on the minimap
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {
