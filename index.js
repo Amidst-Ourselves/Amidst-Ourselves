@@ -226,6 +226,12 @@ io.on('connection', (socket) => {
 
         rooms[socket.roomCode].players[playerObj.id].playerState = PLAYER_STATE.ghost;
 
+        /*
+        FR24 - End.Crewmate
+        FR24 - End.Imposter
+        Whenever kill happen, we check if their is any winner and accordingly emit the signal
+        to end the game or let the game continue. 
+        */
         let winners = findWinners(rooms[socket.roomCode]);
         let room = rooms[socket.roomCode];
 
@@ -302,6 +308,11 @@ io.on('connection', (socket) => {
             player.tasks = player.tasks.filter(x => x !== taskObj.name);
             room.tasksComplete += 1;
 
+            /*
+            FR26 - End.Task
+            Whenever a taks is completed, we check the number of tasks completed,
+            and end the game if all tasks are completed. 
+            */
             if (room.totalTasks === room.tasksComplete) {
                 room.winner = PLAYER_STATE.crewmate;
                 room.winMessage = "Crewmates win! Crewmates finished all tasks!"
@@ -470,8 +481,13 @@ io.on('connection', (socket) => {
     */
 });
 
+/*
+FR28 - Penalize.Deserters
+Before sending game end signal, we update the database to increment the score of players
+who won the game and we dont give any point to those who left the game. 
+*/
 function updateDB(room,winner) {
-    let db_connect = dbo.getDb();
+    let databaseConnect = dbo.getDb();
     let updatePromises = [];
 
     for (let player in room.initialPlayers) {
@@ -479,12 +495,11 @@ function updateDB(room,winner) {
             const filter = { username: room.initialPlayers[player].email };
             const update = { $inc: { wins: 1, totalgames: 1 } };
 
-            let updatePromise = db_connect.collection("Users").updateOne(filter, update);
+            let updatePromise = databaseConnect.collection("Users").updateOne(filter, update);
 
             updatePromises.push(updatePromise);
         }
     }
-
     Promise.all(updatePromises)
     .then(results => {
         console.log("All score updates succeeded.");
@@ -494,7 +509,6 @@ function updateDB(room,winner) {
         console.log("At least one score update failed.");
         return false;
     });
-
 }
 
 function getMeetingResult(socket) {
@@ -518,6 +532,12 @@ function getMeetingResult(socket) {
     if (max/alive > 0.5) {
         rooms[socket.roomCode].players[result].playerState = PLAYER_STATE.ghost;
 
+        /*
+        FR24 - End.Crewmate
+        FR24 - End.Imposter
+        Whenever meeting vote happen, we check if their is any winner and accordingly emit the signal
+        to end the game or let the game continue. 
+        */
         let winners = findWinners(rooms[socket.roomCode]);
         let room = rooms[socket.roomCode];
 
@@ -558,3 +578,5 @@ function delayBackToLobby(socket, delay) {
         io.to(socket.roomCode).emit('teleportToLobby', room);
     }, delay);
 }
+
+

@@ -3,6 +3,11 @@ import { FRAMES_PER_COLOUR, HEIGHT, PLAYER_HEIGHT, PLAYER_STATE, PLAYER_WIDTH, S
 import LobbyScene from './lobbyScene';
 
 
+/*
+FR27 - End.Credits
+This scene is used to show the winning team (crewmates or imposters),
+and show the credit to all the technologies that we used and the developers. 
+*/
 export default class gameEndScene extends Phaser.Scene {
     constructor() {
         super("gameEndScene")
@@ -72,6 +77,7 @@ export default class gameEndScene extends Phaser.Scene {
             this.currentX += this.incrementX;
         }
 
+        //After showing the game end scene, we send players back to the loby to start a new game session. 
         this.socket.on('teleportToLobby', (roomObj) => {
             this.cleanupSocketio();
             this.scene.add("lobbyScene", LobbyScene, true, roomObj);

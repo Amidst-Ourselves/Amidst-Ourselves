@@ -14,17 +14,16 @@ export default function App() {
   const [userData, setUserData] = useState({ name: 'Anonymous', email: 'Anonymous' });
   let storedName = localStorage.getItem('name');
 
+  //This function store the logged in user name and email. 
   const handleLogin = (name, email) => {
     setUserData({ name, email });
-    // console.log("from app.js");
-    // console.log(userData.email);
     localStorage.setItem('name', name);
   }
 
+  //We want to logout the user if the browser close or user leave the game. 
   useEffect(() => {
     const handleBeforeUnload = async () => {
       const storedEmail = localStorage.getItem('emailStart');
-      //const storedEmail = userData.email;
       console.log(storedEmail);
       if(storedEmail){
         const sss = await handleLogout();
@@ -36,9 +35,9 @@ export default function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+  //Our database need to be updated to change the active status to indecate that user is not logged in. 
   const LogoutUserAPI = async () =>{
     const storedEmail = localStorage.getItem('emailStart');
-    //const storedEmail = userData.email;
     try{
       const response = await fetch(process.env.REACT_APP_HOST_URL + "/user/logout", {
           method: "POST",
@@ -61,7 +60,7 @@ export default function App() {
         return false;
     }
   }
-
+  //Ensure that user logout procedure is followed when browser close. 
   const handleLogout = async () => {
     const result = await LogoutUserAPI();
     if (result){
@@ -73,7 +72,7 @@ export default function App() {
     window.location.reload();
   };
 
-  //{storedName ? <h3>Logged-In as {storedName}</h3> : null}
+  
   return (
     <Router>
         <div style={{ textAlign: 'center' }}>

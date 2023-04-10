@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import { useHistory } from 'react-router-dom';
 import badWords from 'bad-words';
 
+/*
+  FR01 - Register.User
+  FR02 - Register.Profane
+  This file allow the user to create a new account i.e. register and
+  then after successful registeration the user get redirected to the home page. 
+  We also implement profanity check on name to ensure that no bad word is 
+  registered as user name as the username is public.
+*/
 export const Register = (props) => {
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
@@ -28,7 +36,6 @@ export const Register = (props) => {
             setErrorMessage("Name contains profanity words. Please try with another name.");
             return;
         }
-
         try{
             const response = await fetch(process.env.REACT_APP_HOST_URL + "/user/add", {
                 method: "POST",
@@ -36,7 +43,6 @@ export const Register = (props) => {
                 body: JSON.stringify(user),
             });
             const data = await response.json();
-
             if (data.message === "added") {
                 console.log(data.message);
                 history.push('/');
@@ -70,9 +76,9 @@ export const Register = (props) => {
             <br></br> <p></p>
             <button type="submit">Register</button>
             {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                        {errorMessage}
-                    </div>
+                <div className="Display Error Message" role="Error">
+                    {errorMessage}
+                </div>
             )}
         </form>
         <p className="link-btn" onClick={() => history.push('/')}>Already have an account? Login here.</p>

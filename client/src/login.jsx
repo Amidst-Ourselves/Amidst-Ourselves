@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { useHistory } from 'react-router-dom';
 
-
+/*
+  FR03 - Login.User
+  This file allow the user to login into the game by entering
+  the valid username/email and password combination. 
+  The page also has options to enable the user to go to forget password,
+  register or play the game anonymously. 
+*/
 export const Login = (props) => {
     const [email, setEmail] = useState('');
     const [pass, setPass] = useState('');
@@ -22,6 +28,8 @@ export const Login = (props) => {
             });
             const data = await response.json();
 
+            //If server return match, then we store the email of the user and
+            //later use the email to updat the score at end of the game. 
             if (data.message === "match") {
                 console.log(data.message);
                 props.onLogin(data.name, data.email);
@@ -52,7 +60,7 @@ export const Login = (props) => {
                 <br></br> <p></p>
                 <button type="submit">Log In</button>
                 {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
+                    <div className="Display Error Message" role="Error">
                         {errorMessage}
                     </div>
                 )}

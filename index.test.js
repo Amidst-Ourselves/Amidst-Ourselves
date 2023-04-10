@@ -1,3 +1,4 @@
+
 const {
     GAME_STATE,
     PLAYER_STATE,
@@ -19,6 +20,8 @@ const {
     findNextAvailableColour,
     findNextHost,
 } = require('./indexFunctions');
+
+const {updateDB,} = require('./index');
 
 
 describe('playerCount', () => {

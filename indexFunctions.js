@@ -60,6 +60,7 @@ function isColourAvailable(players, colour) {
     return true;
 }
 
+//We check which player won the game, but checking the number of crewmates and imposters in the game. 
 function findWinners(roomObj) {
     if (roomObj?.gameState !== GAME_STATE.action) {
         return undefined;

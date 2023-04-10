@@ -168,6 +168,16 @@ export default class GameScene extends AbstractGameplayScene {
             this.scene.remove("gameScene");
         });
 
+        /*
+        FR24 - End.Crewmate
+        FR25 - End.Imposter
+        FR26 - End.Tasks
+        FR27 - End.Credits
+        FR28 - End.Deserters
+        At the backend on server side, whenever any game end condition become trye, 
+        the teleport to end socket is sent, to inform client to end the game 
+        with endgame scene. 
+        */
         this.socket.on('teleportToEnd', (roomObj) => {
             this.cleanupSocketio();
             this.scene.add("gameEndScene", gameEndScene, true, roomObj);
