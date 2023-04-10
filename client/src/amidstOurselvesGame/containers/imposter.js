@@ -34,6 +34,11 @@ export default class Imposter extends GameObjects.Container {
         this.player = player;
     }
 
+    /*
+    FR14 - Imposter.Kill
+    This function is called when an imposter kills a crewmate.
+    To kill a crewmate as imposter, be in the game scene, be an imposter, be close to a crewmate, and press the 'K' key.
+    */
     kill(players, deadBodies) {
         for (let player in players) {
             if((Math.abs(players[player].x - this.player.x) + Math.abs(players[player].y - this.player.y)) < 100 && player !== this.socket.id && players[player].playerState != PLAYER_STATE.ghost) {

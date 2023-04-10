@@ -64,6 +64,11 @@ export default class AbstractGameplayScene extends Phaser.Scene {
             this.startLocalPlayer();
         }
 
+        /*
+        FR17 - Common.Ghost
+        Here, the movement restrictions are aleviated for the ghost players.
+        Wall collision is checked only for players that are not ghosts.
+        */
         if (state === PLAYER_STATE.ghost) {
             this.updateLocalPlayerPosition(newX, newY, newVelocity);
             return true;
@@ -84,6 +89,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         return true;
     }
 
+    /*
+    FR21 - See.Animation
+    The startMovingPlayer and stopMovingPlayer functions are used to start and stop the player movement animations.
+    */
     startMovingPlayer(playerId) {
         if (this.players[playerId].moving) {
             return;
@@ -383,6 +392,10 @@ export default class AbstractGameplayScene extends Phaser.Scene {
         return true;
     }
 
+    /*
+    FR22 - See.Sight
+    This function disallows players who are not ghosts from seeing through walls using the wallBetween() function.
+    */
     visionUpdate(localId, localX, localY) {
         if (this.players[localId].playerState === PLAYER_STATE.ghost) {
             for (let playerId in this.players) {

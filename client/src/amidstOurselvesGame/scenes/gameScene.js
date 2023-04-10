@@ -114,6 +114,12 @@ export default class GameScene extends AbstractGameplayScene {
             }
         });
 
+        /*
+        FR15 - Common.Report
+        FR16 - Common.Call
+        When the R button is pressed this callback will check if the player can call a meeting.
+        Mettings can be called when the player is close to a dead body or when the player is close to the meeting button.
+        */
         this.callButton.on('down', () => {
             if(this.meetingManager.checkMeetingConditions()) {
                 this.socket.emit('meeting');
@@ -130,6 +136,12 @@ export default class GameScene extends AbstractGameplayScene {
             }
         });
     
+        /*
+        FR11 - Navigate.Map
+        This socket event is triggered when other players in the same game move.
+        It updates the position of the players in the game.
+        The local player is updated with the movePlayer() function.
+        */
         this.socket.on('move', (playerObj) => {
             this.updatePlayerPosition(playerObj.x, playerObj.y, playerObj.id, playerObj.velocity);
             this.startMovingPlayer(playerObj.id);
