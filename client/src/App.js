@@ -6,7 +6,7 @@ import { ForgotPassword } from './forgotPassword';
 import Game from './components/Game/index';
 import {LeaderboardPage} from './leaderboard';
 import MenuBar from './menuBar';
-import NotFound from './NotFound';
+import NotFound from './notFound';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 

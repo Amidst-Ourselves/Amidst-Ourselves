@@ -8,7 +8,6 @@ export default class TitleScene extends Phaser.Scene {
 
     init(data) {
         this.data = data;
-        console.log(data);
     }
 
     create() {

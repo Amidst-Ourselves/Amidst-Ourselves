@@ -6,9 +6,12 @@ import {
 
 export default class Imposter extends GameObjects.Container {
 
-    constructor(scene, socket) {
+    constructor(scene) {
         super(scene);
         this.scene = scene;
+    }
+
+    create(socket) {
 
         this.killCooldown = 10000; // in sec
         this.socket = socket;
