@@ -1,3 +1,9 @@
+/*
+    FR13 - Crewmate.Task
+    This event is activated when a player interacts with a task object and holds the F key.
+    A list of tasks is generated for the crewmates to complete throughout the game.
+    Upon interaction, a callback function is triggered to mark the task as completed.
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {

@@ -1,3 +1,33 @@
+/* 
+    FR18 - Meeting.Chat
+    This feature enables players to use the chat functionality during meetings.
+    The event is enable when player click the interactive button called 'text chat' during a meeting.
+    Entered message would be send to server then broadcast to all players in the game room through the addMessage() function
+*/
+
+/* 
+    FR15 - Common.Report
+    The event is trigger when player press R key around a dead body.
+    The function show() would be called to display after received the meeting signal.
+*/
+
+/* 
+    FR16 - Common.Call
+    The event is trigger when player press R key around the emergency meeting button.
+    The function show() would be called to display after received the meeting signal.
+*/
+
+/* 
+    FR19 - Meeting.Vote
+    The event is triggered after a common meeting or a emergency meeting. 
+    Living players can click on interactive vote tab to vote for the player they believe is an imposter.
+*/
+
+/* 
+    FR20 - Meeting.Profane
+    This event is triggered when a player entered some message then press the enter key.
+    bad words library is used to check profane.
+*/
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {

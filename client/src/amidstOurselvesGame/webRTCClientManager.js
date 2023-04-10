@@ -1,3 +1,10 @@
+/*
+    FR29 - Proximity Voice Chat
+    This event is activated when a player joins the game room. Two clients exchange local descriptions 
+    via socket for peer connection and establish the connection upon success.
+    An audio track is attached to the connection for voice chat communication.
+    The proximity filter is implemented using a combination of distance filter and player state filter.
+*/
 import {
     PLAYER_STATE,
     MAP_SCALE,
@@ -112,7 +119,6 @@ export default class webRTCClientManager {
     }
 
 
-    // add remote audio and 
     update() {
         let global_signaling_socket = this.signaling_socket;
 
@@ -169,7 +175,6 @@ export default class webRTCClientManager {
 
                     }
                     catch (error) {
-                        // code that handles the error
                         console.error('An error occurred:', error.message);
                     }
                 }
@@ -200,7 +205,7 @@ export default class webRTCClientManager {
                                     () => { 
                                         this.signaling_socket.emit('relaySessionDescription', 
                                             {'peer_id': peer_id, 'session_description': session_description, 'roomCode': this.roomCode});
-                                        //console.log("Offer setLocalDescription succeeded"); 
+                                        
                                     },
                                     () => { console.log("Offer setLocalDescription failed!"); }
                                 );
@@ -210,7 +215,6 @@ export default class webRTCClientManager {
                             });
                     }
                     catch (error) {
-                        // code that handles the error
                         console.error('An error occurred:', error.message);
                     }
                 }
@@ -264,8 +268,6 @@ export default class webRTCClientManager {
                 return; 
             }
 
-            //console.log("Requesting access to local audio / video inputs");
-
 
             navigator.getUserMedia = ( navigator.getUserMedia ||
                 navigator.webkitGetUserMedia ||
@@ -273,7 +275,6 @@ export default class webRTCClientManager {
                 navigator.msGetUserMedia);
 
             this.attachMediaStream = (element, stream) => {
-                //console.log('DEPRECATED, attachMediaStream will soon be removed.');
                 element.srcObject = stream;
             };
 
@@ -367,7 +368,6 @@ export default class webRTCClientManager {
                                     }
                                 }
                             }
-                            // setTimeout(1000);
                         };
 
                         let local_media = document.createElement('audio');
@@ -383,13 +383,11 @@ export default class webRTCClientManager {
                         if (callback) callback();
                     }
                     catch (error) {
-                        // code that handles the error
                         console.error('An error occurred:', error.message);
                     }
                 })
                 .catch(() => {
-                    console.log("Access denied for audio/video");
-                    //alert("You chose not to provide access to the camera/microphone, demo will not work.");
+                    console.log("Access denied for audio");
                     console.log(errorback);
                     if (errorback) errorback();
                 })
