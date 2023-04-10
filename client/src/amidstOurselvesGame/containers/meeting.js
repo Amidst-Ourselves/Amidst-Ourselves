@@ -1,3 +1,8 @@
+// FR#18 Text Chat Room During Meeting
+// FR#15 Common Report System
+// FR#16 Emergency Meeting
+// FR#19 Voting System
+// FR#20 Profane Check System in Text Chat Room
 import Phaser from "phaser";
 import { GameObjects, Scene } from 'phaser';
 import {
