@@ -257,6 +257,40 @@ export default class Meeting extends GameObjects.Container {
             i++;
         }
 
+        this.keyboardListener = this.scene.input.keyboard.on('keydown', (event) => {
+            if (this.scene.inMeeting) {
+                // Handle special keys
+                if (event.key === 'Backspace') {
+                    // Remove the last character of the input message
+                    this.inputMessage = this.inputMessage.slice(0, -1);
+                } else if (event.key === 'Enter') {
+
+                    if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
+                        // Display the input message in the messageDisplay area
+                        this.scene.socket.emit("new_message", this.inputMessage);
+                        this.addMessage(this.scene.players[this.scene.socket.id].name, this.inputMessage);
+                    } 
+
+                    // Clear the input message
+                    this.inputMessage = '';
+                } else {
+                    if (this.inputMessage.length < 30) {
+                        const keyCode = event.keyCode;
+                        const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
+                        const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
+                    
+                        if (isAlphanumeric || isCommonPunctuation) {
+                        // Update the input message with the new character
+                            this.inputMessage += event.key;
+                        }
+                    }
+                }
+
+                // Update the inputMessageText object
+                this.inputMessageText.setText(this.inputMessage);
+            }
+        });
+
         const badWords = require('bad-words');
         this.filter = new badWords();
     }
@@ -444,40 +478,6 @@ export default class Meeting extends GameObjects.Container {
         this.messageInput.visible = true;
         this.inputMessageText.visible = true;
         this.textOpened = true;
-        this.keyboardListener = this.scene.input.keyboard.on('keydown', (event) => {
-
-            if (this.scene.inMeeting) {
-                // Handle special keys
-                if (event.key === 'Backspace') {
-                    // Remove the last character of the input message
-                    this.inputMessage = this.inputMessage.slice(0, -1);
-                } else if (event.key === 'Enter') {
-
-                    if (!this.filter.isProfane(this.inputMessage) && this.scene.players[this.scene.socket.id].playerState != PLAYER_STATE.ghost) {
-                        // Display the input message in the messageDisplay area
-                        this.scene.socket.emit("new_message", this.inputMessage);
-                        this.addMessage(this.scene.players[this.scene.socket.id].name, this.inputMessage);
-                    } 
-
-                    // Clear the input message
-                    this.inputMessage = '';
-                } else {
-                    if (this.inputMessage.length < 30) {
-                        const keyCode = event.keyCode;
-                        const isAlphanumeric = (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 97 && keyCode <= 122);
-                        const isCommonPunctuation = (keyCode >= 32 && keyCode <= 47) || (keyCode >= 58 && keyCode <= 64) || (keyCode >= 91 && keyCode <= 96) || (keyCode >= 123 && keyCode <= 126);
-                    
-                        if (isAlphanumeric || isCommonPunctuation) {
-                        // Update the input message with the new character
-                            this.inputMessage += event.key;
-                        }
-                    }
-                }
-
-                // Update the inputMessageText object
-                this.inputMessageText.setText(this.inputMessage);
-            }
-        });
         // this.keyboardListener = this.scene.input.keyboard.on('keydown', this.keyboardListener);
     }
 
