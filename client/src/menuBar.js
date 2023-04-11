@@ -2,12 +2,14 @@ import React from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
 
 
+//This file manage the MenuBar of the screen and rendor options as per login conditions and current page. 
+//The menuBar also handle the logout functionality, if user press logout option. 
 const MenuBar = ({ userData }) => {
   const location = useLocation();
   const history = useHistory();
 
+  //If user logout, then we update the database so user is able to login again. 
   const LogoutUserAPI = async () =>{
-    //const storedEmail = localStorage.getItem('email');
     const storedEmail = userData.email;
     if(storedEmail){
       try{
@@ -34,18 +36,14 @@ const MenuBar = ({ userData }) => {
       console.log("Anonymour user logout")
       return true;
     }
-    
   }
-  
   const handleLogout = async () => {
-    
     const result = await LogoutUserAPI();
     if (result){
       localStorage.removeItem('email'); 
       localStorage.removeItem('name'); 
         history.push('/');
         window.location.reload();
-      
     }else{
       console.log("Could not logout!")
     }
@@ -58,7 +56,7 @@ const MenuBar = ({ userData }) => {
   };
 
   
-
+  //We display separate menu bar options on different pages. 
   return (
     <div className="menu-bar">
       <ul>

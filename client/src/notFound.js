@@ -1,5 +1,6 @@
 import React from 'react';
 
+//If user enter a wrong URL, then we show 404 page. 
 function NotFound() {
   return (
     <div>

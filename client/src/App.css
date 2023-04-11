@@ -13,8 +13,6 @@
   }
 }
 
-
-
 table {
   border-collapse: collapse;
   margin: 0 auto;
@@ -31,15 +29,9 @@ h2 {
   margin-bottom: 20px;
 }
 
-
-
 button:hover {
   background-color: #00cc6d;
 }
-
-
-
-
 
 .App-header {
   background-color: #282c34;
@@ -76,10 +68,9 @@ input {
   border-radius: 5px;
 }
 
-
 button {
-  background-color: #dbe1db; /* Green */
-  border: 2px solid #010a01; /* Green */
+  background-color: #dbe1db; 
+  border: 2px solid #010a01; 
   color: rgb(255, 255, 255);
   padding: 5px 10px;
   color: rgb(5, 5, 5);

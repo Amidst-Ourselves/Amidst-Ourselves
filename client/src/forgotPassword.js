@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
+/*
+  FR04 - Change.Password
+  This file allow the user to go to forget password page and then change the password
+  but entering the email ID and sequerity question answer along with new desired password.
+*/
 export const ForgotPassword = (props) => {
   const [email, setEmail] = useState('');
   const [question, setQues] = useState('');
@@ -25,9 +30,9 @@ export const ForgotPassword = (props) => {
             body: JSON.stringify(user),
         });
         const data = await response.json();
+        //If the password is updated then we send the user back to login page. 
         if (data.message === "updated") {
             console.log(data.message);
-            //props.onFormSwitch('login')
             history.push('/');
         } else if (data.message === "notupdated"){
             console.log(data.message);
@@ -57,9 +62,9 @@ export const ForgotPassword = (props) => {
         <br></br> <p></p>
         <button type="submit">Reset Password</button>
         {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                        {errorMessage}
-                    </div>
+          <div className="Display Error Message" role="Error">
+              {errorMessage}
+          </div>
         )}
       </form>
       <p className="link-btn" onClick={() => history.push('/')}>Already have an account? Login here.</p>

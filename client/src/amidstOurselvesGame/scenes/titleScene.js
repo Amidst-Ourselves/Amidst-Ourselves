@@ -14,6 +14,7 @@ export default class TitleScene extends Phaser.Scene {
         const initialText = 'Type room code...';
         let inputText = '';
 
+        //The following code enable the game to set the current logged user. 
         let storedName = localStorage.getItem('name');
         let storedEmail = localStorage.getItem('email');
         if(!storedName){

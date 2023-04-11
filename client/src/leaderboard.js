@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+
+/*
+  FR10 - View.Leaderbaord
+  This file manage the leaderboard page. We make an API call to 
+  get scores of all the players and then sort them according
+  to no. of. games won and display them on the leaderboard page. 
+*/
 export const LeaderboardPage = ({ onClose }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
 
