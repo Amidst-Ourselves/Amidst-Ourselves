@@ -103,9 +103,11 @@ export default class GameScene extends AbstractGameplayScene {
         this.meetingManager.create();
         this.imposter.startCooldown();
 
-        this.add.text(100, 350, 'game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.createEndButtonForHost();
+        
+        this.add.text(100, 350, 'Game', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(50, 400, 'Room Code:', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(250, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        //this.createEndButtonForHost();
         this.createMuteButton();
 
         this.killButton.on('down', () => {
