@@ -63,16 +63,16 @@ export const Register = (props) => {
             <h2>Register</h2>
         <form className="register-form" onSubmit={handleSubmit}>
             <label htmlFor="name">Full Name</label>
-            <input value={name} name="name" onChange={(e) => setName(e.target.value)} id="name" placeholder="Full Name" />
+            <input value={name} name="name" onChange={(e) => setName(e.target.value)} id="name" placeholder="Full Name" required/>
             <br></br> <p></p>
             <label htmlFor="email">Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)}type="email" placeholder="youremail@gmail.com" id="email" name="email" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)}type="email" placeholder="youremail@gmail.com" id="email" name="email" required/>
             <br></br> <p></p>
             <label htmlFor="password">Password</label>
-            <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="********" id="password" name="password" />
+            <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="********" id="password" name="password" required/>
             <br></br> <p></p>
             <label htmlFor="question">Name your favourite city?</label>
-            <input value={ques} onChange={(e) => setQues(e.target.value)} type="question" placeholder="" id="question" name="question" />
+            <input value={ques} onChange={(e) => setQues(e.target.value)} type="question" placeholder="" id="question" name="question" required/>
             <br></br> <p></p>
             <button type="submit">Register</button>
             {errorMessage && (
