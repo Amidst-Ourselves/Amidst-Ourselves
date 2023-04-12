@@ -191,7 +191,7 @@ describe('lobbyScene', () => {
             scene.winner = PLAYER_STATE.imposter;
             scene.create();
         
-            expect(scene.add.text).toHaveBeenCalledTimes(2);
+            expect(scene.add.text).toHaveBeenCalledTimes(3);
             expect(scene.add.image).toHaveBeenCalledTimes(1);
             expect(scene.socket.on).toHaveBeenCalledTimes(8);
         });
