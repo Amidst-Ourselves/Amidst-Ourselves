@@ -233,8 +233,35 @@ describe('Meeting', () => {
       centerY: jest.fn(),
         
     };
+
+    mockScene.input= {
+      keyboard: {
+        on: jest.fn()
+      }
+    }
+
+    mockScene.taskManager = {
+      finishAllTasks: jest.fn()
+    },
+    mockScene.inMeeting = true
+    
     // Create a new instance of the Imposter class with the mock scene object
     meeting = new Meeting(mockScene);
+    meeting.filter = {
+      isProfane: jest.fn().mockReturnValue(false)
+    };
+    meeting.inputMessageText = {
+      setText: jest.fn()
+    };
+    meeting.messageDisplay = {
+      visible: false
+    };
+    meeting.text_board = {
+      visible: false
+    };
+    meeting.messageInput = {
+      visible: false
+    };
     meeting.create();
   });
 
@@ -250,6 +277,8 @@ describe('Meeting', () => {
         expect(meeting.overlay.alpha).toBe(0.7);
         expect(meeting.overlay.visible).toBe(false);
         expect(meeting.overlay.depth).toBe(HEIGHT * MAP_SCALE);
+        expect(mockScene.input.keyboard.on).toHaveBeenCalledTimes(1);
+        expect(mockScene.input.keyboard.on.mock.calls[0][0]).toBe('keydown');
       });
     
   });
@@ -641,8 +670,6 @@ describe('Meeting', () => {
       expect(meeting.text_board.visible).toBe(true);
       expect(meeting.messageInput.visible).toBe(true);
       expect(meeting.inputMessageText.visible).toBe(true);
-      expect(mockScene.input.keyboard.on).toHaveBeenCalledTimes(1);
-      expect(mockScene.input.keyboard.on.mock.calls[0][0]).toBe('keydown');
     });
     
   });
