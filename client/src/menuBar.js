@@ -51,8 +51,8 @@ const MenuBar = ({ userData }) => {
   };
 
   const reloadHandle = async () => {
-    // history.push('/leaderboard');
-    // window.location.reload();
+    history.push('/leaderboard');
+    window.location.reload();
   };
 
   
