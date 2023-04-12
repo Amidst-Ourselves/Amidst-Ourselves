@@ -10,8 +10,9 @@ An Among us like game
 3. run `npm install` in the root directory and in the client directory
 4. create a .env file in the root directory and add the following line `PORT=3000`
 5. create a .env file in the client directory and add the following line `REACT_APP_SERVER_URL=http://localhost:3000`
-6. run `npm start` in the root directory
-7. go to `http://localhost:3000` in your browser
+6. run `npm run build` in the client repository
+7. run `npm start` in the root directory
+8. go to `http://localhost:3000` in your browser
 
 <br>
 
