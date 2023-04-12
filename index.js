@@ -491,7 +491,7 @@ function updateDB(room,winner) {
     let updatePromises = [];
 
     for (let player in room.initialPlayers) {
-        if (room.initialPlayers[player].playerState === winner){
+        if (room.initialPlayers[player]?.playerState === winner && room.initialPlayers[player]?.leftEarly === false){
             const filter = { username: room.initialPlayers[player].email };
             const update = { $inc: { wins: 1, totalgames: 1 } };
 
