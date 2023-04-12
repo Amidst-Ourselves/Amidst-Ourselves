@@ -74,8 +74,9 @@ export default class LobbyScene extends AbstractGameplayScene {
 
         this.colourStation.create(this.players[this.socket.id]);
 
-        this.add.text(100, 350, 'lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
-        this.add.text(100, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(100, 350, 'Lobby', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(50, 400, 'Room Code:', { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
+        this.add.text(250, 400, this.roomCode, { font: '32px Arial', fill: '#FFFFFF' }).setScrollFactor(0);
         this.createStartButtonForHost();
         this.createMuteButton();
 
@@ -154,7 +155,7 @@ export default class LobbyScene extends AbstractGameplayScene {
             return;
         }
 
-        this.startText = this.add.text(100, 450, 'start', { font: '32px Arial', fill: '#FFFFFF' });
+        this.startText = this.add.text(100, 450, 'Start Game', { font: '32px Arial', fill: '#FFFFFF' });
         this.startText.setInteractive().setScrollFactor(0);
         this.startText.on('pointerover', () => {
             this.startText.setTint(0x00FF00);
